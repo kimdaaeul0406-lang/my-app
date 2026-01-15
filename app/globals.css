@@ -1561,7 +1561,20 @@ button {
 /* PC에서 result 단계 카드 */
 @media (min-width: 769px) {
   .tarotShuffleCard.stage-result.selected {
-    transform: translate(-50%, calc(-50% + 40px)) scale(1.6) !important;
+    transform: translate(-50%, calc(-50% + 40px)) scale(1.5) !important;
+    /* 이미지 선명도 유지 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    transform-style: preserve-3d;
+  }
+  
+  /* result 단계에서 이미지 선명도 개선 */
+  .tarotShuffleCard.stage-result.selected .tarotCardImage {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: high-quality;
+    -ms-interpolation-mode: nearest-neighbor;
+    will-change: transform;
   }
 
   /* result 단계에서 카드 컨테이너 높이 증가 */
@@ -1646,6 +1659,11 @@ button {
   opacity: 1 !important;
   max-width: 100%;
   max-height: 100%;
+  /* 이미지 선명도 개선 */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: high-quality;
+  -ms-interpolation-mode: nearest-neighbor;
 }
 
 .tarotCardFallback {
