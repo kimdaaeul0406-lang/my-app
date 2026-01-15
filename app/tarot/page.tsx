@@ -33,13 +33,13 @@ type TarotCard = {
 
 // 셔플 애니메이션 타로 카드 피커
 type ShuffleStage =
-  | "intro"      // 카드들이 중앙으로 모이는 애니메이션
-  | "stacked"    // 덱이 쌓여있는 상태 (클릭 대기)
-  | "shuffling"  // 셔플 애니메이션
-  | "spread"     // 3장 펼쳐진 상태
-  | "selecting"  // 카드 선택 중
-  | "flipping"   // 카드 뒤집기
-  | "result";    // 결과 표시
+  | "intro" // 카드들이 중앙으로 모이는 애니메이션
+  | "stacked" // 덱이 쌓여있는 상태 (클릭 대기)
+  | "shuffling" // 셔플 애니메이션
+  | "spread" // 3장 펼쳐진 상태
+  | "selecting" // 카드 선택 중
+  | "flipping" // 카드 뒤집기
+  | "result"; // 결과 표시
 
 function TarotShufflePicker({
   cards,
@@ -80,7 +80,7 @@ function TarotShufflePicker({
       })),
       stacked: cards.map((_, i) => ({
         offset: (i - cards.length / 2) * 0.4,
-        rotation: (Math.random() - 0.5) * 2,
+        rotation: 0, // 정면으로 보이도록 회전 없음
       })),
       shuffle: cards.map(() => ({
         x: (Math.random() - 0.5) * 150,
@@ -123,10 +123,7 @@ function TarotShufflePicker({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="tarotShuffleContainer"
-    >
+    <div ref={containerRef} className="tarotShuffleContainer">
       {/* 인트로/스택/셔플 단계의 모든 카드 */}
       {(stage === "intro" || stage === "stacked" || stage === "shuffling") &&
         cards.map((card, i) => {
@@ -137,16 +134,27 @@ function TarotShufflePicker({
 
           if (stage === "intro") {
             const pos = randomPositions.intro[i] || { x: 0, y: 0, rotation: 0 };
-            transform = `translate(${pos.x}px, ${pos.y}px) rotate(${pos.rotation}deg)`;
+            // 중앙 기준으로 이동 (left: 50%, top: 50%에서 시작하므로 translate로 추가 이동)
+            transform = `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) rotate(${pos.rotation}deg)`;
             opacity = 0.9;
             zIndex = i;
           } else if (stage === "stacked") {
-            const pos = randomPositions.stacked[i] || { offset: 0, rotation: 0 };
-            transform = `translate(${pos.offset}px, ${-pos.offset}px) rotate(${pos.rotation}deg)`;
+            const pos = randomPositions.stacked[i] || {
+              offset: 0,
+              rotation: 0,
+            };
+            // 정면으로 보이도록 모든 회전 제거 (rotateX, rotateY, rotateZ 모두 0)
+            transform = `translate(calc(-50% + ${
+              pos.offset
+            }px), calc(-50% + ${-pos.offset}px)) rotateX(0deg) rotateY(0deg) rotateZ(0deg)`;
             opacity = 1;
             zIndex = i;
           } else if (stage === "shuffling") {
-            const pos = randomPositions.shuffle[i] || { x: 0, y: 0, rotation: 0 };
+            const pos = randomPositions.shuffle[i] || {
+              x: 0,
+              y: 0,
+              rotation: 0,
+            };
             // shufflePhase에 따라 좌우로 번갈아 흩어지기
             const direction = shufflePhase % 2 === 0 ? 1 : -1;
             const groupIndex = i % 3;
@@ -164,8 +172,15 @@ function TarotShufflePicker({
               yMove = -50;
             }
 
-            transform = `translate(${xMove + pos.x * 0.3}px, ${yMove + pos.y * 0.2}px) rotate(${pos.rotation * direction}deg)`;
-            transition = `all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.008}s`;
+            // 중앙 기준으로 이동
+            transform = `translate(calc(-50% + ${
+              xMove + pos.x * 0.3
+            }px), calc(-50% + ${yMove + pos.y * 0.2}px)) rotate(${
+              pos.rotation * direction
+            }deg)`;
+            transition = `all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) ${
+              i * 0.008
+            }s`;
             zIndex = shufflePhase % 2 === 0 ? i : cards.length - i;
           }
 
@@ -188,11 +203,13 @@ function TarotShufflePicker({
               </div>
             </div>
           );
-        })
-      }
+        })}
 
       {/* 스프레드 단계: 3장 일렬 배치 */}
-      {(stage === "spread" || stage === "selecting" || stage === "flipping" || stage === "result") &&
+      {(stage === "spread" ||
+        stage === "selecting" ||
+        stage === "flipping" ||
+        stage === "result") &&
         spreadCards.map((cardIndex, spreadIndex) => {
           const card = cards[cardIndex];
           const isSelected = selectedSpreadIndex === spreadIndex;
@@ -202,30 +219,30 @@ function TarotShufflePicker({
           let zIndex = spreadIndex;
 
           if (stage === "spread") {
-            // 3장 일렬 배치 (회전 없이)
+            // 3장 일렬 배치 (회전 없이, 중앙 기준)
             const xOffset = (spreadIndex - 1) * 105;
-            transform = `translateX(${xOffset}px)`;
+            transform = `translate(calc(-50% + ${xOffset}px), -50%)`;
             opacity = 1;
             zIndex = spreadIndex;
           } else if (stage === "selecting") {
             if (isSelected) {
-              transform = `translateY(-20px) scale(1.1)`;
+              transform = `translate(-50%, calc(-50% - 20px)) scale(1.1)`;
               opacity = 1;
               zIndex = 100;
             } else {
               const xOffset = (spreadIndex - 1) * 105;
-              transform = `translateX(${xOffset}px) scale(0.95)`;
+              transform = `translate(calc(-50% + ${xOffset}px), -50%) scale(0.95)`;
               opacity = 0.4;
               zIndex = spreadIndex;
             }
           } else if (stage === "flipping" || stage === "result") {
             if (isSelected) {
-              transform = `translateY(-20px) scale(1.1)`;
+              transform = `translate(-50%, calc(-50% - 20px)) scale(1.1)`;
               opacity = 1;
               zIndex = 100;
             } else {
               opacity = 0;
-              transform = `scale(0.5)`;
+              transform = `translate(-50%, -50%) scale(0.5)`;
               zIndex = 0;
             }
           }
@@ -235,7 +252,9 @@ function TarotShufflePicker({
           return (
             <div
               key={card.id}
-              className={`tarotShuffleCard spread stage-${stage} ${isSelected ? 'selected' : ''}`}
+              className={`tarotShuffleCard spread stage-${stage} ${
+                isSelected ? "selected" : ""
+              }`}
               style={{
                 transform,
                 opacity,
@@ -263,8 +282,7 @@ function TarotShufflePicker({
               </div>
             </div>
           );
-        })
-      }
+        })}
 
       {/* 덱 클릭 안내 오버레이 */}
       {stage === "stacked" && (
@@ -279,7 +297,9 @@ function TarotShufflePicker({
 export default function TarotPage() {
   const router = useRouter();
   const [picked, setPicked] = useState<number | null>(null);
-  const [pickedSpreadIndex, setPickedSpreadIndex] = useState<number | null>(null);
+  const [pickedSpreadIndex, setPickedSpreadIndex] = useState<number | null>(
+    null
+  );
   const [flipped, setFlipped] = useState(false);
   const [canHover, setCanHover] = useState(false);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -728,8 +748,10 @@ export default function TarotPage() {
             <p className="p stagger d2">
               {stage === "stacked" && "덱을 탭하여 셔플하세요"}
               {stage === "spread" && "직감으로 한 장을 선택하세요"}
-              {(stage === "intro" || stage === "shuffling") && "카드를 섞고 있어요..."}
-              {(stage === "selecting" || stage === "flipping") && "카드를 확인하고 있어요..."}
+              {(stage === "intro" || stage === "shuffling") &&
+                "카드를 섞고 있어요..."}
+              {(stage === "selecting" || stage === "flipping") &&
+                "카드를 확인하고 있어요..."}
               {stage === "result" && "오늘의 메시지입니다"}
             </p>
 
