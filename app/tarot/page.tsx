@@ -48,6 +48,7 @@ function TarotShufflePicker({
   selectedCardIndex,
   selectedSpreadIndex,
   shufflePhase = 0,
+  onCardImageClick,
 }: {
   cards: TarotCard[];
   onCardSelect?: (cardIndex: number, spreadIndex: number) => void;
@@ -55,10 +56,16 @@ function TarotShufflePicker({
   selectedCardIndex: number | null;
   selectedSpreadIndex: number | null;
   shufflePhase?: number;
+  onCardImageClick?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
   const [isMobile, setIsMobile] = useState(false); // 모바일 감지
+
+  // 터치 이벤트 추적 (스크롤과 클릭 구분)
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(
+    null
+  );
 
   // 랜덤으로 선택된 3장의 카드 인덱스
   const [spreadCards, setSpreadCards] = useState<number[]>([]);
@@ -73,9 +80,12 @@ function TarotShufflePicker({
   useEffect(() => {
     setIsClient(true);
 
-    // 모바일 감지 (768px 이하)
+    // 실제 모바일 디바이스 감지 (터치 지원 + 작은 화면)
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const isTouchDevice =
+        "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobile(isTouchDevice && isSmallScreen);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -279,9 +289,27 @@ function TarotShufflePicker({
               opacity = 0.4;
               zIndex = spreadIndex;
             }
-          } else if (stage === "flipping" || stage === "result") {
+          } else if (stage === "flipping") {
             if (isSelected) {
               transform = `translate(-50%, calc(-50% - 20px)) scale(1.1)`;
+              opacity = 1;
+              zIndex = 100;
+            } else {
+              opacity = 0;
+              transform = `translate(-50%, -50%) scale(0.5)`;
+              zIndex = 0;
+            }
+          } else if (stage === "result") {
+            if (isSelected) {
+              // result 단계에서만 크게 표시 (PC는 작게, 모바일은 고정 크기)
+              // 모바일에서는 CSS에서 !important로 고정되므로 transform은 최소한만 설정
+              if (isClient && isMobile) {
+                // 모바일: CSS에서 고정되므로 기본 transform만 설정
+                transform = `translate(-50%, -50%)`;
+              } else {
+                // PC: 기존대로
+                transform = `translate(-50%, calc(-50% - 20px)) scale(1.3)`;
+              }
               opacity = 1;
               zIndex = 100;
             } else {
@@ -318,7 +346,49 @@ function TarotShufflePicker({
                 isSelected ? "selected" : ""
               }`}
               style={cardStyle}
-              onClick={() => handleSpreadCardClick(spreadIndex, cardIndex)}
+              onClick={() => {
+                // spread 단계에서만 카드 선택
+                if (stage === "spread") {
+                  handleSpreadCardClick(spreadIndex, cardIndex);
+                }
+              }}
+              onTouchStart={(e) => {
+                // 모바일에서 터치 시작 위치 저장
+                if (isClient && isMobile && stage === "result" && isSelected) {
+                  const touch = e.touches[0];
+                  touchStartRef.current = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    time: Date.now(),
+                  };
+                }
+              }}
+              onTouchEnd={(e) => {
+                // 모바일에서 터치 종료 시 스크롤인지 클릭인지 구분
+                if (
+                  isClient &&
+                  isMobile &&
+                  stage === "result" &&
+                  isSelected &&
+                  touchStartRef.current
+                ) {
+                  const touch = e.changedTouches[0];
+                  const deltaX = Math.abs(
+                    touch.clientX - touchStartRef.current.x
+                  );
+                  const deltaY = Math.abs(
+                    touch.clientY - touchStartRef.current.y
+                  );
+                  const deltaTime = Date.now() - touchStartRef.current.time;
+
+                  // 이동 거리가 작고 시간이 짧으면 클릭으로 간주
+                  if (deltaX < 10 && deltaY < 10 && deltaTime < 300) {
+                    // 클릭 이벤트는 이미지에서만 처리
+                    e.preventDefault();
+                  }
+                  touchStartRef.current = null;
+                }
+              }}
             >
               {/* 카드 플립 컨테이너 */}
               <div className="tarotCardFlip">
@@ -332,7 +402,97 @@ function TarotShufflePicker({
                   </div>
                   {/* 앞면 */}
                   <div className="tarotCardFront tarotCardFace">
-                    <div className="tarotCardFrontContent">{card.name}</div>
+                    <div className="tarotCardFrontContent">
+                      <img
+                        src={`/tarot/${card.id}.png`}
+                        alt={card.name}
+                        className="tarotCardImage"
+                        loading="eager"
+                        onClick={(e) => {
+                          // result 단계에서 이미지를 직접 클릭했을 때만 모달 열기
+                          if (stage === "result" && isSelected) {
+                            e.stopPropagation();
+                            if (onCardImageClick) {
+                              onCardImageClick();
+                            }
+                          }
+                        }}
+                        onTouchStart={(e) => {
+                          // 모바일에서 이미지 터치 시작
+                          if (stage === "result" && isSelected) {
+                            e.stopPropagation();
+                            const touch = e.touches[0];
+                            touchStartRef.current = {
+                              x: touch.clientX,
+                              y: touch.clientY,
+                              time: Date.now(),
+                            };
+                          }
+                        }}
+                        onTouchEnd={(e) => {
+                          // 모바일에서 이미지 터치 종료 시 클릭 처리
+                          if (
+                            stage === "result" &&
+                            isSelected &&
+                            touchStartRef.current
+                          ) {
+                            e.stopPropagation();
+                            const touch = e.changedTouches[0];
+                            const deltaX = Math.abs(
+                              touch.clientX - touchStartRef.current.x
+                            );
+                            const deltaY = Math.abs(
+                              touch.clientY - touchStartRef.current.y
+                            );
+                            const deltaTime =
+                              Date.now() - touchStartRef.current.time;
+
+                            // 이동 거리가 작고 시간이 짧으면 클릭으로 간주
+                            if (deltaX < 15 && deltaY < 15 && deltaTime < 400) {
+                              if (onCardImageClick) {
+                                onCardImageClick();
+                              }
+                            }
+                            touchStartRef.current = null;
+                          }
+                        }}
+                        style={{
+                          cursor:
+                            stage === "result" && isSelected
+                              ? "pointer"
+                              : "default",
+                          touchAction: "manipulation", // 모바일 터치 최적화
+                        }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          const parent = target.parentElement;
+                          if (
+                            parent &&
+                            !parent.querySelector(".tarotCardFallback")
+                          ) {
+                            const fallback = document.createElement("div");
+                            fallback.className = "tarotCardFallback";
+                            fallback.textContent = card.name;
+                            parent.appendChild(fallback);
+                          }
+                        }}
+                        onLoad={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.opacity = "1";
+                          target.style.display = "block";
+                          // fallback 제거
+                          const parent = target.parentElement;
+                          if (parent) {
+                            const fallback =
+                              parent.querySelector(".tarotCardFallback");
+                            if (fallback) {
+                              fallback.remove();
+                            }
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -360,6 +520,7 @@ export default function TarotPage() {
   const [canHover, setCanHover] = useState(false);
   const [hovered, setHovered] = useState<number | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showCardImageModal, setShowCardImageModal] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(
     null
@@ -802,7 +963,9 @@ export default function TarotPage() {
     if (canHover) return;
     const el = e.target as HTMLElement;
     if (el.closest("button")) return;
-    if (picked !== null) resetTarot();
+    if (el.closest(".tarotShuffleCard")) return; // 카드 클릭은 무시
+    // result 단계에서는 빈 공간 터치로 리셋하지 않음
+    if (picked !== null && stage !== "result") resetTarot();
   };
 
   return (
@@ -851,13 +1014,14 @@ export default function TarotPage() {
                 selectedCardIndex={picked}
                 selectedSpreadIndex={pickedSpreadIndex}
                 shufflePhase={shuffleCount}
+                onCardImageClick={() => setShowCardImageModal(true)}
               />
             </div>
 
             {tarotResult && stage === "result" ? (
               <div
                 className="card cardPad lift stagger d4 tarotResultCard"
-                style={{ marginTop: 16 }}
+                style={{ marginTop: 100 }}
               >
                 <div
                   style={{
@@ -963,6 +1127,51 @@ export default function TarotPage() {
                         </span>
                       ))}
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 카드 이미지 상세 보기 모달 */}
+            {showCardImageModal && tarotResult && (
+              <div
+                className="modalOverlay"
+                onClick={() => setShowCardImageModal(false)}
+              >
+                <div
+                  className="modalSheet"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ maxWidth: "90vw", maxHeight: "90vh" }}
+                >
+                  <div className="modalHeader">
+                    <div className="modalTitle">{tarotResult.name}</div>
+                    <button
+                      className="closeBtn"
+                      onClick={() => setShowCardImageModal(false)}
+                      aria-label="닫기"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div
+                    className="modalBody"
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      padding: "20px",
+                    }}
+                  >
+                    <img
+                      src={`/tarot/${tarotResult.id}.png`}
+                      alt={tarotResult.name}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "70vh",
+                        objectFit: "contain",
+                        borderRadius: "12px",
+                      }}
+                    />
                   </div>
                 </div>
               </div>
