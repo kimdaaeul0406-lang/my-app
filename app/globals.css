@@ -1435,7 +1435,6 @@ button {
   align-items: center;
   justify-content: center;
   overflow: visible;
-  perspective: 1000px;
 }
 
 .tarotShuffleCard {
@@ -1444,7 +1443,6 @@ button {
   height: 124px;
   cursor: pointer;
   will-change: transform, opacity;
-  backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
