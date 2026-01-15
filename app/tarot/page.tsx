@@ -31,250 +31,115 @@ type TarotCard = {
   number?: string;
 };
 
-// 부채꼴 덱 + 개별 카드 드래그 UX
-function TarotFanPicker({
+// 셔플 애니메이션 타로 카드 피커
+type ShuffleStage =
+  | "intro"      // 카드들이 중앙으로 모이는 애니메이션
+  | "stacked"    // 덱이 쌓여있는 상태 (클릭 대기)
+  | "shuffling"  // 셔플 애니메이션
+  | "spread"     // 3장 펼쳐진 상태
+  | "selecting"  // 카드 선택 중
+  | "flipping"   // 카드 뒤집기
+  | "result";    // 결과 표시
+
+function TarotShufflePicker({
   cards,
   onCardSelect,
   stage,
   selectedCardIndex,
+  selectedSpreadIndex,
 }: {
   cards: TarotCard[];
-  onCardSelect?: (index: number) => void;
-  stage: "deck" | "selecting" | "flipping" | "result";
+  onCardSelect?: (cardIndex: number, spreadIndex: number) => void;
+  stage: ShuffleStage;
   selectedCardIndex: number | null;
+  selectedSpreadIndex: number | null;
 }) {
-  // 덱 단계에서만 드래그 활성화
-  const isDeckActive = stage === "deck";
-
-  // 덱 탐색 상태
-  const [currentIndex, setCurrentIndex] = useState(
-    Math.floor(cards.length / 2)
-  );
-  const [deckOffsetX, setDeckOffsetX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggingCardIndex, setDraggingCardIndex] = useState<number | null>(
-    null
-  );
-  const [dragStartX, setDragStartX] = useState(0);
-  const [pendingIndexChange, setPendingIndexChange] = useState<number | null>(
-    null
-  );
-  const [isResetting, setIsResetting] = useState(false); // offset 리셋 중 transition 비활성화
   const containerRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null); // requestAnimationFrame ID 추적
 
-  // stage가 "deck"으로 변경될 때 currentIndex 초기화
+  // 랜덤으로 선택된 3장의 카드 인덱스
+  const [spreadCards, setSpreadCards] = useState<number[]>([]);
+
+  // 셔플 시 사용할 랜덤 시작 위치 (각 카드별)
+  const [introPositions] = useState(() =>
+    cards.map(() => ({
+      x: (Math.random() - 0.5) * 300,
+      y: (Math.random() - 0.5) * 200 - 100,
+      rotation: (Math.random() - 0.5) * 60,
+    }))
+  );
+
+  // stage가 intro가 되면 spread 카드 선택
   useEffect(() => {
-    if (stage === "deck") {
-      setCurrentIndex(Math.floor(cards.length / 2));
-      setDeckOffsetX(0);
-      setIsDragging(false);
-      setDraggingCardIndex(null);
+    if (stage === "intro") {
+      // 랜덤으로 3장 선택
+      const shuffled = [...Array(cards.length).keys()]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      setSpreadCards(shuffled);
     }
   }, [stage, cards.length]);
 
-  // 카드별 드래그 핸들러 (덱 탐색용)
-  const handleCardPointerDown = (e: React.PointerEvent, cardIndex: number) => {
-    if (!isDeckActive) return;
-    e.stopPropagation();
-    e.preventDefault();
-
-    // 예약된 애니메이션 프레임 취소
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
+  const handleDeckClick = () => {
+    if (stage === "stacked") {
+      // 외부에서 셔플 시작 처리
     }
-
-    setIsDragging(true);
-    setDraggingCardIndex(cardIndex);
-    setDragStartX(e.clientX);
-    setDeckOffsetX(0);
-
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
-  const handleCardPointerMove = (e: React.PointerEvent) => {
-    if (!isDragging || draggingCardIndex === null || !isDeckActive) return;
-
-    const deltaX = e.clientX - dragStartX;
-    // 드래그 중에는 임시 오프셋만 사용 (카드만 움직이고 덱 컨테이너는 고정)
-    // 충분히 큰 범위 허용 (여러 카드 이동 가능)
-    const maxOffset = 600;
-    const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, deltaX));
-
-    // 이미 예약된 프레임이 있으면 취소하고 새로 예약
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
+  const handleSpreadCardClick = (spreadIndex: number, cardIndex: number) => {
+    if (stage === "spread" && onCardSelect) {
+      onCardSelect(cardIndex, spreadIndex);
     }
-
-    // requestAnimationFrame으로 부드러운 업데이트 (컨테이너는 고정, 카드만 움직임)
-    rafRef.current = requestAnimationFrame(() => {
-      setDeckOffsetX(clampedOffset);
-      rafRef.current = null;
-    });
-  };
-
-  const handleCardPointerUp = (e: React.PointerEvent) => {
-    if (!isDragging || draggingCardIndex === null) return;
-
-    // 예약된 애니메이션 프레임 취소
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-
-    const deltaX = e.clientX - dragStartX;
-    const threshold = 60; // 스와이프 임계값 (카드 절반 정도)
-
-    // 클릭 처리 (드래그가 거의 없으면)
-    if (Math.abs(deltaX) < 10) {
-      if (draggingCardIndex === currentIndex && onCardSelect) {
-        // 클릭 시에도 부드럽게 리셋되도록 약간의 지연 추가
-        setIsDragging(false);
-        setDraggingCardIndex(null);
-        // 리셋 애니메이션을 위해 transition을 활성화
-        requestAnimationFrame(() => {
-          setDeckOffsetX(0);
-        });
-        onCardSelect(currentIndex);
-      } else {
-        // setState를 묶어서 업데이트
-        setIsDragging(false);
-        setDraggingCardIndex(null);
-        requestAnimationFrame(() => {
-          setDeckOffsetX(0);
-        });
-      }
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      return;
-    }
-
-    // 드래그가 끝났을 때: deltaX를 기반으로 다음 카드 결정
-    let nextIndex: number | null = null;
-    let cardsToMove = 0;
-
-    // 드래그 거리를 카드 간격(56px)으로 나누어 몇 장 이동할지 계산
-    if (Math.abs(deltaX) >= threshold) {
-      cardsToMove = Math.round(deltaX / 56); // 카드 간격으로 나눔
-
-      if (deltaX > 0 && currentIndex > 0) {
-        // 오른쪽으로 드래그 -> 이전 카드들로 이동 (currentIndex 감소)
-        nextIndex = Math.max(0, currentIndex - Math.abs(cardsToMove));
-      } else if (deltaX < 0 && currentIndex < cards.length - 1) {
-        // 왼쪽으로 드래그 -> 다음 카드들로 이동 (currentIndex 증가)
-        nextIndex = Math.min(
-          cards.length - 1,
-          currentIndex + Math.abs(cardsToMove)
-        );
-      }
-    }
-
-    // setState를 묶어서 업데이트 (한 번의 리렌더링으로 처리)
-    if (nextIndex !== null && nextIndex !== currentIndex) {
-      // 카드 인덱스 변경 및 오프셋 리셋 (덱 컨테이너는 고정, 카드만 새로운 위치로 이동)
-      setIsDragging(false);
-      setDraggingCardIndex(null);
-
-      // transition 없이 즉시 인덱스 변경 (덱 컨테이너는 고정 상태 유지)
-      setIsResetting(true);
-      setCurrentIndex(nextIndex);
-
-      // 다음 프레임에서 transition 활성화 후 오프셋 리셋
-      // 이렇게 하면 컨테이너는 고정되고 카드만 부드럽게 새로운 위치로 이동
-      requestAnimationFrame(() => {
-        setIsResetting(false);
-        setDeckOffsetX(0);
-      });
-    } else {
-      // 충분히 움직이지 않았거나 같은 위치면 원래 위치로 복귀 (덱 컨테이너 고정 유지)
-      setIsDragging(false);
-      setDraggingCardIndex(null);
-      requestAnimationFrame(() => {
-        setDeckOffsetX(0);
-      });
-    }
-
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-  };
-
-  // transitionend 이벤트 핸들러
-  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
-    // transform transition이 끝났을 때만 처리
-    if (e.propertyName !== "transform") return;
-    if (pendingIndexChange === null) return;
-
-    const nextIndex = pendingIndexChange;
-
-    // currentIndex 변경 및 deckOffsetX 리셋 (transition 없이)
-    setIsResetting(true);
-    setCurrentIndex(nextIndex);
-    setPendingIndexChange(null);
-
-    // 다음 프레임에서 오프셋 리셋 및 transition 재활성화
-    requestAnimationFrame(() => {
-      setDeckOffsetX(0);
-      requestAnimationFrame(() => {
-        setIsResetting(false);
-      });
-    });
   };
 
   return (
     <div
       ref={containerRef}
-      className="tarotFanPickerContainer"
-      style={{
-        pointerEvents: isDeckActive ? "auto" : "none",
-      }}
+      className="tarotShuffleContainer"
     >
-      {cards.map((card, i) => {
-        const isSelected = selectedCardIndex === i;
-        const isSelecting = stage === "selecting";
-        const isFlipping = stage === "flipping";
-        const isResult = stage === "result";
-        const isThisCardDragging = draggingCardIndex === i; // 이 카드가 드래그 중인지
+      {/* 인트로/스택/셔플 단계의 모든 카드 */}
+      {(stage === "intro" || stage === "stacked" || stage === "shuffling") &&
+        cards.map((card, i) => {
+          let transform = "";
+          let opacity = 1;
+          let zIndex = i;
+          let transition = "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
 
-        // 덱 단계: 부채꼴 배치 + 덱 탐색
-        if (isDeckActive && !isSelected) {
-          const offset = i - currentIndex;
-          // 회전 각도: offset * 6deg
-          const angle = offset * 6;
-          // X 이동: offset * 56px + 덱 오프셋 (모든 카드가 함께 움직임)
-          const baseX = offset * 56;
-          const x = baseX + deckOffsetX;
-          // Y 이동: abs(offset) * 6px
-          const y = Math.abs(offset) * 6;
-
-          // 드래그 중인지 확인 (모든 카드가 동일하게 처리됨)
-          const isCenterCard = offset === 0; // 중앙 카드
+          if (stage === "intro") {
+            // 흩어진 위치에서 시작
+            const pos = introPositions[i];
+            transform = `translate(${pos.x}px, ${pos.y}px) rotate(${pos.rotation}deg)`;
+            opacity = 0.9;
+            zIndex = i;
+          } else if (stage === "stacked") {
+            // 중앙에 쌓인 상태 (약간의 랜덤 오프셋으로 자연스럽게)
+            const stackOffset = (i - cards.length / 2) * 0.3;
+            const randomRotation = (Math.random() - 0.5) * 2;
+            transform = `translate(${stackOffset}px, ${-stackOffset}px) rotate(${randomRotation}deg)`;
+            opacity = 1;
+            zIndex = i;
+          } else if (stage === "shuffling") {
+            // 셔플 애니메이션 - 카드들이 좌우로 흩어졌다 다시 모임
+            const shufflePhase = (i % 3);
+            const xOffset = shufflePhase === 0 ? -80 : shufflePhase === 1 ? 80 : 0;
+            const yOffset = shufflePhase === 2 ? -30 : 0;
+            const rotation = (Math.random() - 0.5) * 15;
+            transform = `translate(${xOffset}px, ${yOffset}px) rotate(${rotation}deg)`;
+            transition = `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.02}s`;
+            zIndex = cards.length - i;
+          }
 
           return (
             <div
               key={card.id}
-              className={`tarotFanPickerCard ${
-                isThisCardDragging ? "dragging" : ""
-              } stage-${stage}`}
+              className={`tarotShuffleCard stage-${stage}`}
               style={{
-                transform: `rotate(${angle}deg) translate3d(${x}px, ${y}px, 0) scale(${
-                  isThisCardDragging ? 1.03 : 1
-                })`,
-                transformOrigin: "bottom center",
-                opacity:
-                  Math.abs(offset) <= 5
-                    ? 1
-                    : Math.max(0, 1 - Math.abs(offset) * 0.15),
-                zIndex: isThisCardDragging ? 1000 : 100 - Math.abs(offset),
-                transition:
-                  isDragging || isResetting
-                    ? "none" // 드래그 중이거나 리셋 중에는 모든 카드의 애니메이션 없음 (전역 isDragging 상태 사용)
-                    : "transform 450ms cubic-bezier(0.25, 0.46, 0.45, 0.94)", // 스냅 및 일반 상태에서 transition 사용 (더 부드러운 easing)
-                pointerEvents: "auto",
+                transform,
+                opacity,
+                zIndex,
+                transition,
+                cursor: stage === "stacked" ? "pointer" : "default",
               }}
-              onPointerDown={(e) => handleCardPointerDown(e, i)}
-              onPointerMove={handleCardPointerMove}
-              onPointerUp={handleCardPointerUp}
-              onPointerLeave={handleCardPointerUp}
-              onTransitionEnd={undefined}
+              onClick={stage === "stacked" ? handleDeckClick : undefined}
             >
               <div className="tarotFlip">
                 <div className="tarotInner">
@@ -284,75 +149,82 @@ function TarotFanPicker({
               </div>
             </div>
           );
-        }
+        })
+      }
 
-        // 선택/뒤집기/결과 단계: 기존 로직
-        let transform = "";
-        let opacity = 1;
-        let scale = 1;
-        let translateX = 0;
-        let translateY = 0;
+      {/* 스프레드 단계: 3장만 표시 */}
+      {(stage === "spread" || stage === "selecting" || stage === "flipping" || stage === "result") &&
+        spreadCards.map((cardIndex, spreadIndex) => {
+          const card = cards[cardIndex];
+          const isSelected = selectedSpreadIndex === spreadIndex;
 
-        if (isSelecting) {
-          // 2단계: 선택 중
-          if (isSelected) {
-            translateX = 0;
-            translateY = -40;
-            scale = 1.2;
+          let transform = "";
+          let opacity = 1;
+          let zIndex = spreadIndex;
+          let scale = 1;
+
+          if (stage === "spread") {
+            // 3장 펼쳐진 상태
+            const xOffset = (spreadIndex - 1) * 110; // -110, 0, 110
+            const rotation = (spreadIndex - 1) * 5; // -5, 0, 5
+            transform = `translateX(${xOffset}px) rotate(${rotation}deg)`;
             opacity = 1;
-            transform = `rotate(0deg) translateX(${translateX}px) translateY(${translateY}px) scale(${scale})`;
-          } else {
-            opacity = 0;
-            scale = 0.3;
-            transform = `rotate(0deg) scale(${scale})`;
+            zIndex = spreadIndex;
+          } else if (stage === "selecting") {
+            if (isSelected) {
+              transform = `translateY(-30px) scale(1.15)`;
+              opacity = 1;
+              zIndex = 100;
+            } else {
+              const xOffset = (spreadIndex - 1) * 110;
+              transform = `translateX(${xOffset}px) scale(0.9)`;
+              opacity = 0.3;
+              zIndex = spreadIndex;
+            }
+          } else if (stage === "flipping" || stage === "result") {
+            if (isSelected) {
+              transform = `translateY(-30px) scale(1.15)`;
+              opacity = 1;
+              zIndex = 100;
+            } else {
+              opacity = 0;
+              transform = `scale(0.5)`;
+              zIndex = 0;
+            }
           }
-        } else if (isFlipping || isResult) {
-          // 3-4단계: 선택된 카드만 표시
-          if (isSelected) {
-            translateX = 0;
-            translateY = -40;
-            scale = 1.2;
-            opacity = 1;
-            transform = `rotate(0deg) translateX(${translateX}px) translateY(${translateY}px) scale(${scale})`;
-          } else {
-            opacity = 0;
-            transform = `rotate(0deg)`;
-          }
-        }
 
-        return (
-          <div
-            key={card.id}
-            className={`tarotFanPickerCard ${
-              isSelected ? "selected" : ""
-            } stage-${stage}`}
-            style={{
-              transform,
-              transformOrigin: "bottom center",
-              opacity,
-              zIndex: isSelected
-                ? 100
-                : 50 - Math.abs(i - (selectedCardIndex || 0)),
-              transition: isSelecting
-                ? "transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease"
-                : "none",
-            }}
-          >
-            <div className="tarotFlip">
-              <div
-                className={`tarotInner ${
-                  isFlipping || isResult ? "flipped" : ""
-                }`}
-              >
-                <div className="tarotFace tarotBack" />
-                <div className="tarotFace tarotFront">
-                  {isResult ? "OPEN" : "LUMEN"}
+          return (
+            <div
+              key={card.id}
+              className={`tarotShuffleCard spread stage-${stage} ${isSelected ? 'selected' : ''}`}
+              style={{
+                transform,
+                opacity,
+                zIndex,
+                transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                cursor: stage === "spread" ? "pointer" : "default",
+              }}
+              onClick={() => handleSpreadCardClick(spreadIndex, cardIndex)}
+            >
+              <div className="tarotFlip">
+                <div className={`tarotInner ${(stage === "flipping" || stage === "result") && isSelected ? "flipped" : ""}`}>
+                  <div className="tarotFace tarotBack" />
+                  <div className="tarotFace tarotFront">
+                    {stage === "result" && isSelected ? "OPEN" : "LUMEN"}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })
+      }
+
+      {/* 덱 클릭 안내 오버레이 */}
+      {stage === "stacked" && (
+        <div className="deckClickOverlay">
+          <span>탭하여 셔플</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -360,6 +232,7 @@ function TarotFanPicker({
 export default function TarotPage() {
   const router = useRouter();
   const [picked, setPicked] = useState<number | null>(null);
+  const [pickedSpreadIndex, setPickedSpreadIndex] = useState<number | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [canHover, setCanHover] = useState(false);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -370,10 +243,8 @@ export default function TarotPage() {
   );
   const [swipeOffset, setSwipeOffset] = useState(0);
 
-  // 단계별 상태 관리
-  const [stage, setStage] = useState<
-    "deck" | "selecting" | "flipping" | "result"
-  >("deck");
+  // 단계별 상태 관리 (새로운 셔플 방식)
+  const [stage, setStage] = useState<ShuffleStage>("intro");
 
   useEffect(() => {
     const m = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -382,6 +253,27 @@ export default function TarotPage() {
     m.addEventListener?.("change", apply);
     return () => m.removeEventListener?.("change", apply);
   }, []);
+
+  // 페이지 로드 시 intro -> stacked 애니메이션
+  useEffect(() => {
+    if (stage === "intro") {
+      const timer = setTimeout(() => {
+        setStage("stacked");
+      }, 1000); // 1초 후 stacked로 전환
+      return () => clearTimeout(timer);
+    }
+  }, [stage]);
+
+  // 덱 클릭 시 셔플 시작
+  const startShuffle = () => {
+    if (stage !== "stacked") return;
+    setStage("shuffling");
+
+    // 셔플 애니메이션 후 스프레드
+    setTimeout(() => {
+      setStage("spread");
+    }, 800);
+  };
 
   // 78장의 타로 카드 생성
   const tarotDeck = useMemo(() => {
@@ -589,20 +481,22 @@ export default function TarotPage() {
 
   const resetTarot = () => {
     setPicked(null);
+    setPickedSpreadIndex(null);
     setFlipped(false);
-    setStage("deck");
+    setStage("intro");
     setCurrentCardIndex(0);
   };
 
-  const pickTarot = (i: number) => {
+  const pickTarot = (cardIndex: number, spreadIndex: number) => {
     if (picked !== null) return;
-    setPicked(i);
-    setCurrentCardIndex(i);
+    setPicked(cardIndex);
+    setPickedSpreadIndex(spreadIndex);
+    setCurrentCardIndex(cardIndex);
 
     // 2단계: 카드 선택 (나머지 fade out)
     setStage("selecting");
 
-    // 3단계: 카드 뒤집기 (0.7초 후)
+    // 3단계: 카드 뒤집기 (0.5초 후)
     setTimeout(() => {
       setStage("flipping");
       setFlipped(true);
@@ -611,7 +505,7 @@ export default function TarotPage() {
       setTimeout(() => {
         setStage("result");
       }, 700); // flip 애니메이션 시간
-    }, 600); // selecting 애니메이션 시간
+    }, 500); // selecting 애니메이션 시간
   };
 
   const tarotResult = useMemo(() => {
@@ -768,24 +662,32 @@ export default function TarotPage() {
 
             <h1 className="h2 stagger d1">타로 카드(데모)</h1>
             <p className="p stagger d2">
-              부채꼴로 펼쳐진 카드를 드래그해서 탐색하고, 카드를 탭해서
-              선택하세요.
+              {stage === "stacked" && "덱을 탭하여 셔플하세요"}
+              {stage === "spread" && "직감으로 한 장을 선택하세요"}
+              {(stage === "intro" || stage === "shuffling") && "카드를 섞고 있어요..."}
+              {(stage === "selecting" || stage === "flipping") && "카드를 확인하고 있어요..."}
+              {stage === "result" && "오늘의 메시지입니다"}
             </p>
 
             <div
               className="tarotArea stagger d3"
               onPointerDown={onEmptyTapReset}
+              onClick={() => {
+                if (stage === "stacked") {
+                  startShuffle();
+                }
+              }}
             >
-              <TarotFanPicker
+              <TarotShufflePicker
                 cards={fanDeckCards}
-                onCardSelect={(index) => {
-                  // 중앙 카드(currentIndex)를 탭하면 선택
-                  if (stage === "deck") {
-                    pickTarot(index);
+                onCardSelect={(cardIndex, spreadIndex) => {
+                  if (stage === "spread") {
+                    pickTarot(cardIndex, spreadIndex);
                   }
                 }}
                 stage={stage}
                 selectedCardIndex={picked}
+                selectedSpreadIndex={pickedSpreadIndex}
               />
             </div>
 
@@ -860,7 +762,7 @@ export default function TarotPage() {
                   </Link>
                 </div>
               </div>
-            ) : stage === "deck" ? (
+            ) : (stage === "stacked" || stage === "spread") ? (
               <div
                 className="stagger d4"
                 style={{
@@ -871,7 +773,8 @@ export default function TarotPage() {
                   textAlign: "center",
                 }}
               >
-                좌우로 스와이프하여 카드를 탐색하고, 중앙 카드를 선택하세요.
+                {stage === "stacked" && "덱을 탭하면 카드가 셔플됩니다"}
+                {stage === "spread" && "세 장 중 한 장을 선택하세요"}
               </div>
             ) : null}
 
