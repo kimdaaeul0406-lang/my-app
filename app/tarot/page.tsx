@@ -762,20 +762,6 @@ export default function TarotPage() {
                   </Link>
                 </div>
               </div>
-            ) : (stage === "stacked" || stage === "spread") ? (
-              <div
-                className="stagger d4"
-                style={{
-                  marginTop: 16,
-                  fontSize: 11,
-                  color: "rgba(43,38,42,0.62)",
-                  lineHeight: 1.6,
-                  textAlign: "center",
-                }}
-              >
-                {stage === "stacked" && "덱을 탭하면 카드가 셔플됩니다"}
-                {stage === "spread" && "세 장 중 한 장을 선택하세요"}
-              </div>
             ) : null}
 
             {/* 자세히보기 팝업 */}
