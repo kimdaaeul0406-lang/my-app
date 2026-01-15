@@ -1439,11 +1439,16 @@ button {
 
 .tarotShuffleCard {
   position: absolute;
+  left: 50%;
+  top: 50%;
   width: 92px;
   height: 124px;
+  margin-left: -46px; /* 카드 너비의 절반 */
+  margin-top: -62px; /* 카드 높이의 절반 */
   cursor: pointer;
   will-change: transform, opacity;
   -webkit-font-smoothing: antialiased;
+  transform-origin: center center; /* 정면으로 보이도록 중심 기준 */
 }
 
 /* 셔플 카드 내부 - 3D 효과 완전 비활성화 */
@@ -1459,7 +1464,7 @@ button {
   border-radius: 16px;
   position: relative;
   transform-style: flat !important;
-  transform: none !important;
+  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) !important; /* 정면으로 보이도록 모든 회전 제거 */
 }
 
 /* 셔플 단계에서는 뒷면만 표시 */
@@ -1508,6 +1513,17 @@ button {
   cursor: pointer;
 }
 
+/* stacked 단계에서는 완전히 정면으로 보이도록 모든 3D 효과 제거 */
+.tarotShuffleCard.stage-stacked .tarotFlip {
+  perspective: none !important;
+}
+
+.tarotShuffleCard.stage-stacked .tarotInner {
+  transform-style: flat !important;
+  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) !important;
+  transition: none !important;
+}
+
 .tarotShuffleCard.stage-stacked:hover {
   filter: brightness(1.05);
 }
@@ -1544,7 +1560,8 @@ button {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: translateX(-50%) scale(1);
   }
@@ -1607,21 +1624,40 @@ button {
 }
 .tarotBack {
   background:
-    /* 별 패턴 - 작은 점들 */
-    radial-gradient(1px 1px at 10% 15%, rgba(255, 255, 255, 0.6), transparent),
+    /* 별 패턴 - 작은 점들 */ radial-gradient(
+      1px 1px at 10% 15%,
+      rgba(255, 255, 255, 0.6),
+      transparent
+    ),
     radial-gradient(1px 1px at 25% 35%, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(1.5px 1.5px at 45% 10%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(
+      1.5px 1.5px at 45% 10%,
+      rgba(255, 255, 255, 0.7),
+      transparent
+    ),
     radial-gradient(1px 1px at 60% 45%, rgba(255, 255, 255, 0.4), transparent),
     radial-gradient(1px 1px at 75% 20%, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(1.5px 1.5px at 85% 55%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(
+      1.5px 1.5px at 85% 55%,
+      rgba(255, 255, 255, 0.5),
+      transparent
+    ),
     radial-gradient(1px 1px at 30% 70%, rgba(255, 255, 255, 0.4), transparent),
     radial-gradient(1px 1px at 55% 80%, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(1.5px 1.5px at 90% 85%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(
+      1.5px 1.5px at 90% 85%,
+      rgba(255, 255, 255, 0.6),
+      transparent
+    ),
     radial-gradient(1px 1px at 15% 90%, rgba(255, 255, 255, 0.4), transparent),
     /* 은은한 빛 효과 */
-    radial-gradient(ellipse 80% 50% at 50% 50%, rgba(139, 115, 179, 0.15), transparent 70%),
+      radial-gradient(
+        ellipse 80% 50% at 50% 50%,
+        rgba(139, 115, 179, 0.15),
+        transparent 70%
+      ),
     /* 메인 그라데이션 - 깊은 남보라색 */
-    linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #1a1a2e 100%);
+      linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #1a1a2e 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1630,7 +1666,7 @@ button {
 }
 
 .tarotBack::before {
-  content: '☽';
+  content: "☽";
   position: absolute;
   top: 12%;
   left: 50%;
@@ -1641,7 +1677,7 @@ button {
 }
 
 .tarotBack::after {
-  content: 'LUMEN';
+  content: "LUMEN";
   position: absolute;
   bottom: 15%;
   left: 50%;
