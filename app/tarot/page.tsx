@@ -58,41 +58,50 @@ function TarotShufflePicker({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isMobile, setIsMobile] = useState(false); // 모바일 감지
 
   // 랜덤으로 선택된 3장의 카드 인덱스
   const [spreadCards, setSpreadCards] = useState<number[]>([]);
 
-  // 미리 계산된 랜덤 위치값들 (hydration 에러 방지)
+  // 미리 계산된 랜덤 위치값들 (hydration 에러 방지) - 인트로 제거
   const [randomPositions, setRandomPositions] = useState<{
-    intro: { x: number; y: number; rotation: number }[];
     stacked: { offset: number; rotation: number }[];
     shuffle: { x: number; y: number; rotation: number }[];
-  }>({ intro: [], stacked: [], shuffle: [] });
+  }>({ stacked: [], shuffle: [] });
 
-  // 클라이언트에서만 랜덤값 생성
+  // 클라이언트에서만 랜덤값 생성 및 모바일 감지
   useEffect(() => {
     setIsClient(true);
+
+    // 모바일 감지 (768px 이하)
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
     setRandomPositions({
-      intro: cards.map(() => ({
-        x: (Math.random() - 0.5) * 300,
-        y: (Math.random() - 0.5) * 200 - 30,
-        rotation: (Math.random() - 0.5) * 40,
-      })),
       stacked: cards.map((_, i) => ({
         offset: (i - cards.length / 2) * 0.4,
         rotation: 0, // 정면으로 보이도록 회전 없음
       })),
       shuffle: cards.map(() => ({
+        // 기본값 사용 (실제 거리는 transform에서 isMobile 체크하여 조정)
         x: (Math.random() - 0.5) * 150,
         y: (Math.random() - 0.5) * 60,
         rotation: (Math.random() - 0.5) * 20,
       })),
     });
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
   }, [cards.length]);
 
-  // stage가 intro가 되면 spread 카드 선택
+  // stacked 단계에서 spread 카드 선택 (리셋 시에도 새로 선택)
   useEffect(() => {
-    if (stage === "intro" && isClient) {
+    if (stage === "stacked" && isClient) {
+      // stacked로 돌아올 때마다 새로운 카드 선택 (리셋 대응)
       const shuffled = [...Array(cards.length).keys()]
         .sort(() => Math.random() - 0.5)
         .slice(0, 3);
@@ -100,45 +109,41 @@ function TarotShufflePicker({
     }
   }, [stage, cards.length, isClient]);
 
+  // 셔플마다 새로운 랜덤 위치 생성 (더 자연스러운 애니메이션)
+  // shufflePhase가 변경될 때마다 새로운 랜덤 위치 생성
+  useEffect(() => {
+    if (stage === "shuffling" && isClient && shufflePhase > 0) {
+      setRandomPositions((prev) => ({
+        ...prev,
+        shuffle: cards.map(() => ({
+          x: (Math.random() - 0.5) * 150,
+          y: (Math.random() - 0.5) * 60,
+          rotation: (Math.random() - 0.5) * 20,
+        })),
+      }));
+    }
+  }, [stage, shufflePhase, cards.length, isClient]);
+
   const handleSpreadCardClick = (spreadIndex: number, cardIndex: number) => {
     if (stage === "spread" && onCardSelect) {
       onCardSelect(cardIndex, spreadIndex);
     }
   };
 
-  // 클라이언트 준비 전에는 기본 렌더링
-  if (!isClient) {
-    return (
-      <div ref={containerRef} className="tarotShuffleContainer">
-        <div className="tarotShuffleCard">
-          <div className="tarotFlip">
-            <div className="tarotInner">
-              <div className="tarotFace tarotBack" />
-              <div className="tarotFace tarotFront">LUMEN</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // hydration 에러 방지: 서버와 클라이언트에서 동일한 구조 렌더링
+  // isClient가 false여도 동일한 구조를 렌더링하되, 위치값은 기본값 사용
 
   return (
     <div ref={containerRef} className="tarotShuffleContainer">
       {/* 인트로/스택/셔플 단계의 모든 카드 */}
-      {(stage === "intro" || stage === "stacked" || stage === "shuffling") &&
+      {(stage === "stacked" || stage === "shuffling") &&
         cards.map((card, i) => {
           let transform = "";
           let opacity = 1;
           let zIndex = i;
           let transition = "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
 
-          if (stage === "intro") {
-            const pos = randomPositions.intro[i] || { x: 0, y: 0, rotation: 0 };
-            // 중앙 기준으로 이동 (left: 50%, top: 50%에서 시작하므로 translate로 추가 이동)
-            transform = `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) rotate(${pos.rotation}deg)`;
-            opacity = 0.9;
-            zIndex = i;
-          } else if (stage === "stacked") {
+          if (stage === "stacked") {
             const pos = randomPositions.stacked[i] || {
               offset: 0,
               rotation: 0,
@@ -150,38 +155,72 @@ function TarotShufflePicker({
             opacity = 1;
             zIndex = i;
           } else if (stage === "shuffling") {
-            const pos = randomPositions.shuffle[i] || {
-              x: 0,
-              y: 0,
-              rotation: 0,
-            };
+            // hydration 에러 방지: 서버와 클라이언트에서 항상 동일한 기본값 사용
+            // isClient가 false일 때는 항상 기본값(0)을 사용하여 서버와 클라이언트 일치 보장
+            const pos =
+              isClient && randomPositions.shuffle[i]
+                ? randomPositions.shuffle[i]
+                : { x: 0, y: 0, rotation: 0 };
+
             // shufflePhase에 따라 좌우로 번갈아 흩어지기
             const direction = shufflePhase % 2 === 0 ? 1 : -1;
             const groupIndex = i % 3;
             let xMove = 0;
             let yMove = 0;
 
-            if (groupIndex === 0) {
-              xMove = direction * 120;
-              yMove = -20;
-            } else if (groupIndex === 1) {
-              xMove = direction * -100;
-              yMove = 30;
+            // hydration 에러 방지: isClient가 false면 항상 PC 버전으로 렌더링
+            // 서버와 클라이언트 초기 렌더링에서 동일한 값 사용
+            if (isClient && isMobile) {
+              if (groupIndex === 0) {
+                xMove = direction * 50;
+                yMove = -8;
+              } else if (groupIndex === 1) {
+                xMove = direction * -40;
+                yMove = 12;
+              } else {
+                xMove = direction * 25;
+                yMove = -20;
+              }
             } else {
-              xMove = direction * 60;
-              yMove = -50;
+              // PC는 기존 거리 유지 (서버에서도 동일)
+              if (groupIndex === 0) {
+                xMove = direction * 120;
+                yMove = -20;
+              } else if (groupIndex === 1) {
+                xMove = direction * -100;
+                yMove = 30;
+              } else {
+                xMove = direction * 60;
+                yMove = -50;
+              }
             }
 
             // 중앙 기준으로 이동
+            // hydration 에러 방지: isClient가 false면 항상 PC 버전으로 렌더링
+            const isMobileForTransform = isClient && isMobile;
+            // pos 값이 undefined일 수 있으므로 안전하게 처리
+            const posX = pos.x ?? 0;
+            const posY = pos.y ?? 0;
+            const posRotation = pos.rotation ?? 0;
+            // 회전 각도를 제한하여 카드 뒷면이 보이지 않도록 (최대 ±15도)
+            const rotationValue =
+              posRotation * direction * (isMobileForTransform ? 0.7 : 1);
+            const maxRotation = isMobileForTransform ? 10 : 15;
+            // 명시적으로 처리하여 서버와 클라이언트에서 동일한 결과 보장
+            let rotationAngle = rotationValue;
+            if (rotationValue > maxRotation) rotationAngle = maxRotation;
+            if (rotationValue < -maxRotation) rotationAngle = -maxRotation;
             transform = `translate(calc(-50% + ${
-              xMove + pos.x * 0.3
-            }px), calc(-50% + ${yMove + pos.y * 0.2}px)) rotate(${
-              pos.rotation * direction
-            }deg)`;
-            transition = `all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) ${
-              i * 0.008
-            }s`;
-            zIndex = shufflePhase % 2 === 0 ? i : cards.length - i;
+              xMove + posX * (isMobileForTransform ? 0.1 : 0.3)
+            }px), calc(-50% + ${
+              yMove + posY * (isMobileForTransform ? 0.08 : 0.2)
+            }px)) rotate(${rotationAngle}deg)`;
+            // 모바일에서는 transition 시간과 delay를 조정하여 부드럽게
+            const transitionDuration = isMobileForTransform ? 0.3 : 0.25;
+            const cardDelay = i * (isMobileForTransform ? 0.005 : 0.008);
+            transition = `all ${transitionDuration}s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${cardDelay}s`;
+            // zIndex를 더 안정적으로 관리
+            zIndex = i + (shufflePhase % 2 === 0 ? 0 : 100);
           }
 
           return (
@@ -219,8 +258,11 @@ function TarotShufflePicker({
           let zIndex = spreadIndex;
 
           if (stage === "spread") {
-            // 3장 일렬 배치 (회전 없이, 중앙 기준)
-            const xOffset = (spreadIndex - 1) * 105;
+            // 3장 일렬 배치 (회전 없이, 중앙 기준) - 모바일에서는 간격 좁게
+            // hydration 에러 방지: isClient가 false면 항상 PC 버전으로 렌더링
+            const cardWidth = 92; // 카드 너비
+            const cardGap = isClient && isMobile ? 120 : 200; // 모바일: 120px, PC: 200px
+            const xOffset = (spreadIndex - 1) * cardGap;
             transform = `translate(calc(-50% + ${xOffset}px), -50%)`;
             opacity = 1;
             zIndex = spreadIndex;
@@ -230,7 +272,9 @@ function TarotShufflePicker({
               opacity = 1;
               zIndex = 100;
             } else {
-              const xOffset = (spreadIndex - 1) * 105;
+              // hydration 에러 방지: isClient가 false면 항상 PC 버전으로 렌더링
+              const cardGap = isClient && isMobile ? 120 : 200; // 모바일: 120px, PC: 200px
+              const xOffset = (spreadIndex - 1) * cardGap;
               transform = `translate(calc(-50% + ${xOffset}px), -50%) scale(0.95)`;
               opacity = 0.4;
               zIndex = spreadIndex;
@@ -247,7 +291,25 @@ function TarotShufflePicker({
             }
           }
 
-          const isFlipped = (stage === "flipping" || stage === "result") && isSelected;
+          const isFlipped =
+            (stage === "flipping" || stage === "result") && isSelected;
+
+          // spread 단계에서는 hover 효과를 위한 xOffset을 CSS 변수로 저장
+          const cardStyle: React.CSSProperties = {
+            transform,
+            opacity,
+            zIndex,
+            transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            cursor: stage === "spread" ? "pointer" : "default",
+          };
+
+          // spread 단계에서만 hover 시 사용할 xOffset 추가
+          if (stage === "spread") {
+            // hydration 에러 방지: isClient가 false면 항상 PC 버전으로 렌더링
+            const cardGap = isClient && isMobile ? 120 : 200; // 모바일: 120px, PC: 200px
+            const xOffset = (spreadIndex - 1) * cardGap;
+            (cardStyle as any)["--hover-x-offset"] = `${xOffset}px`;
+          }
 
           return (
             <div
@@ -255,18 +317,14 @@ function TarotShufflePicker({
               className={`tarotShuffleCard spread stage-${stage} ${
                 isSelected ? "selected" : ""
               }`}
-              style={{
-                transform,
-                opacity,
-                zIndex,
-                transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                cursor: stage === "spread" ? "pointer" : "default",
-              }}
+              style={cardStyle}
               onClick={() => handleSpreadCardClick(spreadIndex, cardIndex)}
             >
               {/* 카드 플립 컨테이너 */}
               <div className="tarotCardFlip">
-                <div className={`tarotCardFlipInner ${isFlipped ? 'flipped' : ''}`}>
+                <div
+                  className={`tarotCardFlipInner ${isFlipped ? "flipped" : ""}`}
+                >
                   {/* 뒷면 */}
                   <div className="tarotCardBack tarotCardFace">
                     <span className="tarotCardMoon">☽</span>
@@ -274,9 +332,7 @@ function TarotShufflePicker({
                   </div>
                   {/* 앞면 */}
                   <div className="tarotCardFront tarotCardFace">
-                    <div className="tarotCardFrontContent">
-                      {card.name}
-                    </div>
+                    <div className="tarotCardFrontContent">{card.name}</div>
                   </div>
                 </div>
               </div>
@@ -310,8 +366,8 @@ export default function TarotPage() {
   );
   const [swipeOffset, setSwipeOffset] = useState(0);
 
-  // 단계별 상태 관리 (새로운 셔플 방식)
-  const [stage, setStage] = useState<ShuffleStage>("intro");
+  // 단계별 상태 관리 (새로운 셔플 방식) - 인트로 제거, stacked에서 시작
+  const [stage, setStage] = useState<ShuffleStage>("stacked");
 
   useEffect(() => {
     const m = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -321,15 +377,7 @@ export default function TarotPage() {
     return () => m.removeEventListener?.("change", apply);
   }, []);
 
-  // 페이지 로드 시 intro -> stacked 애니메이션
-  useEffect(() => {
-    if (stage === "intro") {
-      const timer = setTimeout(() => {
-        setStage("stacked");
-      }, 1000); // 1초 후 stacked로 전환
-      return () => clearTimeout(timer);
-    }
-  }, [stage]);
+  // 인트로 단계 제거됨 - 바로 stacked로 시작
 
   // 셔플 카운터 (여러 번 반복)
   const [shuffleCount, setShuffleCount] = useState(0);
@@ -341,23 +389,51 @@ export default function TarotPage() {
     setStage("shuffling");
   };
 
+  // 모바일 감지 (셔플 속도 조정용)
+  const [isMobileForShuffle, setIsMobileForShuffle] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileForShuffle(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // 셔플 애니메이션 반복 (3번 섞기)
+  // 모바일에서는 더 빠르게 반복
   useEffect(() => {
     if (stage === "shuffling") {
       if (shuffleCount < 3) {
+        // transition 시간 + 마지막 카드 delay + 여유시간 계산
+        // PC와 모바일의 delay 간격이 다르므로 각각 계산
+        const transitionTime = isMobileForShuffle ? 300 : 250;
+        const delayInterval = isMobileForShuffle ? 0.005 : 0.008; // 각각의 delay 간격
+        const maxDelay = (21 - 1) * delayInterval; // 마지막 카드의 delay
+        const totalTime = Math.ceil(
+          transitionTime + maxDelay * 1000 + (isMobileForShuffle ? 80 : 60)
+        );
+
         const timer = setTimeout(() => {
           setShuffleCount((c) => c + 1);
-        }, 400);
+        }, totalTime);
         return () => clearTimeout(timer);
       } else {
-        // 셔플 완료 후 스프레드
+        // 셔플 완료 후 스프레드 (transition 시간 + 마지막 delay 고려)
+        const transitionTime = isMobileForShuffle ? 300 : 250;
+        const delayInterval = isMobileForShuffle ? 0.005 : 0.008;
+        const maxDelay = (21 - 1) * delayInterval;
+        const totalTime = Math.ceil(
+          transitionTime + maxDelay * 1000 + (isMobileForShuffle ? 50 : 40)
+        );
         const timer = setTimeout(() => {
           setStage("spread");
-        }, 300);
+        }, totalTime);
         return () => clearTimeout(timer);
       }
     }
-  }, [stage, shuffleCount]);
+  }, [stage, shuffleCount, isMobileForShuffle]);
 
   // 78장의 타로 카드 생성
   const tarotDeck = useMemo(() => {
@@ -567,8 +643,9 @@ export default function TarotPage() {
     setPicked(null);
     setPickedSpreadIndex(null);
     setFlipped(false);
-    setStage("intro");
+    setStage("stacked"); // intro 제거로 stacked로 초기화
     setCurrentCardIndex(0);
+    setShuffleCount(0); // 셔플 카운터도 리셋
   };
 
   const pickTarot = (cardIndex: number, spreadIndex: number) => {
@@ -748,8 +825,7 @@ export default function TarotPage() {
             <p className="p stagger d2">
               {stage === "stacked" && "덱을 탭하여 셔플하세요"}
               {stage === "spread" && "직감으로 한 장을 선택하세요"}
-              {(stage === "intro" || stage === "shuffling") &&
-                "카드를 섞고 있어요..."}
+              {stage === "shuffling" && "카드를 섞고 있어요..."}
               {(stage === "selecting" || stage === "flipping") &&
                 "카드를 확인하고 있어요..."}
               {stage === "result" && "오늘의 메시지입니다"}
