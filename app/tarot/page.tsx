@@ -181,11 +181,10 @@ function TarotShufflePicker({
                 cursor: stage === "stacked" ? "pointer" : "default",
               }}
             >
-              <div className="tarotFlip">
-                <div className="tarotInner">
-                  <div className="tarotFace tarotBack" />
-                  <div className="tarotFace tarotFront">LUMEN</div>
-                </div>
+              {/* 단순화된 카드 뒷면 */}
+              <div className="tarotCardBack">
+                <span className="tarotCardMoon">☽</span>
+                <span className="tarotCardLogo">LUMEN</span>
               </div>
             </div>
           );
@@ -231,6 +230,8 @@ function TarotShufflePicker({
             }
           }
 
+          const isFlipped = (stage === "flipping" || stage === "result") && isSelected;
+
           return (
             <div
               key={card.id}
@@ -244,11 +245,19 @@ function TarotShufflePicker({
               }}
               onClick={() => handleSpreadCardClick(spreadIndex, cardIndex)}
             >
-              <div className="tarotFlip">
-                <div className={`tarotInner ${(stage === "flipping" || stage === "result") && isSelected ? "flipped" : ""}`}>
-                  <div className="tarotFace tarotBack" />
-                  <div className="tarotFace tarotFront">
-                    {stage === "result" && isSelected ? "OPEN" : "LUMEN"}
+              {/* 카드 플립 컨테이너 */}
+              <div className="tarotCardFlip">
+                <div className={`tarotCardFlipInner ${isFlipped ? 'flipped' : ''}`}>
+                  {/* 뒷면 */}
+                  <div className="tarotCardBack tarotCardFace">
+                    <span className="tarotCardMoon">☽</span>
+                    <span className="tarotCardLogo">LUMEN</span>
+                  </div>
+                  {/* 앞면 */}
+                  <div className="tarotCardFront tarotCardFace">
+                    <div className="tarotCardFrontContent">
+                      {card.name}
+                    </div>
                   </div>
                 </div>
               </div>
