@@ -74,18 +74,18 @@ function TarotShufflePicker({
     setIsClient(true);
     setRandomPositions({
       intro: cards.map(() => ({
-        x: (Math.random() - 0.5) * 400,
-        y: (Math.random() - 0.5) * 300 - 50,
-        rotation: (Math.random() - 0.5) * 90,
+        x: (Math.random() - 0.5) * 300,
+        y: (Math.random() - 0.5) * 200 - 30,
+        rotation: (Math.random() - 0.5) * 40,
       })),
       stacked: cards.map((_, i) => ({
-        offset: (i - cards.length / 2) * 0.5,
-        rotation: (Math.random() - 0.5) * 3,
+        offset: (i - cards.length / 2) * 0.4,
+        rotation: (Math.random() - 0.5) * 2,
       })),
       shuffle: cards.map(() => ({
-        x: (Math.random() - 0.5) * 200,
-        y: (Math.random() - 0.5) * 100,
-        rotation: (Math.random() - 0.5) * 30,
+        x: (Math.random() - 0.5) * 150,
+        y: (Math.random() - 0.5) * 60,
+        rotation: (Math.random() - 0.5) * 20,
       })),
     });
   }, [cards.length]);
