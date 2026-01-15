@@ -1579,12 +1579,51 @@ button {
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.14);
 }
 .tarotBack {
-  background: radial-gradient(
-      220px 160px at 40% 20%,
-      rgba(216, 198, 168, 0.16),
-      transparent 62%
-    ),
-    linear-gradient(135deg, rgba(36, 58, 72, 0.18), rgba(122, 95, 82, 0.16));
+  background:
+    /* 별 패턴 - 작은 점들 */
+    radial-gradient(1px 1px at 10% 15%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 25% 35%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 45% 10%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 60% 45%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 75% 20%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 85% 55%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 30% 70%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 55% 80%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 90% 85%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 15% 90%, rgba(255, 255, 255, 0.4), transparent),
+    /* 은은한 빛 효과 */
+    radial-gradient(ellipse 80% 50% at 50% 50%, rgba(139, 115, 179, 0.15), transparent 70%),
+    /* 메인 그라데이션 - 깊은 남보라색 */
+    linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #1a1a2e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.tarotBack::before {
+  content: '☽';
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  color: rgba(212, 190, 152, 0.7);
+  text-shadow: 0 0 8px rgba(212, 190, 152, 0.4);
+}
+
+.tarotBack::after {
+  content: 'LUMEN';
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: rgba(212, 190, 152, 0.6);
+  text-shadow: 0 0 6px rgba(212, 190, 152, 0.3);
 }
 .tarotFront {
   transform: rotateY(180deg);
