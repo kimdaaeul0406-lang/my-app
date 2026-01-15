@@ -1291,6 +1291,9 @@ button {
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid var(--cardLine);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.045);
+  /* PC에서 새 항목 추가 시 기존 항목이 오른쪽으로 이동하는 애니메이션 */
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.4s ease;
 }
 .historyTop {
   display: flex;
@@ -2209,27 +2212,33 @@ button {
     grid-column: 1 / -1;
   }
 
-  /* 히스토리 지그재그 구조 - PC에서 좌우 번갈아 배치 */
+  /* 히스토리 레이아웃 - PC에서 새 항목 추가 시 기존 항목들이 오른쪽으로 이동 */
   .historyWrap {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    justify-content: center;
     gap: 16px;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
+    overflow-x: auto;
   }
 
-  /* 홀수 카드: 왼쪽 정렬 */
-  .historyWrap > .historyCard:nth-child(odd) {
-    align-self: flex-start;
+  /* 항목이 1개일 때: 중앙 정렬 */
+  .historyWrap > .historyCard:only-child {
+    margin-left: auto;
+    margin-right: auto;
     max-width: 720px;
+    flex-shrink: 0;
   }
 
-  /* 짝수 카드: 오른쪽 정렬 */
-  .historyWrap > .historyCard:nth-child(even) {
-    align-self: flex-end;
+  /* 항목이 2개 이상일 때: 모든 항목을 가로로 배치 */
+  .historyWrap > .historyCard {
+    flex-shrink: 0;
     max-width: 720px;
+    min-width: 300px;
   }
 
   /* 빈 박스는 중앙 정렬 유지 */
