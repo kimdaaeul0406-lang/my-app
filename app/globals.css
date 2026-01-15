@@ -1446,10 +1446,11 @@ button {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 셔플 카드 내부 - 뒷면만 보이게 */
+/* 셔플 카드 내부 - 3D 효과 완전 비활성화 */
 .tarotShuffleCard .tarotFlip {
   width: 100%;
   height: 100%;
+  perspective: none !important;
 }
 
 .tarotShuffleCard .tarotInner {
@@ -1457,42 +1458,50 @@ button {
   height: 100%;
   border-radius: 16px;
   position: relative;
+  transform-style: flat !important;
+  transform: none !important;
 }
 
 /* 셔플 단계에서는 뒷면만 표시 */
 .tarotShuffleCard .tarotFace {
-  backface-visibility: visible;
+  backface-visibility: visible !important;
 }
 
 .tarotShuffleCard .tarotFront {
-  display: none;
+  display: none !important;
+  transform: none !important;
 }
 
 .tarotShuffleCard .tarotBack {
-  display: flex;
+  display: flex !important;
 }
 
 /* spread 단계에서 플립 활성화 */
 .tarotShuffleCard.spread .tarotFlip {
-  perspective: 900px;
+  perspective: 900px !important;
 }
 
 .tarotShuffleCard.spread .tarotInner {
-  transform-style: preserve-3d;
-  transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transform-style: preserve-3d !important;
+  transform: none !important;
+  transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+}
+
+.tarotShuffleCard.spread .tarotInner.flipped {
+  transform: rotateY(180deg) !important;
 }
 
 .tarotShuffleCard.spread .tarotFace {
-  backface-visibility: hidden;
+  backface-visibility: hidden !important;
 }
 
 .tarotShuffleCard.spread .tarotFront {
-  display: grid;
-  transform: rotateY(180deg);
+  display: grid !important;
+  transform: rotateY(180deg) !important;
 }
 
 .tarotShuffleCard.spread .tarotBack {
-  display: flex;
+  display: flex !important;
 }
 
 .tarotShuffleCard.stage-stacked {
