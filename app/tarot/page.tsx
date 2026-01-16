@@ -161,6 +161,8 @@ function TarotShufflePicker({
       setSpreadCards(todayIndices);
     }
   }, [stage, cards.length, isClient]);
+    }
+  }, [stage, cards.length, isClient]);
 
   // 셔플마다 새로운 랜덤 위치 생성 (더 자연스러운 애니메이션)
   // shufflePhase가 변경될 때마다 새로운 랜덤 위치 생성
