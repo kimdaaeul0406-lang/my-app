@@ -154,11 +154,13 @@ function TarotShufflePicker({
     };
   }, [cards.length]);
 
-  // stacked 단계에서 오늘의 카드 3장 선택 (날짜 기반 - 매일 자정 기준)
+  // stacked 단계에서 랜덤으로 3장 선택 (매번 다른 카드)
   useEffect(() => {
     if (stage === "stacked" && isClient) {
-      const todayIndices = getTodayCardIndices(cards.length);
-      setSpreadCards(todayIndices);
+      const shuffled = [...Array(cards.length).keys()]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      setSpreadCards(shuffled);
     }
   }, [stage, cards.length, isClient]);
 
@@ -987,7 +989,7 @@ export default function TarotPage() {
                 </div>
 
                 <div className="smallHelp" style={{ marginTop: 10 }}>
-                  * 매일 자정(00:00)을 기준으로 새로운 카드가 선택돼요.
+                  * 카드를 다시 뽑으면 새로운 3장이 선택돼요.
                 </div>
               </div>
             ) : null}
