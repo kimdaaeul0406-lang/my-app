@@ -1004,7 +1004,8 @@ export default function TarotPage() {
                 >
                   <div className="modalHeader">
                     <div className="modalTitle">
-                      {tarotResult.name} · {tarotResult.title}
+                      {tarotResult.name}
+                      {currentInterpretation && ` · ${currentInterpretation.title}`}
                     </div>
                     <button
                       className="closeBtn"
@@ -1015,19 +1016,23 @@ export default function TarotPage() {
                     </button>
                   </div>
                   <div className="modalBody">
-                    <div
-                      className="p"
-                      style={{ whiteSpace: "pre-line", lineHeight: 1.8 }}
-                    >
-                      {tarotResult.detailText}
-                    </div>
-                    <div className="chipRow" style={{ marginTop: 16 }}>
-                      {tarotResult.tags.map((t) => (
-                        <span className="chip" key={t}>
-                          {t}
-                        </span>
-                      ))}
-                    </div>
+                    {currentInterpretation && (
+                      <>
+                        <div
+                          className="p"
+                          style={{ whiteSpace: "pre-line", lineHeight: 1.8 }}
+                        >
+                          {currentInterpretation.text}
+                        </div>
+                        <div className="chipRow" style={{ marginTop: 16 }}>
+                          {currentInterpretation.tags.map((t) => (
+                            <span className="chip" key={t}>
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
