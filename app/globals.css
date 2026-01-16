@@ -1567,7 +1567,7 @@ button {
     -webkit-font-smoothing: antialiased;
     transform-style: preserve-3d;
   }
-  
+
   /* result 단계에서 이미지 선명도 개선 */
   .tarotShuffleCard.stage-result.selected .tarotCardImage {
     image-rendering: -webkit-optimize-contrast;
