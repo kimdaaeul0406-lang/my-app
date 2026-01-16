@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import tarotCardsData from "../data/tarot-cards.json";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -20,15 +21,24 @@ type HistoryItem = {
   isPremium?: boolean;
 };
 
+type TarotCategory = "love" | "money" | "work" | "advice";
+
+type TarotInterpretation = {
+  title: string;
+  text: string;
+  tags: string[];
+};
+
 type TarotCard = {
   id: number;
   name: string;
   title: string;
-  text: string;
-  detailText: string;
-  tags: string[];
-  suit?: string;
-  number?: string;
+  interpretations: {
+    love: TarotInterpretation;
+    money: TarotInterpretation;
+    work: TarotInterpretation;
+    advice: TarotInterpretation;
+  };
 };
 
 // 셔플 애니메이션 타로 카드 피커
@@ -40,6 +50,42 @@ type ShuffleStage =
   | "selecting" // 카드 선택 중
   | "flipping" // 카드 뒤집기
   | "result"; // 결과 표시
+
+// 날짜 기반 시드 생성 함수 (매일 자정 기준)
+function getDateSeed(): number {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  const day = today.getDate();
+  return year * 10000 + month * 100 + day;
+}
+
+// 시드 기반 랜덤 생성기 (간단한 LCG 알고리즘)
+function seededRandom(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (state * 1103515245 + 12345) & 0x7fffffff;
+    return state / 0x7fffffff;
+  };
+}
+
+// 날짜 기반으로 고정된 3장의 카드 인덱스 반환
+function getTodayCardIndices(totalCards: number): number[] {
+  const seed = getDateSeed();
+  const random = seededRandom(seed);
+
+  const indices: number[] = [];
+  const available = Array.from({ length: totalCards }, (_, i) => i);
+
+  // 3장 선택
+  for (let i = 0; i < 3; i++) {
+    const randomIndex = Math.floor(random() * available.length);
+    indices.push(available[randomIndex]);
+    available.splice(randomIndex, 1);
+  }
+
+  return indices;
+}
 
 function TarotShufflePicker({
   cards,
@@ -108,14 +154,13 @@ function TarotShufflePicker({
     };
   }, [cards.length]);
 
-  // stacked 단계에서 spread 카드 선택 (리셋 시에도 새로 선택)
+  // stacked 단계에서 오늘의 카드 3장 선택 (날짜 기반 - 매일 자정 기준)
   useEffect(() => {
     if (stage === "stacked" && isClient) {
-      // stacked로 돌아올 때마다 새로운 카드 선택 (리셋 대응)
-      const shuffled = [...Array(cards.length).keys()]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
-      setSpreadCards(shuffled);
+      const todayIndices = getTodayCardIndices(cards.length);
+      setSpreadCards(todayIndices);
+    }
+  }, [stage, cards.length, isClient]);
     }
   }, [stage, cards.length, isClient]);
 
@@ -521,6 +566,8 @@ export default function TarotPage() {
   const [hovered, setHovered] = useState<number | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCardImageModal, setShowCardImageModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] =
+    useState<TarotCategory>("advice");
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(
     null
@@ -596,203 +643,9 @@ export default function TarotPage() {
     }
   }, [stage, shuffleCount, isMobileForShuffle]);
 
-  // 78장의 타로 카드 생성
+  // 타로 카드 데이터 (JSON에서 로드)
   const tarotDeck = useMemo(() => {
-    const cards: TarotCard[] = [];
-
-    // 메이저 아르카나 22장 (0-21)
-    const majorArcana = [
-      {
-        name: "THE FOOL",
-        title: "새로운 시작의 여정",
-        text: "오늘은 두려움보다 호기심을 선택하는 날이에요.",
-        tags: ["시작", "자유", "모험"],
-      },
-      {
-        name: "THE MAGICIAN",
-        title: "의지로 현실을 만들어요",
-        text: "오늘은 생각을 행동으로 옮길 수 있는 날이에요.",
-        tags: ["의지", "집중", "실행"],
-      },
-      {
-        name: "THE HIGH PRIESTESS",
-        title: "직감이 답을 알려줘요",
-        text: "오늘은 논리보다 내면의 목소리를 들어보세요.",
-        tags: ["직감", "침묵", "지혜"],
-      },
-      {
-        name: "THE EMPRESS",
-        title: "풍요와 성장의 시간",
-        text: "오늘은 자연스러운 흐름을 따르는 것이 좋아요.",
-        tags: ["풍요", "성장", "배려"],
-      },
-      {
-        name: "THE EMPEROR",
-        title: "구조와 안정을 만들어요",
-        text: "오늘은 체계적으로 정리하는 것이 중요해요.",
-        tags: ["구조", "안정", "리더십"],
-      },
-      {
-        name: "THE HIEROPHANT",
-        title: "전통과 가르침을 따르세요",
-        text: "오늘은 검증된 방법을 따르는 것이 좋아요.",
-        tags: ["전통", "가르침", "규칙"],
-      },
-      {
-        name: "THE LOVERS",
-        title: "선택과 조화의 시간",
-        text: "오늘은 중요한 결정을 내려야 할 때예요.",
-        tags: ["선택", "조화", "관계"],
-      },
-      {
-        name: "THE CHARIOT",
-        title: "의지로 목표를 향해요",
-        text: "오늘은 집중력으로 장애물을 넘어가요.",
-        tags: ["의지", "집중", "승리"],
-      },
-      {
-        name: "STRENGTH",
-        title: "인내로 힘을 다스려요",
-        text: "오늘은 부드러운 힘으로 극복하는 날이에요.",
-        tags: ["인내", "자제", "용기"],
-      },
-      {
-        name: "THE HERMIT",
-        title: "내면의 빛을 찾아요",
-        text: "오늘은 혼자만의 시간이 필요해요.",
-        tags: ["성찰", "탐구", "고독"],
-      },
-      {
-        name: "WHEEL OF FORTUNE",
-        title: "변화의 순환을 받아들이세요",
-        text: "오늘은 흐름에 맡기는 것이 좋아요.",
-        tags: ["변화", "순환", "운명"],
-      },
-      {
-        name: "JUSTICE",
-        title: "균형과 공정함을 찾아요",
-        text: "오늘은 객관적인 판단이 필요해요.",
-        tags: ["공정", "균형", "책임"],
-      },
-      {
-        name: "THE HANGED MAN",
-        title: "새로운 관점을 얻어요",
-        text: "오늘은 기다림과 관찰이 중요해요.",
-        tags: ["기다림", "관점", "희생"],
-      },
-      {
-        name: "DEATH",
-        title: "끝과 새로운 시작",
-        text: "오늘은 변화를 받아들이는 시간이에요.",
-        tags: ["변화", "종료", "재생"],
-      },
-      {
-        name: "TEMPERANCE",
-        title: "균형이 답을 더 빨리 데려와요",
-        text: "오늘은 한쪽으로 치우치기 쉬워요. 속도 조절만 해도 관계와 일정이 부드러워져요.",
-        tags: ["균형", "조율", "호흡"],
-      },
-      {
-        name: "THE DEVIL",
-        title: "속박에서 벗어나요",
-        text: "오늘은 나쁜 습관이나 패턴을 인식하는 날이에요.",
-        tags: ["속박", "욕구", "해방"],
-      },
-      {
-        name: "THE TOWER",
-        title: "갑작스러운 변화를 받아들이세요",
-        text: "오늘은 예상치 못한 변화가 있을 수 있어요.",
-        tags: ["변화", "파괴", "각성"],
-      },
-      {
-        name: "THE STAR",
-        title: "희망과 영감이 찾아와요",
-        text: "오늘은 긍정적인 에너지가 흐르는 날이에요.",
-        tags: ["희망", "영감", "치유"],
-      },
-      {
-        name: "THE MOON",
-        title: "흐림 속에서도 길은 있어요",
-        text: "오늘은 모든 걸 확정하기보다, 감정을 관찰하는 쪽이 좋아요.",
-        tags: ["관찰", "직감", "유예"],
-      },
-      {
-        name: "THE SUN",
-        title: "정답이 아니라 '확신'이 자라요",
-        text: "오늘은 작은 성취가 큰 자신감으로 이어져요. 시작을 미루지 말고, 가볍게 움직여봐요.",
-        tags: ["성취", "기쁨", "시작"],
-      },
-      {
-        name: "JUDGEMENT",
-        title: "과거를 평가하고 새로 시작해요",
-        text: "오늘은 자신을 되돌아보는 시간이에요.",
-        tags: ["평가", "재생", "각성"],
-      },
-      {
-        name: "THE WORLD",
-        title: "완성과 새로운 시작",
-        text: "오늘은 한 단계를 마무리하고 다음으로 나아가는 날이에요.",
-        tags: ["완성", "성취", "새시작"],
-      },
-    ];
-
-    // 마이너 아르카나 56장 생성
-    const suits = [
-      { name: "완드", symbol: "W" },
-      { name: "컵", symbol: "C" },
-      { name: "소드", symbol: "S" },
-      { name: "펜타클", symbol: "P" },
-    ];
-
-    const numbers = [
-      "Ace",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "Page",
-      "Knight",
-      "Queen",
-      "King",
-    ];
-
-    // 메이저 아르카나 추가
-    majorArcana.forEach((card, index) => {
-      cards.push({
-        id: index,
-        name: card.name,
-        title: card.title,
-        text: card.text,
-        detailText: `${card.text}\n\n${card.name} 카드는 ${card.tags.join(
-          ", "
-        )}의 의미를 담고 있어요. 오늘 하루 이 에너지를 기억하며 살펴보세요.`,
-        tags: card.tags,
-      });
-    });
-
-    // 마이너 아르카나 추가
-    suits.forEach((suit, suitIndex) => {
-      numbers.forEach((number, numIndex) => {
-        const cardId = 22 + suitIndex * 14 + numIndex;
-        cards.push({
-          id: cardId,
-          name: `${number} of ${suit.name}`,
-          title: `${suit.name}의 ${number}`,
-          text: `${suit.name}의 ${number} 카드가 오늘의 메시지를 전해요.`,
-          detailText: `${suit.name}의 ${number} 카드는 ${suit.name}의 에너지를 ${number}의 의미로 전달해요. 오늘 하루 이 카드의 메시지를 마음에 새겨보세요.`,
-          tags: [suit.name, number],
-          suit: suit.name,
-          number: number,
-        });
-      });
-    });
-
-    return cards;
+    return tarotCardsData as TarotCard[];
   }, []);
 
   // 부채꼴 덱용 카드 21장 (임시)
@@ -805,6 +658,7 @@ export default function TarotPage() {
     setPickedSpreadIndex(null);
     setFlipped(false);
     setStage("stacked"); // intro 제거로 stacked로 초기화
+    setSelectedCategory("advice");
     setCurrentCardIndex(0);
     setShuffleCount(0); // 셔플 카운터도 리셋
   };
@@ -832,8 +686,13 @@ export default function TarotPage() {
 
   const tarotResult = useMemo(() => {
     if (picked === null) return null;
-    return tarotDeck[currentCardIndex];
-  }, [picked, currentCardIndex, tarotDeck]);
+    return tarotDeck[picked];
+  }, [picked, tarotDeck]);
+
+  const currentInterpretation = useMemo(() => {
+    if (!tarotResult) return null;
+    return tarotResult.interpretations[selectedCategory];
+  }, [tarotResult, selectedCategory]);
 
   // 스와이프 핸들러
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -935,14 +794,21 @@ export default function TarotPage() {
   };
 
   const saveTarot = (isPremium = false) => {
-    if (!tarotResult) return;
+    if (!tarotResult || !currentInterpretation) return;
+
+    const categoryLabels: Record<TarotCategory, string> = {
+      love: "연애",
+      money: "금전",
+      work: "직장",
+      advice: "조언",
+    };
 
     const item: HistoryItem = {
       id: uid(),
       type: "TAROT",
-      title: `[타로] ${tarotResult.title}`,
-      text: tarotResult.text,
-      tags: tarotResult.tags,
+      title: `[타로·${categoryLabels[selectedCategory]}] ${currentInterpretation.title}`,
+      text: currentInterpretation.text,
+      tags: currentInterpretation.tags,
       createdAt: Date.now(),
       isPremium,
     };
@@ -1034,24 +900,57 @@ export default function TarotPage() {
                   <div className="muted">오늘의 메시지</div>
                 </div>
 
+                {/* 카테고리 선택 탭 */}
                 <div
-                  style={{
-                    marginTop: 8,
-                    fontWeight: 900,
-                    letterSpacing: -0.01,
-                  }}
+                  className="tabRow"
+                  style={{ marginTop: 12 }}
+                  aria-label="타로 카테고리"
                 >
-                  {tarotResult.title}
+                  {(["love", "money", "work", "advice"] as TarotCategory[]).map(
+                    (category) => {
+                      const labels: Record<TarotCategory, string> = {
+                        love: "연애",
+                        money: "금전",
+                        work: "직장",
+                        advice: "조언",
+                      };
+                      return (
+                        <button
+                          key={category}
+                          className={`tabBtn ${
+                            category === selectedCategory ? "on" : ""
+                          }`}
+                          onClick={() => setSelectedCategory(category)}
+                        >
+                          {labels[category]}
+                        </button>
+                      );
+                    }
+                  )}
                 </div>
-                <div className="p">{tarotResult.text}</div>
 
-                <div className="chipRow">
-                  {tarotResult.tags.map((t) => (
-                    <span className="chip" key={t}>
-                      {t}
-                    </span>
-                  ))}
-                </div>
+                {currentInterpretation && (
+                  <>
+                    <div
+                      style={{
+                        marginTop: 12,
+                        fontWeight: 900,
+                        letterSpacing: -0.01,
+                      }}
+                    >
+                      {currentInterpretation.title}
+                    </div>
+                    <div className="p">{currentInterpretation.text}</div>
+
+                    <div className="chipRow">
+                      {currentInterpretation.tags.map((t) => (
+                        <span className="chip" key={t}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
                   <button
@@ -1087,6 +986,10 @@ export default function TarotPage() {
                   >
                     돌아가기
                   </Link>
+                </div>
+
+                <div className="smallHelp" style={{ marginTop: 10 }}>
+                  * 매일 자정(00:00)을 기준으로 새로운 카드가 선택돼요.
                 </div>
               </div>
             ) : null}
