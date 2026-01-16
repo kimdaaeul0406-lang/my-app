@@ -2511,3 +2511,140 @@ button {
     line-height: 1.9;
   }
 }
+
+/* ===== 별자리 섹션 스타일 ===== */
+.zodiacSection {
+  margin-top: 24px;
+}
+
+.zodiacSectionHeader {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.zodiacSectionKicker {
+  font-size: 11px;
+  color: rgba(36, 58, 72, 0.92);
+  letter-spacing: 0.1em;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.zodiacSectionDesc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.zodiacInputSection {
+  margin-top: 16px;
+}
+
+.zodiacInputRow {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.zodiacInputField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zodiacInputLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.zodiacInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zodiacResultHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.zodiacIcon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.zodiacName {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.zodiacDateRange {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.zodiacHoroscopeTitle {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.zodiacCategoryLabel {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+/* ===== 프리미엄 게이트 스타일 ===== */
+.premiumGate {
+  position: relative;
+  border-radius: var(--rXL);
+  overflow: hidden;
+}
+
+.premiumGateContent {
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
+
+.premiumGateOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  border-radius: var(--rXL);
+}
+
+.premiumGateIcon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.premiumGateTitle {
+  font-size: 16px;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.premiumGateDesc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import tarotCardsData from "../data/tarot-cards.json";
+import ZodiacSection from "../components/ZodiacSection";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -988,9 +989,18 @@ export default function TarotPage() {
 
                 <div className="smallHelp" style={{ marginTop: 10 }}>
                   * 매일 자정(00:00)을 기준으로 새로운 카드가 선택돼요.
+                  <br />
+                  * 오늘의 결과는 하루 동안 유지됩니다
                 </div>
               </div>
             ) : null}
+
+            {/* 별자리 운세 섹션 - 타로 결과 아래 */}
+            {tarotResult && stage === "result" && (
+              <div className="stagger d5" style={{ marginTop: 40 }}>
+                <ZodiacSection isPremium={false} />
+              </div>
+            )}
 
             {/* 자세히보기 팝업 */}
             {showDetailModal && tarotResult && (

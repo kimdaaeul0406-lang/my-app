@@ -4,21 +4,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-type ModalType = "saju" | "tarot" | "plan" | null;
+type ModalType = "tarot" | "plan" | null;
 
 type Review = { name: string; text: string };
 
 type HistoryItem = {
   id: string;
-  type: "SAJU" | "TAROT";
+  type: "SAJU" | "TAROT" | "ZODIAC";
   title: string;
   text: string;
   tags: string[];
   createdAt: number;
   isPremium?: boolean;
 };
-
-type SajuTopic = "연애" | "재물" | "직장" | "건강";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -158,15 +156,9 @@ export default function Page() {
     );
   };
 
-  // 입력(사주)
-  const [birth, setBirth] = useState("");
-  const [time, setTime] = useState("");
-  const [gender, setGender] = useState<"female" | "male" | "none">("female");
-  const [topic, setTopic] = useState<SajuTopic>("연애");
-
-  const sajuBase = useMemo(() => {
-    const hasBirth = birth.trim().length >= 8;
-    const hasTime = time.trim().length >= 4;
+  // 기록
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  useEffect(() => {
     const g =
       gender === "female" ? "여성" : gender === "male" ? "남성" : "선택 안 함";
     const note = hasBirth
@@ -201,12 +193,6 @@ export default function Page() {
         tags: ["루틴", "회복", "호흡"],
       },
     };
-    return map[topic];
-  }, [topic]);
-
-  // 기록
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  useEffect(() => {
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
       if (!raw) return;
@@ -226,10 +212,10 @@ export default function Page() {
       // 히스토리 섹션으로 스크롤
       setTimeout(() => {
         scrollTo(historyRef);
-        if (saved === "saju") {
-          showToast("사주 결과를 기록에 저장했어");
-        } else if (saved === "tarot") {
+        if (saved === "tarot") {
           showToast("타로 결과를 기록에 저장했어");
+        } else if (saved === "zodiac") {
+          showToast("별자리 결과를 기록에 저장했어");
         }
       }, 100);
     }
@@ -246,21 +232,6 @@ export default function Page() {
     setHistory(next);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
     showToast("기록 삭제 완료");
-  };
-
-  const saveSaju = () => {
-    const item: HistoryItem = {
-      id: uid(),
-      type: "SAJU",
-      title: `[사주] ${topic} · ${sajuResultByTopic.title}`,
-      text: `${sajuBase}\n\n${sajuResultByTopic.text}`,
-      tags: [topic, ...sajuResultByTopic.tags],
-      createdAt: Date.now(),
-      isPremium: false,
-    };
-    saveHistory(item);
-    showToast("사주 결과를 기록에 저장했어");
-    scrollTo(historyRef);
   };
 
   // 타로(모달)
@@ -355,13 +326,13 @@ export default function Page() {
           <div className="container center">
             <h1 className="brand stagger d1">LUMEN</h1>
             <p className="tagline stagger d2">
-              과장 없이, 오늘의 흐름을 정리하는 사주 & 타로
+              과장 없이, 오늘의 흐름을 정리하는 타로 & 별자리
             </p>
 
             <div className="heroEyebrow stagger d3">
-              <span>사주</span>
-              <span className="heroDot" />
               <span>타로</span>
+              <span className="heroDot" />
+              <span>별자리</span>
             </div>
 
             <div className="heroTitle stagger d4">
@@ -373,7 +344,7 @@ export default function Page() {
             </div>
 
             <div className="heroSub stagger d5">
-              사주는 기준을, 타로는 감각을.
+              타로는 선택을, 별자리는 흐름을.
               <br />
               하루의 방향을 조용히 정리해요.
             </div>
@@ -382,11 +353,11 @@ export default function Page() {
               className="identityLine stagger d5"
               style={{ justifyContent: "center" }}
             >
-              <span className="identityBadge">사주</span>
-              <span>정리·기준</span>
-              <span className="heroDot" />
               <span className="identityBadge">타로</span>
-              <span>상징·조언</span>
+              <span>선택·메시지</span>
+              <span className="heroDot" />
+              <span className="identityBadge">별자리</span>
+              <span>흐름·보조</span>
             </div>
 
             <div className="heroDivider" />
@@ -870,136 +841,21 @@ export default function Page() {
           <div className="container center">
             <h2 className="h2 stagger d1">나의 흐름, 무료로 시작하기</h2>
             <p className="p stagger d2">
-              사주는 기준을 잡아주고, 타로는 한 장의 조언을 건네요.
+              타로는 당신의 선택을 말하고, 별자리는 오늘의 흐름을 알려줍니다.
             </p>
 
-            <div className="form left stagger d3">
-              {/* 모바일 레이아웃 */}
-              <div className="formMobile">
-                <div className="field">
-                  <div className="label">생년월일</div>
-                  <input
-                    className="input"
-                    placeholder="예: 1996-08-17"
-                    value={birth}
-                    onChange={(e) => setBirth(e.target.value)}
-                  />
-                </div>
-
-                <div className="row2">
-                  <div className="field">
-                    <div className="label">태어난 시간(선택)</div>
-                    <input
-                      className="input"
-                      placeholder="예: 07:30"
-                      value={time}
-                      onChange={(e) => setTime(e.target.value)}
-                    />
-                  </div>
-                  <div className="field">
-                    <div className="label">성별</div>
-                    <select
-                      className="input"
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value as any)}
-                    >
-                      <option value="female">여성</option>
-                      <option value="male">남성</option>
-                      <option value="none">선택 안 함</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-                  <Link
-                    href="/saju"
-                    className="btn btnPrimary btnWide"
-                    style={{ textAlign: "center", textDecoration: "none" }}
-                  >
-                    입력으로 사주 확인하기(데모)
-                  </Link>
-                  <Link
-                    href="/tarot"
-                    className="btn btnGhost btnWide"
-                    style={{ textAlign: "center", textDecoration: "none" }}
-                  >
-                    타로 한 장 뽑기
-                  </Link>
-                </div>
-
-                <div className="smallHelp" style={{ marginTop: 10 }}>
-                  * 입력값은 데모 결과에만 반영돼요(실제 계산/API 연결은 다음
-                  단계).
-                </div>
-              </div>
-
-              {/* PC 레이아웃 */}
-              <div className="formDesktop">
-                <div className="field">
-                  <div className="label">생년월일</div>
-                  <input
-                    className="input"
-                    placeholder="예: 1996-08-17"
-                    value={birth}
-                    onChange={(e) => setBirth(e.target.value)}
-                  />
-                </div>
-
-                <div className="field">
-                  <div className="label">태어난 시간(선택)</div>
-                  <input
-                    className="input"
-                    placeholder="예: 07:30"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                  />
-                </div>
-
-                <div className="field">
-                  <div className="label">성별</div>
-                  <select
-                    className="input"
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value as any)}
-                  >
-                    <option value="female">여성</option>
-                    <option value="male">남성</option>
-                    <option value="none">선택 안 함</option>
-                  </select>
-                </div>
-
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    marginTop: 12,
-                    display: "grid",
-                    gap: 10,
-                  }}
-                >
-                  <Link
-                    href="/saju"
-                    className="btn btnPrimary btnWide"
-                    style={{ textAlign: "center", textDecoration: "none" }}
-                  >
-                    입력으로 사주 확인하기(데모)
-                  </Link>
-                  <Link
-                    href="/tarot"
-                    className="btn btnGhost btnWide"
-                    style={{ textAlign: "center", textDecoration: "none" }}
-                  >
-                    타로 한 장 뽑기
-                  </Link>
-                </div>
-
-                <div
-                  className="smallHelp"
-                  style={{ gridColumn: "1 / -1", marginTop: 10 }}
-                >
-                  * 입력값은 데모 결과에만 반영돼요(실제 계산/API 연결은 다음
-                  단계).
-                </div>
-              </div>
+            <div className="stagger d3" style={{ marginTop: 20 }}>
+              <Link
+                href="/tarot"
+                className="btn btnPrimary btnWide"
+                style={{
+                  textAlign: "center",
+                  textDecoration: "none",
+                  display: "block",
+                }}
+              >
+                타로 카드 뽑기
+              </Link>
             </div>
           </div>
         </section>
@@ -1023,7 +879,11 @@ export default function Page() {
                   <div className="historyCard" key={h.id}>
                     <div className="historyTop">
                       <span className="badge">
-                        {h.type === "SAJU" ? "SAJU" : "TAROT"}
+                        {h.type === "SAJU"
+                          ? "SAJU"
+                          : h.type === "ZODIAC"
+                          ? "ZODIAC"
+                          : "TAROT"}
                         {h.isPremium ? " · PREMIUM" : ""}
                       </span>
                       <span className="muted">
@@ -1095,25 +955,10 @@ export default function Page() {
         {/* MODALS */}
         {modal && (
           <Modal
-            title={
-              modal === "saju"
-                ? "사주 조회(데모)"
-                : modal === "tarot"
-                ? "타로 한 장(데모)"
-                : "프리미엄 플랜"
-            }
+            title={modal === "tarot" ? "타로 한 장(데모)" : "프리미엄 플랜"}
             onClose={() => setModal(null)}
           >
-            {modal === "saju" ? (
-              <SajuModal
-                topic={topic}
-                setTopic={setTopic}
-                baseNote={sajuBase}
-                result={sajuResultByTopic}
-                onSave={saveSaju}
-                onClose={() => setModal(null)}
-              />
-            ) : modal === "tarot" ? (
+            {modal === "tarot" ? (
               <TarotModal
                 picked={picked}
                 flipped={flipped}
@@ -1169,9 +1014,9 @@ function Modal({
   );
 }
 
-/* ===== SAJU Modal ===== */
-function SajuModal({
-  topic,
+/* ===== TAROT Modal (PC: hover 살짝 / click 완전 뒤집힘, Mobile: 선택 후 바탕 탭하면 초기화) ===== */
+function TarotModal({
+  picked,
   setTopic,
   baseNote,
   result,
