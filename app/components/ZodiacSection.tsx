@@ -78,17 +78,18 @@ export default function ZodiacSection({
       setLoading(true);
       setError(null);
       try {
-        // API Ninjas가 계속 실패하므로 Aztro API 사용 (type=today)
-        const apiUrl = `/api/horoscope?sign=${zodiacInfo.nameEn}&type=today`;
-        console.log(`🌐 [Client] Fetching horoscope from: ${apiUrl}`);
+        console.log(`🌐 [Client] Fetching horoscope from: /api/horoscope`);
 
-        const response = await fetch(apiUrl, {
-          method: "GET",
+        const response = await fetch("/api/horoscope", {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          // 캐시 비활성화하여 항상 서버에서 최신 데이터 가져오기
-          cache: "no-store",
+          body: JSON.stringify({
+            sign: zodiacInfo.nameEn,
+            signName: zodiacInfo.name,
+            date: new Date().toISOString().split('T')[0],
+          }),
         });
 
         console.log(`📥 [Client] Response status: ${response.status}`);
@@ -122,21 +123,28 @@ export default function ZodiacSection({
           throw new Error(errorMessage);
         }
 
-        const data = await response.json();
-        console.log(`✅ [Client] Received data:`, data);
+        const result = await response.json();
+        console.log(`✅ [Client] Received data:`, result);
 
-        // API 호출 실패 시 null 처리
-        if (data.error || !data.description) {
-          console.warn(`⚠️ [Client] API returned error or empty data`);
+        if (!result.success) {
+          console.warn(`⚠️ [Client] API returned error:`, result.error);
           setHoroscopeData(null);
-          setError(data.error || "운세 데이터를 가져올 수 없어요");
+          setError(result.error || "운세 데이터를 가져올 수 없어요");
           return;
         }
 
-        // 새로운 API 응답 형식에 맞게 변환 (description -> horoscope)
+        // API 응답 형식에 맞게 변환
+        const data = result.data;
         setHoroscopeData({
-          ...data,
-          horoscope: data.description, // description을 horoscope로 매핑
+          message: data.message || "",
+          love: data.love || "",
+          career: data.career || "",
+          money: data.money || "",
+          advice: data.advice || "",
+          luckyNumber: data.luckyNumber || 0,
+          luckyColor: data.luckyColor || "",
+          keywords: data.keywords || [],
+          horoscope: data.message || "", // 호환성을 위해
         });
       } catch (err) {
         console.error(`❌ [Client] Error:`, err);

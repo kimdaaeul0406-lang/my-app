@@ -85,11 +85,17 @@ export default function SajuPage() {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: "API 오류" }));
+          const errorData = await response.json().catch(() => ({ success: false, error: "API 오류" }));
           throw new Error(errorData.error || "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
         }
 
-        const data: SajuResult = await response.json();
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || "API 호출 실패");
+        }
+
+        const data: SajuResult = result.data;
 
         if (!data.overview) {
           throw new Error("사주 데이터를 가져올 수 없어요");

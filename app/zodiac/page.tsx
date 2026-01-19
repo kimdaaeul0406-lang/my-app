@@ -94,25 +94,29 @@ export default function ZodiacPage() {
       }
 
       try {
-        const apiUrl = `/api/horoscope?sign=${zodiacInfo.nameEn}`;
-        const response = await fetch(apiUrl, {
-          method: "GET",
+        const response = await fetch("/api/horoscope", {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          cache: "no-store",
+          body: JSON.stringify({
+            sign: zodiacInfo.nameEn,
+            signName: zodiacInfo.name,
+            date: new Date().toISOString().split('T')[0],
+          }),
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: "API 오류" }));
+          const errorData = await response.json().catch(() => ({ success: false, error: "API 오류" }));
           throw new Error(errorData.error || "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
         }
 
-        const data = await response.json();
+        const result = await response.json();
         
-        if (data.error) {
-          throw new Error(data.error);
+        if (!result.success) {
+          throw new Error(result.error || "API 호출 실패");
         }
 
         // 응답 데이터 정리
+        const data = result.data;
         const horoscopeData: HoroscopeData = {
           message: data.message || "",
           love: data.love || "",
@@ -180,7 +184,7 @@ export default function ZodiacPage() {
               </Link>
             </div>
 
-            <h1 className="h2 stagger d1">별자리 운세(데모)</h1>
+            <h1 className="h2 stagger d1">별자리 운세</h1>
             <p className="p stagger d2">
               별자리를 선택하면 오늘의 별자리 흐름을 알려드려요.
             </p>

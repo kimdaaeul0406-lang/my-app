@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import tarotCardsData from "../data/tarot-cards.json";
+import { MAJOR_ARCANA } from "../utils/constants";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -571,6 +572,16 @@ export default function TarotPage() {
     null
   );
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [apiResult, setApiResult] = useState<{
+    message: string;
+    love: string;
+    career: string;
+    money: string;
+    advice: string;
+    keywords: string[];
+  } | null>(null);
+  const [loadingApi, setLoadingApi] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // 단계별 상태 관리 (새로운 셔플 방식) - 인트로 제거, stacked에서 시작
   // 초기에는 카드가 보이지 않도록 "waiting" 단계 추가
@@ -669,16 +680,77 @@ export default function TarotPage() {
     setSelectedCategory("advice");
     setCurrentCardIndex(0);
     setShuffleCount(0); // 셔플 카운터도 리셋
+    setApiResult(null);
+    setApiError(null);
+    setLoadingApi(false);
   };
 
-  const pickTarot = (cardIndex: number, spreadIndex: number) => {
+  const pickTarot = async (cardIndex: number, spreadIndex: number) => {
     if (picked !== null) return;
     setPicked(cardIndex);
     setPickedSpreadIndex(spreadIndex);
     setCurrentCardIndex(cardIndex);
+    setApiResult(null);
+    setApiError(null);
+    setLoadingApi(true);
 
     // 2단계: 카드 선택 (나머지 fade out)
     setStage("selecting");
+
+    const selectedCard = tarotDeck[cardIndex];
+
+    // MAJOR_ARCANA에서 nameKo 찾기
+    const cardInfo = MAJOR_ARCANA.find((c) => c.id === selectedCard.id);
+    const nameKo = cardInfo?.nameKo || selectedCard.title;
+
+    // API 호출
+    try {
+      const response = await fetch("/api/tarot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cardName: selectedCard.name,
+          cardNameKo: nameKo,
+          isReversed: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ success: false, error: "API 오류" }));
+        throw new Error(
+          errorData.error ||
+            "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
+        );
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "API 호출 실패");
+      }
+
+      // API 응답을 interpretations 형식으로 변환
+      const data = result.data;
+      setApiResult({
+        message: data.message || "",
+        love: data.love || "",
+        career: data.career || "",
+        money: data.money || "",
+        advice: data.advice || "",
+        keywords: data.keywords || [],
+      });
+    } catch (err) {
+      console.error(`❌ [Tarot] Error:`, err);
+      setApiError(
+        err instanceof Error
+          ? err.message
+          : "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
+      );
+    } finally {
+      setLoadingApi(false);
+    }
 
     // 3단계: 카드 뒤집기 (0.5초 후)
     setTimeout(() => {
@@ -698,9 +770,64 @@ export default function TarotPage() {
   }, [picked, tarotDeck]);
 
   const currentInterpretation = useMemo(() => {
-    if (!tarotResult) return null;
-    return tarotResult.interpretations[selectedCategory];
-  }, [tarotResult, selectedCategory]);
+    if (!tarotResult || !apiResult) return null;
+
+    // API 응답을 interpretations 형식으로 변환
+    const categoryMap: Record<
+      TarotCategory,
+      { title: string; text: string; tags: string[] }
+    > = {
+      love: {
+        title: "연애운",
+        text: apiResult.love,
+        tags: apiResult.keywords.filter(
+          (k) =>
+            k.toLowerCase().includes("love") ||
+            k.toLowerCase().includes("연애") ||
+            k.toLowerCase().includes("사랑")
+        ),
+      },
+      money: {
+        title: "금전운",
+        text: apiResult.money,
+        tags: apiResult.keywords.filter(
+          (k) =>
+            k.toLowerCase().includes("money") ||
+            k.toLowerCase().includes("금전") ||
+            k.toLowerCase().includes("재물")
+        ),
+      },
+      work: {
+        title: "직장/학업운",
+        text: apiResult.career,
+        tags: apiResult.keywords.filter(
+          (k) =>
+            k.toLowerCase().includes("career") ||
+            k.toLowerCase().includes("직장") ||
+            k.toLowerCase().includes("학업") ||
+            k.toLowerCase().includes("업무")
+        ),
+      },
+      advice: {
+        title: "조언",
+        text: apiResult.advice,
+        tags: apiResult.keywords.filter(
+          (k) =>
+            k.toLowerCase().includes("advice") ||
+            k.toLowerCase().includes("조언") ||
+            k.toLowerCase().includes("가이드")
+        ),
+      },
+    };
+
+    return (
+      categoryMap[selectedCategory] || {
+        title: "메시지",
+        text: apiResult.message,
+        tags: apiResult.keywords,
+      }
+    );
+  }, [tarotResult, apiResult, selectedCategory]);
 
   // 스와이프 핸들러
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -802,7 +929,7 @@ export default function TarotPage() {
   };
 
   const saveTarot = () => {
-    if (!tarotResult || !currentInterpretation) return;
+    if (!tarotResult || !currentInterpretation || !apiResult) return;
 
     const categoryLabels: Record<TarotCategory, string> = {
       love: "연애",
@@ -816,7 +943,10 @@ export default function TarotPage() {
       type: "TAROT",
       title: `[타로·${categoryLabels[selectedCategory]}] ${currentInterpretation.title}`,
       text: currentInterpretation.text,
-      tags: currentInterpretation.tags,
+      tags:
+        currentInterpretation.tags.length > 0
+          ? currentInterpretation.tags
+          : apiResult.keywords,
       createdAt: Date.now(),
     };
 
@@ -910,109 +1040,138 @@ export default function TarotPage() {
                 className="card cardPad lift stagger d4 tarotResultCard"
                 style={{ marginTop: 100 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 10,
-                  }}
-                >
-                  <div style={{ fontWeight: 900 }}>{tarotResult.name}</div>
-                  <div className="muted">오늘의 메시지</div>
-                </div>
+                {loadingApi && (
+                  <div style={{ padding: "20px 0", textAlign: "center" }}>
+                    <div className="p" style={{ color: "var(--muted)" }}>
+                      타로를 해석하고 있어요...
+                    </div>
+                  </div>
+                )}
 
-                {/* 카테고리 선택 탭 */}
-                <div
-                  className="tabRow"
-                  style={{ marginTop: 12 }}
-                  aria-label="타로 카테고리"
-                >
-                  {(["love", "money", "work", "advice"] as TarotCategory[]).map(
-                    (category) => {
-                      const labels: Record<TarotCategory, string> = {
-                        love: "연애",
-                        money: "금전",
-                        work: "직장",
-                        advice: "조언",
-                      };
-                      return (
-                        <button
-                          key={category}
-                          className={`tabBtn ${
-                            category === selectedCategory ? "on" : ""
-                          }`}
-                          onClick={() => setSelectedCategory(category)}
-                        >
-                          {labels[category]}
-                        </button>
-                      );
-                    }
-                  )}
-                </div>
+                {apiError && !loadingApi && (
+                  <div style={{ padding: "20px 0", textAlign: "center" }}>
+                    <div className="p" style={{ color: "var(--muted)" }}>
+                      {apiError}
+                    </div>
+                  </div>
+                )}
 
-                {/* 선택된 카테고리 해석 표시 */}
-                {currentInterpretation && (
+                {!loadingApi && !apiError && apiResult && (
                   <>
                     <div
                       style={{
-                        marginTop: 12,
-                        fontWeight: 900,
-                        letterSpacing: -0.01,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 10,
                       }}
                     >
-                      {currentInterpretation.title}
-                    </div>
-                    <div className="p" style={{ marginTop: 6 }}>
-                      {currentInterpretation.text}
+                      <div style={{ fontWeight: 900 }}>{tarotResult.name}</div>
+                      <div className="muted">오늘의 메시지</div>
                     </div>
 
-                    <div className="chipRow" style={{ marginTop: 8 }}>
-                      {currentInterpretation.tags.map((t) => (
-                        <span className="chip" key={t}>
-                          {t}
-                        </span>
-                      ))}
+                    {/* 카테고리 선택 탭 */}
+                    <div
+                      className="tabRow"
+                      style={{ marginTop: 12 }}
+                      aria-label="타로 카테고리"
+                    >
+                      {(
+                        ["love", "money", "work", "advice"] as TarotCategory[]
+                      ).map((category) => {
+                        const labels: Record<TarotCategory, string> = {
+                          love: "연애",
+                          money: "금전",
+                          work: "직장",
+                          advice: "조언",
+                        };
+                        return (
+                          <button
+                            key={category}
+                            className={`tabBtn ${
+                              category === selectedCategory ? "on" : ""
+                            }`}
+                            onClick={() => setSelectedCategory(category)}
+                          >
+                            {labels[category]}
+                          </button>
+                        );
+                      })}
                     </div>
+
+                    {/* 선택된 카테고리 해석 표시 */}
+                    {currentInterpretation && (
+                      <>
+                        <div
+                          style={{
+                            marginTop: 12,
+                            fontWeight: 900,
+                            letterSpacing: -0.01,
+                          }}
+                        >
+                          {currentInterpretation.title}
+                        </div>
+                        <div className="p" style={{ marginTop: 6 }}>
+                          {currentInterpretation.text}
+                        </div>
+
+                        {currentInterpretation.tags.length > 0 && (
+                          <div className="chipRow" style={{ marginTop: 8 }}>
+                            {currentInterpretation.tags.map((t) => (
+                              <span className="chip" key={t}>
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </>
                 )}
 
-                <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
-                  <button
-                    className="btn btnPrimary btnWide"
-                    onClick={saveTarot}
-                  >
-                    기록에 저장하기
-                  </button>
+                {!loadingApi && !apiError && apiResult && (
+                  <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
+                    <button
+                      className="btn btnPrimary btnWide"
+                      onClick={saveTarot}
+                    >
+                      기록에 저장하기
+                    </button>
 
-                  <button
-                    className="btn btnGhost btnWide"
-                    onClick={() => setShowDetailModal(true)}
-                  >
-                    자세히보기
-                  </button>
+                    <button
+                      className="btn btnGhost btnWide"
+                      onClick={() => setShowDetailModal(true)}
+                    >
+                      자세히보기
+                    </button>
 
-                  <button className="btn btnGhost btnWide" onClick={resetTarot}>
-                    카드 다시 뽑기
-                  </button>
+                    <button
+                      className="btn btnGhost btnWide"
+                      onClick={resetTarot}
+                    >
+                      카드 다시 뽑기
+                    </button>
 
-                  <Link
-                    href="/"
-                    className="btn btnGhost btnWide"
-                    style={{ textAlign: "center", textDecoration: "none" }}
-                  >
-                    돌아가기
-                  </Link>
-                </div>
+                    <Link
+                      href="/"
+                      className="btn btnGhost btnWide"
+                      style={{ textAlign: "center", textDecoration: "none" }}
+                    >
+                      돌아가기
+                    </Link>
+                  </div>
+                )}
 
-                <div className="smallHelp" style={{ marginTop: 10 }}>
-                  * 매일 자정(00:00)을 기준으로 새로운 카드가 선택돼요.
-                  <br />* 오늘의 결과는 하루 동안 유지됩니다
-                </div>
+                {!loadingApi && !apiError && apiResult && (
+                  <div className="smallHelp" style={{ marginTop: 10 }}>
+                    * 매일 자정(00:00)을 기준으로 새로운 카드가 선택돼요.
+                    <br />* 오늘의 결과는 하루 동안 유지됩니다
+                  </div>
+                )}
               </div>
             ) : null}
 
             {/* 자세히보기 팝업 */}
-            {showDetailModal && tarotResult && (
+            {showDetailModal && tarotResult && apiResult && (
               <div
                 className="modalOverlay"
                 onClick={() => setShowDetailModal(false)}
@@ -1033,6 +1192,28 @@ export default function TarotPage() {
                   </div>
                   <div className="modalBody">
                     <div style={{ display: "grid", gap: 24 }}>
+                      {/* 전체 운세 */}
+                      {apiResult.message && (
+                        <div>
+                          <div
+                            className="zodiacCategoryLabel"
+                            style={{ marginBottom: 8 }}
+                          >
+                            전체 운세
+                          </div>
+                          <div
+                            className="p"
+                            style={{
+                              whiteSpace: "pre-line",
+                              lineHeight: 1.8,
+                              marginBottom: 12,
+                            }}
+                          >
+                            {apiResult.message}
+                          </div>
+                        </div>
+                      )}
+
                       {(
                         ["love", "money", "work", "advice"] as TarotCategory[]
                       ).map((category) => {
@@ -1042,8 +1223,15 @@ export default function TarotPage() {
                           work: "직장",
                           advice: "조언",
                         };
-                        const interpretation =
-                          tarotResult.interpretations[category];
+                        const categoryData: Record<TarotCategory, string> = {
+                          love: apiResult.love,
+                          money: apiResult.money,
+                          work: apiResult.career,
+                          advice: apiResult.advice,
+                        };
+                        const text = categoryData[category];
+                        if (!text) return null;
+
                         return (
                           <div key={category}>
                             <div
@@ -1053,15 +1241,6 @@ export default function TarotPage() {
                               {labels[category]}
                             </div>
                             <div
-                              style={{
-                                fontWeight: 900,
-                                letterSpacing: -0.01,
-                                marginBottom: 8,
-                              }}
-                            >
-                              {interpretation.title}
-                            </div>
-                            <div
                               className="p"
                               style={{
                                 whiteSpace: "pre-line",
@@ -1069,15 +1248,18 @@ export default function TarotPage() {
                                 marginBottom: 12,
                               }}
                             >
-                              {interpretation.text}
+                              {text}
                             </div>
-                            <div className="chipRow">
-                              {interpretation.tags.map((t) => (
-                                <span className="chip" key={t}>
-                                  {t}
-                                </span>
-                              ))}
-                            </div>
+                            {apiResult.keywords &&
+                              apiResult.keywords.length > 0 && (
+                                <div className="chipRow">
+                                  {apiResult.keywords.map((t) => (
+                                    <span className="chip" key={t}>
+                                      {t}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                           </div>
                         );
                       })}
