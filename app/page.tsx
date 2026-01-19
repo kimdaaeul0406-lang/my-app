@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-type ModalType = "tarot" | "plan" | null;
+type ModalType = "tarot" | null;
 
 type Review = { name: string; text: string };
 
@@ -133,26 +133,9 @@ export default function Page() {
   ];
 
   // 구독
-  const [billing, setBilling] = useState<"month" | "year">("month");
-  const premiumPriceLabel =
-    billing === "month" ? "월 10,900원" : "연 109,000원";
-
-  const [freeEmail, setFreeEmail] = useState("");
   const submitFree = () => {
     // Stibee 구독 페이지로 이동
     window.open("https://page.stibee.com/subscriptions/467092", "_blank");
-  };
-
-  // 프리미엄 카드 뒤집기 - 제거됨 (팝업 방식으로 변경)
-  // const premiumWrapRef = useRef<HTMLDivElement | null>(null);
-  // const [canHover, setCanHover] = useState(false);
-  // ... (필요시 복구 가능)
-
-  const openPlan = () => router.push("/plan");
-  const confirmPlan = () => {
-    showToast(
-      billing === "month" ? "월간 결제 연결(데모)" : "연간 결제 연결(데모)"
-    );
   };
 
   // 기록
@@ -244,7 +227,7 @@ export default function Page() {
     return tarotDeck[picked];
   }, [picked, tarotDeck]);
 
-  const saveTarot = (isPremium = false) => {
+  const saveTarot = () => {
     if (!tarotResult) return;
     const item: HistoryItem = {
       id: uid(),
@@ -253,12 +236,9 @@ export default function Page() {
       text: tarotResult.text,
       tags: tarotResult.tags,
       createdAt: Date.now(),
-      isPremium,
     };
     saveHistory(item);
-    showToast(
-      isPremium ? "프리미엄 타로 저장(데모)" : "타로 결과를 기록에 저장했어"
-    );
+    showToast("타로 결과를 기록에 저장했어");
     scrollTo(historyRef);
   };
 
@@ -589,96 +569,12 @@ export default function Page() {
                     </div>
                   </div>
                 </div>
-
-                {/* 구분선 */}
-                <div className="pricingDivider"></div>
-
-                {/* PREMIUM 섹션 */}
-                <div className="pricingSection premium">
-                  {/* 월간/연간 탭 */}
-                  <div
-                    className="pricingTabs"
-                    style={{ padding: "0 0 16px", background: "transparent" }}
-                  >
-                    <button
-                      className={`pricingTabBtn ${
-                        billing === "month" ? "active" : ""
-                      }`}
-                      onClick={() => setBilling("month")}
-                    >
-                      월간
-                    </button>
-                    <button
-                      className={`pricingTabBtn ${
-                        billing === "year" ? "active" : ""
-                      }`}
-                      onClick={() => setBilling("year")}
-                    >
-                      연간
-                    </button>
-                  </div>
-
-                  <div className="pricingSectionHeader">
-                    <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 8,
-                          alignItems: "center",
-                          flexWrap: "nowrap",
-                        }}
-                      >
-                        <div className="pricingBadge premium">PREMIUM</div>
-                        <span className="recoBadge">추천</span>
-                      </div>
-                      <div className="pricingTitle">더 깊게, 매일 한 번 더</div>
-                      <div className="pricingDesc">
-                        심화 해석과 기록 기능으로 흐름을 쌓아가요.
-                      </div>
-                    </div>
-                    <div className="price">{premiumPriceLabel}</div>
-                  </div>
-
-                  <div className="chipRow">
-                    <span className="chip chipGold">심화 해석</span>
-                    <span className="chip">기록/아카이브</span>
-                    <span className="chip">프리미엄 타로</span>
-                  </div>
-
-                  {/* 자세히 보기 버튼 */}
-                  <div
-                    style={{
-                      marginTop: 16,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 12,
-                    }}
-                  >
-                    <Link
-                      href="/plan"
-                      className="btn btnGhost btnWide"
-                      style={{
-                        textAlign: "center",
-                        textDecoration: "none",
-                        display: "block",
-                        maxWidth: "100%",
-                      }}
-                    >
-                      자세히 보기
-                    </Link>
-
-                    <div className="smallHelp" style={{ textAlign: "center" }}>
-                      * PC: 클릭하면 상세 정보를 확인할 수 있어요.
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              {/* PC: 나란히 비교 배치 */}
+              {/* PC: 무료 구독 */}
               <div className="pricingDesktop stagger d3">
                 {/* FREE 섹션 */}
-                <div className="pricingSection">
+                <div className="pricingSection" style={{ maxWidth: "500px", margin: "0 auto" }}>
                   <div className="pricingSectionHeader">
                     <div>
                       <div className="pricingBadge free">FREE</div>
@@ -710,77 +606,6 @@ export default function Page() {
                     </button>
                     <div className="smallHelp" style={{ textAlign: "center" }}>
                       * 클릭하면 구독 페이지로 이동합니다.
-                    </div>
-                  </div>
-                </div>
-
-                {/* PREMIUM 섹션 */}
-                <div className="pricingSection premium">
-                  <div className="pricingSectionHeader">
-                    <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 8,
-                          alignItems: "center",
-                          flexWrap: "nowrap",
-                        }}
-                      >
-                        <div className="pricingBadge premium">PREMIUM</div>
-                        <span className="recoBadge">추천</span>
-                      </div>
-                      <div className="pricingTitle">더 깊게, 매일 한 번 더</div>
-                      <div className="pricingDesc">
-                        심화 해석과 기록 기능으로 흐름을 쌓아가요.
-                      </div>
-                    </div>
-                    <div className="price">{premiumPriceLabel}</div>
-                  </div>
-
-                  {/* 월간/연간 탭 */}
-                  <div
-                    className="pricingTabs"
-                    style={{ padding: "12px 0", background: "transparent" }}
-                  >
-                    <button
-                      className={`pricingTabBtn ${
-                        billing === "month" ? "active" : ""
-                      }`}
-                      onClick={() => setBilling("month")}
-                    >
-                      월간
-                    </button>
-                    <button
-                      className={`pricingTabBtn ${
-                        billing === "year" ? "active" : ""
-                      }`}
-                      onClick={() => setBilling("year")}
-                    >
-                      연간
-                    </button>
-                  </div>
-
-                  <div className="chipRow">
-                    <span className="chip chipGold">심화 해석</span>
-                    <span className="chip">기록/아카이브</span>
-                    <span className="chip">프리미엄 타로</span>
-                  </div>
-
-                  <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
-                    <Link
-                      href="/plan"
-                      className="btn btnGhost btnWide"
-                      style={{
-                        textAlign: "center",
-                        textDecoration: "none",
-                        display: "block",
-                        maxWidth: "100%",
-                      }}
-                    >
-                      자세히 보기
-                    </Link>
-                    <div className="smallHelp" style={{ textAlign: "center" }}>
-                      * PC: 클릭하면 상세 정보를 확인할 수 있어요.
                     </div>
                   </div>
                 </div>
@@ -906,33 +731,20 @@ export default function Page() {
         </footer>
 
         {/* MODALS */}
-        {modal && (
+        {modal === "tarot" && (
           <Modal
-            title={modal === "tarot" ? "타로 한 장(데모)" : "프리미엄 플랜"}
+            title="타로 한 장(데모)"
             onClose={() => setModal(null)}
           >
-            {modal === "tarot" ? (
-              <TarotModal
-                picked={picked}
-                flipped={flipped}
-                onPick={pickTarot}
-                onReset={resetTarot}
-                result={tarotResult}
-                onSaveFree={() => saveTarot(false)}
-                onSavePremium={() => {
-                  // 프리미엄 해석 표시 (구독 페이지로 이동하지 않음)
-                  showToast("프리미엄 해석을 확인하세요");
-                }}
-                onClose={() => setModal(null)}
-              />
-            ) : (
-              <PlanModal
-                billing={billing}
-                priceLabel={premiumPriceLabel}
-                onConfirm={confirmPlan}
-                onClose={() => setModal(null)}
-              />
-            )}
+            <TarotModal
+              picked={picked}
+              flipped={flipped}
+              onPick={pickTarot}
+              onReset={resetTarot}
+              result={tarotResult}
+              onSave={saveTarot}
+              onClose={() => setModal(null)}
+            />
           </Modal>
         )}
 
@@ -974,8 +786,7 @@ function TarotModal({
   onPick,
   onReset,
   result,
-  onSaveFree,
-  onSavePremium,
+  onSave,
   onClose,
 }: {
   picked: number | null;
@@ -983,12 +794,10 @@ function TarotModal({
   onPick: (i: number) => void;
   onReset: () => void;
   result: { name: string; title: string; text: string; tags: string[] } | null;
-  onSaveFree: () => void;
-  onSavePremium: () => void;
+  onSave: () => void;
   onClose: () => void;
 }) {
   const [canHover, setCanHover] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
   useEffect(() => {
     const m = window.matchMedia("(hover: hover) and (pointer: fine)");
     const apply = () => setCanHover(m.matches);
@@ -1089,20 +898,8 @@ function TarotModal({
           </div>
 
           <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-            <button className="btn btnPrimary btnWide" onClick={onSaveFree}>
+            <button className="btn btnPrimary btnWide" onClick={onSave}>
               기록에 저장하기
-            </button>
-
-            <button
-              className="btn btnGhost btnWide"
-              onClick={() => {
-                setIsPremium(true);
-                onSavePremium();
-              }}
-            >
-              {isPremium
-                ? "프리미엄 해석 보는 중"
-                : "프리미엄으로 더 깊게 보기"}
             </button>
 
             <button className="btn btnGhost btnWide" onClick={onReset}>
@@ -1130,49 +927,3 @@ function TarotModal({
   );
 }
 
-/* ===== Plan Modal ===== */
-function PlanModal({
-  billing,
-  priceLabel,
-  onConfirm,
-  onClose,
-}: {
-  billing: "month" | "year";
-  priceLabel: string;
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
-  return (
-    <>
-      <p className="p" style={{ marginTop: 0 }}>
-        결제는 다음 단계에서 연결해요. 지금은 "플랜 UX"만 잡아두는 데모예요.
-      </p>
-
-      <div className="card cardPad lift" style={{ marginTop: 12 }}>
-        <div style={{ fontWeight: 900 }}>프리미엄 플랜</div>
-        <div className="p" style={{ marginTop: 6 }}>
-          선택한 주기: <b>{billing === "month" ? "월간" : "연간"}</b> ·{" "}
-          <b>{priceLabel}</b>
-        </div>
-
-        <div className="chipRow">
-          <span className="chip chipGold">심화 해석</span>
-          <span className="chip">기록 아카이브</span>
-          <span className="chip">프리미엄 타로</span>
-          <span className="chip">알림 우선</span>
-        </div>
-
-        <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-          <button className="btn btnPrimary btnWide" onClick={onConfirm}>
-            {billing === "month"
-              ? "월간으로 시작하기(데모)"
-              : "연간으로 시작하기(데모)"}
-          </button>
-          <button className="btn btnGhost btnWide" onClick={onClose}>
-            닫기
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
