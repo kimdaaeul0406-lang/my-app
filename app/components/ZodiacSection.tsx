@@ -1,17 +1,25 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { calculateZodiac, parseDateAndCalculateZodiac, type ZodiacInfo } from "../utils/zodiac";
+import {
+  calculateZodiac,
+  parseDateAndCalculateZodiac,
+  type ZodiacInfo,
+} from "../utils/zodiac";
 import ZodiacResult from "./ZodiacResult";
 import PremiumGate from "./PremiumGate";
 
 interface HoroscopeData {
-  date: string;
+  date: string | null;
   sign: string;
   horoscope: string;
-  love?: string;
-  money?: string;
-  work?: string;
+  description?: string;
+  mood?: string | null;
+  color?: string | null;
+  lucky_number?: string | number | null;
+  lucky_time?: string | null;
+  source?: "aztro" | "api-ninjas";
+  type?: "basic" | "today" | "tomorrow" | "yesterday";
 }
 
 interface ZodiacSectionProps {
@@ -22,16 +30,25 @@ interface ZodiacSectionProps {
  * 별자리 운세 섹션 컴포넌트
  * 생일 입력 → 별자리 계산 → 오늘의 운세 표시
  */
-export default function ZodiacSection({ isPremium = false }: ZodiacSectionProps) {
+export default function ZodiacSection({
+  isPremium = false,
+}: ZodiacSectionProps) {
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
   const [zodiacInfo, setZodiacInfo] = useState<ZodiacInfo | null>(null);
-  const [horoscopeData, setHoroscopeData] = useState<HoroscopeData | null>(null);
+  const [horoscopeData, setHoroscopeData] = useState<HoroscopeData | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 생일 입력 시 별자리 자동 계산
   useEffect(() => {
+    // 생일이 변경되면 이전 운세 데이터 초기화
+    setHoroscopeData(null);
+    setError(null);
+    setLoading(false);
+
     if (birthMonth && birthDay) {
       try {
         const month = parseInt(birthMonth, 10);
@@ -39,7 +56,6 @@ export default function ZodiacSection({ isPremium = false }: ZodiacSectionProps)
         if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
           const zodiac = calculateZodiac(month, day);
           setZodiacInfo(zodiac);
-          setError(null);
         } else {
           setZodiacInfo(null);
         }
@@ -62,15 +78,68 @@ export default function ZodiacSection({ isPremium = false }: ZodiacSectionProps)
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(
-          `/api/horoscope?sign=${zodiacInfo.nameEn}`
-        );
+        // API Ninjas가 계속 실패하므로 Aztro API 사용 (type=today)
+        const apiUrl = `/api/horoscope?sign=${zodiacInfo.nameEn}&type=today`;
+        console.log(`🌐 [Client] Fetching horoscope from: ${apiUrl}`);
+
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // 캐시 비활성화하여 항상 서버에서 최신 데이터 가져오기
+          cache: "no-store",
+        });
+
+        console.log(`📥 [Client] Response status: ${response.status}`);
+
         if (!response.ok) {
-          throw new Error("운세를 가져오는데 실패했어요");
+          let errorData: any = {};
+          try {
+            const text = await response.text();
+            console.log(`❌ [Client] Error response text:`, text);
+            errorData = text
+              ? JSON.parse(text)
+              : { error: `HTTP ${response.status}` };
+          } catch (parseError) {
+            console.error(
+              `❌ [Client] Failed to parse error response:`,
+              parseError
+            );
+            errorData = {
+              error: `HTTP ${response.status}`,
+              message: "서버에서 에러 응답을 받았습니다.",
+            };
+          }
+
+          console.error(`❌ [Client] API error:`, errorData);
+          console.error(`❌ [Client] Response status: ${response.status}`);
+
+          const errorMessage =
+            errorData.message ||
+            errorData.error ||
+            `HTTP ${response.status}: 운세를 가져오는데 실패했어요`;
+          throw new Error(errorMessage);
         }
+
         const data = await response.json();
-        setHoroscopeData(data);
+        console.log(`✅ [Client] Received data:`, data);
+
+        // API 호출 실패 시 null 처리
+        if (data.error || !data.description) {
+          console.warn(`⚠️ [Client] API returned error or empty data`);
+          setHoroscopeData(null);
+          setError(data.error || "운세 데이터를 가져올 수 없어요");
+          return;
+        }
+
+        // 새로운 API 응답 형식에 맞게 변환 (description -> horoscope)
+        setHoroscopeData({
+          ...data,
+          horoscope: data.description, // description을 horoscope로 매핑
+        });
       } catch (err) {
+        console.error(`❌ [Client] Error:`, err);
         setError(err instanceof Error ? err.message : "오류가 발생했어요");
         setHoroscopeData(null);
       } finally {
@@ -83,14 +152,20 @@ export default function ZodiacSection({ isPremium = false }: ZodiacSectionProps)
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === "" || (parseInt(value, 10) >= 1 && parseInt(value, 10) <= 12)) {
+    if (
+      value === "" ||
+      (parseInt(value, 10) >= 1 && parseInt(value, 10) <= 12)
+    ) {
       setBirthMonth(value);
     }
   };
 
   const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === "" || (parseInt(value, 10) >= 1 && parseInt(value, 10) <= 31)) {
+    if (
+      value === "" ||
+      (parseInt(value, 10) >= 1 && parseInt(value, 10) <= 31)
+    ) {
       setBirthDay(value);
     }
   };
@@ -146,7 +221,10 @@ export default function ZodiacSection({ isPremium = false }: ZodiacSectionProps)
       )}
 
       {!zodiacInfo && birthMonth && birthDay && (
-        <div className="smallHelp" style={{ marginTop: 12, textAlign: "center" }}>
+        <div
+          className="smallHelp"
+          style={{ marginTop: 12, textAlign: "center" }}
+        >
           생일을 올바르게 입력해주세요 (예: 08/17)
         </div>
       )}

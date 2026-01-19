@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Horoscope API 연동
- * 무료 Horoscope API를 사용하여 별자리 운세를 가져옵니다.
- * 
- * 참고: 실제 API는 아래 중 하나를 사용할 수 있습니다:
- * - https://aztro.sameerkumar.website/ (무료, 간단)
- * - https://horoscope-api.herokuapp.com/horoscope/today/ (무료)
- * - https://api.horoscopesandyearlypredictions.com/ (유료)
- * 
- * 현재는 데모용으로 가공된 한국어 응답을 반환합니다.
+ * 두 개의 외부 API를 사용하여 별자리 운세를 가져옵니다.
+ *
+ * - API Ninjas Horoscope API (API Key 사용) - basic (무료)
+ * - Aztro API (POST 요청, API Key 없음) - today/tomorrow/yesterday (프리미엄)
+ *
+ * 환경 변수:
+ * - API_NINJAS_KEY: API Ninjas API 키 (.env.local에 설정)
+ *
+ * 요청 예시:
+ * - GET /api/horoscope?sign=leo&type=basic (API Ninjas)
+ * - GET /api/horoscope?sign=leo&type=today (Aztro API)
+ * - GET /api/horoscope?sign=leo&type=tomorrow (Aztro API)
+ * - GET /api/horoscope?sign=leo&type=yesterday (Aztro API)
  */
 
 type ZodiacSignEn =
@@ -26,211 +31,703 @@ type ZodiacSignEn =
   | "aquarius"
   | "pisces";
 
-interface HoroscopeResponse {
-  date: string;
+type HoroscopeType = "basic" | "today" | "tomorrow" | "yesterday";
+
+/**
+ * 공통 응답 포맷
+ */
+interface UnifiedHoroscopeResponse {
   sign: ZodiacSignEn;
-  horoscope: string;
-  love?: string;
-  money?: string;
-  work?: string;
-}
-
-// 날짜 기반 캐싱을 위한 간단한 메모리 캐시
-const cache: Map<string, HoroscopeResponse> = new Map();
-
-function getCacheKey(sign: ZodiacSignEn, date: string): string {
-  return `${sign}_${date}`;
+  type: HoroscopeType;
+  date: string | null;
+  description: string;
+  mood: string | null;
+  color: string | null;
+  lucky_number: string | number | null;
+  lucky_time: string | null;
+  source: "aztro" | "api-ninjas" | "fallback";
+  warning?: string;
+  // 프리미엄: 카테고리별 운세
+  love?: string | null;
+  money?: string | null;
+  work?: string | null;
 }
 
 /**
- * 외부 API에서 운세를 가져오는 함수 (데모용)
- * 실제 구현 시 아래 주석 처리된 코드를 사용하세요.
+ * API Ninjas 응답 형식
  */
-async function fetchHoroscopeFromAPI(
-  sign: ZodiacSignEn
-): Promise<HoroscopeResponse> {
-  // 실제 API 연동 예시 (주석 처리됨)
-  /*
-  try {
-    const response = await fetch(
-      `https://aztro.sameerkumar.website/?sign=${sign}&day=today`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+interface ApiNinjasResponse {
+  horoscope: string;
+}
+
+/**
+ * Aztro API 응답 형식
+ */
+interface AztroResponse {
+  current_date: string;
+  date_range: string;
+  description: string;
+  compatibility: string;
+  mood: string;
+  color: string;
+  lucky_number: string | number;
+  lucky_time: string;
+}
+
+/**
+ * Google Translate 비공식 API 응답 형식
+ */
+type GoogleTranslateResponse = [
+  [[string, string, null, null, number]],
+  null,
+  string
+];
+
+/**
+ * Mood 매핑 테이블 (영어 → 한국어)
+ */
+const moodMapping: Record<string, string> = {
+  Confident: "자신감",
+  Relaxed: "편안함",
+  Energetic: "활기참",
+  Calm: "차분함",
+  Optimistic: "낙관적",
+  Creative: "창의적",
+  Focused: "집중력",
+  Playful: "장난기",
+  Serious: "진지함",
+  Adventurous: "모험적",
+  Thoughtful: "사려깊음",
+  Passionate: "열정적",
+  Mysterious: "신비로움",
+  Balanced: "균형잡힘",
+  Ambitious: "야망",
+  Sensitive: "민감함",
+  Independent: "독립적",
+  Social: "사교적",
+  Introspective: "내성적",
+  Determined: "결단력",
+};
+
+/**
+ * Color 매핑 테이블 (영어 → 한국어)
+ */
+const colorMapping: Record<string, string> = {
+  Gold: "골드",
+  "Spring Green": "봄녹색",
+  "Sky Blue": "하늘색",
+  "Royal Blue": "로얄 블루",
+  "Deep Purple": "진한 보라",
+  "Coral Red": "코랄 레드",
+  "Sunset Orange": "석양 오렌지",
+  "Forest Green": "숲녹색",
+  "Ocean Blue": "바다색",
+  Lavender: "라벤더",
+  "Rose Pink": "로즈 핑크",
+  Amber: "호박색",
+  Emerald: "에메랄드",
+  Sapphire: "사파이어",
+  Ruby: "루비",
+  Silver: "실버",
+  Bronze: "브론즈",
+  Ivory: "아이보리",
+  Navy: "네이비",
+  Crimson: "진홍색",
+};
+
+/**
+ * 시간 형식 변환 함수
+ * "2pm" → "오후 2시", "7am" → "오전 7시"
+ */
+function translateLuckyTime(timeStr: string | null): string | null {
+  if (!timeStr) return null;
+
+  // 이미 한국어인지 체크
+  if (/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(timeStr)) {
+    return timeStr;
+  }
+
+  // "2pm", "7am" 형식 처리
+  const timeMatch = timeStr.match(/(\d+)(am|pm)/i);
+  if (timeMatch) {
+    const hour = parseInt(timeMatch[1], 10);
+    const period = timeMatch[2].toLowerCase();
+
+    if (period === "am") {
+      return `오전 ${hour}시`;
+    } else {
+      return `오후 ${hour}시`;
+    }
+  }
+
+  // 다른 형식은 번역 API 사용
+  return null; // 번역 API로 처리하도록 null 반환
+}
+
+/**
+ * 영어를 한국어로 번역하는 함수 (서버 전용)
+ * Google Translate 비공식 API 사용
+ */
+async function translateToKorean(text: string): Promise<string> {
+  if (!text || text.trim() === "") {
+    return text;
+  }
+
+  // 이미 한국어인지 간단히 체크 (한글 포함 여부)
+  const hasKorean = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(text);
+  if (hasKorean) {
+    console.log(
+      "🌐 [Translation] Text already contains Korean, skipping translation"
     );
+    return text;
+  }
+
+  console.log(`🌐 [Translation] Translating text (length: ${text.length})`);
+
+  const translateUrl = new URL(
+    "https://translate.googleapis.com/translate_a/single"
+  );
+  translateUrl.searchParams.append("client", "gtx");
+  translateUrl.searchParams.append("sl", "en");
+  translateUrl.searchParams.append("tl", "ko");
+  translateUrl.searchParams.append("dt", "t");
+  translateUrl.searchParams.append("q", text);
+
+  // AbortController를 사용한 timeout 설정 (5초)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await fetch(translateUrl.toString(), {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error("API request failed");
+      console.error(`❌ [Translation] HTTP error: ${response.status}`);
+      return text; // 번역 실패 시 원문 반환
     }
 
-    const data = await response.json();
-    
-    // API 응답을 한국어 톤으로 가공
-    return {
-      date: data.current_date,
-      sign: sign,
-      horoscope: processHoroscopeText(data.description),
-      love: data.love ? processHoroscopeText(data.love) : undefined,
-      money: data.money ? processHoroscopeText(data.money) : undefined,
-      work: data.work ? processHoroscopeText(data.work) : undefined,
-    };
+    const data: GoogleTranslateResponse = await response.json();
+
+    // 응답 형식: [[["번역된 텍스트", "원문", null, null, 0]], null, "en"]
+    if (
+      Array.isArray(data) &&
+      Array.isArray(data[0]) &&
+      Array.isArray(data[0][0]) &&
+      data[0][0][0]
+    ) {
+      const translatedText = data[0][0][0];
+      console.log("✅ [Translation] Translation successful");
+      return translatedText;
+    }
+
+    console.error("❌ [Translation] Unexpected response format");
+    return text; // 번역 실패 시 원문 반환
   } catch (error) {
-    console.error("Horoscope API error:", error);
-    throw error;
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error("❌ [Translation] Request timeout (5 seconds)");
+    } else {
+      console.error("❌ [Translation] Error:", error);
+    }
+
+    // 번역 실패해도 원문 반환 (전체 API는 정상 동작)
+    return text;
   }
-  */
+}
 
-  // 데모용 응답 (실제 API 연결 전까지 사용)
-  const demoHoroscopes: Record<ZodiacSignEn, string> = {
-    aries: "오늘은 새로운 시작에 용기를 내보세요. 작은 도전이 큰 변화를 만들어요.",
-    taurus: "오늘은 안정을 추구하는 하루예요. 서두르지 말고 차근차근 진행하세요.",
-    gemini: "오늘은 소통이 중요한 날이에요. 주변 사람들과 대화를 나누면 좋은 기회가 생겨요.",
-    cancer: "오늘은 감정에 귀 기울이는 시간이 필요해요. 내면의 목소리를 들어보세요.",
-    leo: "오늘은 자신감을 발휘할 수 있는 날이에요. 주도적으로 움직이면 좋은 결과가 나와요.",
-    virgo: "오늘은 정리와 계획이 중요한 하루예요. 체계적으로 접근하면 효율이 올라가요.",
-    libra: "오늘은 균형을 찾는 것이 중요해요. 한쪽으로 치우치지 않도록 조심하세요.",
-    scorpio: "오늘은 깊이 있는 사고가 필요한 날이에요. 표면보다 본질을 보는 것이 좋아요.",
-    sagittarius: "오늘은 모험과 탐험의 기운이 있어요. 새로운 경험을 시도해보세요.",
-    capricorn: "오늘은 목표를 향해 꾸준히 나아가는 날이에요. 인내심이 결과를 만들어요.",
-    aquarius: "오늘은 독창적인 아이디어가 떠오르는 날이에요. 창의성을 발휘해보세요.",
-    pisces: "오늘은 직감을 믿어보세요. 감정의 흐름을 따라가면 좋은 방향이 보여요.",
-  };
+/**
+ * 응답 객체의 모든 필드를 한국어로 번역하는 함수
+ */
+async function translateFields(
+  response: UnifiedHoroscopeResponse
+): Promise<UnifiedHoroscopeResponse> {
+  console.log("🌐 [Translation] Starting field translation");
 
-  const demoLove: Record<ZodiacSignEn, string> = {
-    aries: "오늘은 적극적인 접근이 관계를 발전시켜요.",
-    taurus: "오늘은 안정적인 관계를 유지하는 것이 좋아요.",
-    gemini: "오늘은 대화를 통해 서로를 더 이해할 수 있어요.",
-    cancer: "오늘은 감정을 솔직하게 표현하는 것이 중요해요.",
-    leo: "오늘은 로맨틱한 순간을 만들어보세요.",
-    virgo: "오늘은 작은 배려가 관계를 돈독하게 만들어요.",
-    libra: "오늘은 상대방의 입장을 고려하는 것이 좋아요.",
-    scorpio: "오늘은 깊은 신뢰를 쌓을 수 있는 날이에요.",
-    sagittarius: "오늘은 함께 새로운 경험을 나누면 좋아요.",
-    capricorn: "오늘은 진지한 대화를 나눌 수 있는 날이에요.",
-    aquarius: "오늘은 독특한 방식으로 마음을 전해보세요.",
-    pisces: "오늘은 감성적인 교감이 중요한 하루예요.",
-  };
+  // description 번역 (번역 API 사용)
+  const translatedDescription = await translateToKorean(response.description);
 
-  const demoMoney: Record<ZodiacSignEn, string> = {
-    aries: "오늘은 신중한 투자가 필요해요.",
-    taurus: "오늘은 안정적인 재정 관리가 중요해요.",
-    gemini: "오늘은 정보를 충분히 수집한 후 결정하세요.",
-    cancer: "오늘은 감정적인 소비를 자제하는 것이 좋아요.",
-    leo: "오늘은 투자보다는 절약에 집중하세요.",
-    virgo: "오늘은 계획적인 지출이 필요해요.",
-    libra: "오늘은 균형 잡힌 재정 관리가 중요해요.",
-    scorpio: "오늘은 장기적인 관점에서 생각하세요.",
-    sagittarius: "오늘은 새로운 기회를 주의 깊게 살펴보세요.",
-    capricorn: "오늘은 보수적인 접근이 안전해요.",
-    aquarius: "오늘은 독창적인 방법으로 수입을 늘릴 수 있어요.",
-    pisces: "오늘은 직감보다는 사실에 기반해 결정하세요.",
-  };
+  // mood 번역 (매핑 테이블 우선, 없으면 번역 API)
+  let translatedMood: string | null = null;
+  if (response.mood) {
+    const moodLower = response.mood.trim();
+    if (moodMapping[moodLower]) {
+      translatedMood = moodMapping[moodLower];
+      console.log(
+        `🌐 [Translation] Mood mapped: ${response.mood} → ${translatedMood}`
+      );
+    } else {
+      translatedMood = await translateToKorean(response.mood);
+    }
+  }
 
-  const demoWork: Record<ZodiacSignEn, string> = {
-    aries: "오늘은 주도적으로 일을 이끌어가세요.",
-    taurus: "오늘은 꾸준함이 성과를 만들어요.",
-    gemini: "오늘은 협업이 중요한 하루예요.",
-    cancer: "오늘은 세심한 배려가 업무 효율을 높여요.",
-    leo: "오늘은 리더십을 발휘할 수 있는 날이에요.",
-    virgo: "오늘은 체계적인 접근이 필요해요.",
-    libra: "오늘은 팀워크가 성공의 열쇠예요.",
-    scorpio: "오늘은 집중력이 중요한 하루예요.",
-    sagittarius: "오늘은 새로운 도전을 받아들이세요.",
-    capricorn: "오늘은 목표를 향해 꾸준히 나아가세요.",
-    aquarius: "오늘은 혁신적인 아이디어가 떠오르는 날이에요.",
-    pisces: "오늘은 직감을 활용해 문제를 해결하세요.",
-  };
+  // color 번역 (매핑 테이블 우선, 없으면 번역 API)
+  let translatedColor: string | null = null;
+  if (response.color) {
+    const colorKey = Object.keys(colorMapping).find(
+      (key) => key.toLowerCase() === response.color?.toLowerCase()
+    );
+    if (colorKey) {
+      translatedColor = colorMapping[colorKey];
+      console.log(
+        `🌐 [Translation] Color mapped: ${response.color} → ${translatedColor}`
+      );
+    } else {
+      translatedColor = await translateToKorean(response.color);
+    }
+  }
 
-  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  // lucky_time 번역 (시간 형식 변환 우선, 없으면 번역 API)
+  let translatedLuckyTime: string | null = null;
+  if (response.lucky_time) {
+    const timeTranslated = translateLuckyTime(response.lucky_time);
+    if (timeTranslated) {
+      translatedLuckyTime = timeTranslated;
+      console.log(
+        `🌐 [Translation] Lucky time converted: ${response.lucky_time} → ${translatedLuckyTime}`
+      );
+    } else {
+      translatedLuckyTime = await translateToKorean(response.lucky_time);
+    }
+  }
+
+  // warning 번역 (있는 경우)
+  let translatedWarning: string | undefined = undefined;
+  if (response.warning) {
+    translatedWarning = await translateToKorean(response.warning);
+  }
+
+  // love, money, work 번역 (있는 경우)
+  let translatedLove: string | null = null;
+  let translatedMoney: string | null = null;
+  let translatedWork: string | null = null;
+
+  if (response.love) {
+    translatedLove = await translateToKorean(response.love);
+  }
+  if (response.money) {
+    translatedMoney = await translateToKorean(response.money);
+  }
+  if (response.work) {
+    translatedWork = await translateToKorean(response.work);
+  }
 
   return {
-    date: today,
-    sign: sign,
-    horoscope: demoHoroscopes[sign],
-    love: demoLove[sign],
-    money: demoMoney[sign],
-    work: demoWork[sign],
+    ...response,
+    description: translatedDescription,
+    mood: translatedMood,
+    color: translatedColor,
+    lucky_time: translatedLuckyTime,
+    warning: translatedWarning,
+    love: translatedLove,
+    money: translatedMoney,
+    work: translatedWork,
   };
 }
 
 /**
- * API 응답 텍스트를 한국어 톤으로 가공
- * (과장/점집 느낌 제거, 세련되고 차분한 톤으로 변환)
+ * 날짜 변환 함수 (Aztro 전용)
+ * "January 16, 2026" → "2026-01-16"
  */
-function processHoroscopeText(text: string): string {
-  // 실제 API 응답을 받으면 여기서 가공
-  // 예: "You will have a great day!" → "오늘은 좋은 하루가 될 거예요."
-  return text;
+function convertAztroDate(dateStr: string): string | null {
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.error("❌ [Date Conversion] Invalid date:", dateStr);
+      return null;
+    }
+    return date.toISOString().split("T")[0];
+  } catch (error) {
+    console.error("❌ [Date Conversion] Failed to convert date:", dateStr);
+    return null;
+  }
+}
+
+/**
+ * HTML 응답인지 확인
+ */
+function isHtmlResponse(text: string): boolean {
+  const trimmed = text.trim().toLowerCase();
+  return (
+    trimmed.startsWith("<!doctype") ||
+    trimmed.startsWith("<html") ||
+    trimmed.includes("<html>")
+  );
+}
+
+/**
+ * API Ninjas에서 운세를 가져오는 함수
+ * ⚠️ 중요: date, day, today 같은 파라미터 절대 추가하지 않기
+ */
+async function fetchFromApiNinjas(
+  sign: ZodiacSignEn
+): Promise<UnifiedHoroscopeResponse> {
+  const apiKey = process.env.API_NINJAS_KEY;
+
+  if (!apiKey) {
+    throw new Error("API_NINJAS_KEY is not set in environment variables");
+  }
+
+  console.log(`🔮 [API Ninjas] Fetching horoscope for ${sign}`);
+
+  // ⚠️ 중요: URL을 직접 고정하여 date/day/today 파라미터가 절대 포함되지 않도록 함
+  const url = `https://api.api-ninjas.com/v1/horoscope?zodiac=${encodeURIComponent(
+    sign
+  )}`;
+
+  // 디버깅: fetch 호출 직전에 실제 URL 확인
+  console.log("[NINJAS URL]", url);
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "X-Api-Key": apiKey,
+      },
+      cache: "no-store",
+    });
+
+    console.log(`📥 [API Ninjas] Response Status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ [API Ninjas] Error response:", errorText);
+      throw new Error(
+        `API Ninjas request failed: ${response.status} ${errorText}`
+      );
+    }
+
+    const data: ApiNinjasResponse = await response.json();
+    console.log("✅ [API Ninjas] Response received");
+
+    if (!data.horoscope || data.horoscope.trim() === "") {
+      throw new Error("API Ninjas returned empty horoscope");
+    }
+
+    // basic은 date를 항상 null로 설정
+    const result: UnifiedHoroscopeResponse = {
+      sign: sign,
+      date: null,
+      type: "basic",
+      description: data.horoscope, // 번역은 translateFields에서 처리
+      mood: null,
+      color: null,
+      lucky_number: null,
+      lucky_time: null,
+      source: "api-ninjas",
+    };
+
+    // 모든 필드 번역
+    return await translateFields(result);
+  } catch (error) {
+    console.error("❌ [API Ninjas] Error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Aztro API에서 운세를 가져오는 함수
+ * type=today|tomorrow|yesterday에서만 사용
+ * timeout 6초 적용, HTML 응답 감지 및 처리
+ */
+async function fetchFromAztro(
+  sign: ZodiacSignEn,
+  day: "today" | "tomorrow" | "yesterday"
+): Promise<UnifiedHoroscopeResponse> {
+  console.log(`🔮 [Aztro] Fetching horoscope for ${sign}, day: ${day}`);
+
+  const apiUrl = `https://aztro.sameerkumar.website/?sign=${sign}&day=${day}`;
+
+  console.log(`📡 [Aztro] Request URL: ${apiUrl}`);
+
+  // AbortController를 사용한 timeout 설정 (6초)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    console.log(`📥 [Aztro] Response Status: ${response.status}`);
+
+    // 응답이 성공이 아니거나 HTML인 경우 처리
+    if (!response.ok) {
+      const errorText = await response.text();
+      const errorPreview = errorText.substring(0, 200);
+
+      console.error("❌ [Aztro] Error response status:", response.status);
+      console.error("❌ [Aztro] Error response preview:", errorPreview);
+      console.error(
+        "❌ [Aztro] Error response is HTML:",
+        isHtmlResponse(errorText)
+      );
+
+      // HTML 응답이면 AztroUnavailable로 간주
+      if (isHtmlResponse(errorText)) {
+        throw new Error("AztroUnavailable: HTML error page received");
+      }
+
+      throw new Error(
+        `Aztro API request failed: ${response.status} ${errorPreview}`
+      );
+    }
+
+    // 응답 텍스트 읽기
+    const responseText = await response.text();
+
+    // HTML 응답인지 확인
+    if (isHtmlResponse(responseText)) {
+      console.error("❌ [Aztro] Received HTML instead of JSON");
+      console.error(
+        "❌ [Aztro] Response preview:",
+        responseText.substring(0, 200)
+      );
+      throw new Error("AztroUnavailable: HTML error page received");
+    }
+
+    // JSON 파싱 시도
+    let data: AztroResponse;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("❌ [Aztro] Failed to parse JSON response");
+      console.error(
+        "❌ [Aztro] Response preview:",
+        responseText.substring(0, 200)
+      );
+      throw new Error("AztroUnavailable: Invalid JSON response");
+    }
+
+    console.log("✅ [Aztro] Response received and parsed");
+
+    if (!data.description || data.description.trim() === "") {
+      throw new Error("Aztro API returned empty description");
+    }
+
+    // Aztro만 날짜 변환: "January 16, 2026" → "2026-01-16"
+    const convertedDate = convertAztroDate(data.current_date);
+
+    const result: UnifiedHoroscopeResponse = {
+      sign: sign,
+      date: convertedDate,
+      type: day,
+      description: data.description, // 번역은 translateFields에서 처리
+      mood: data.mood || null,
+      color: data.color || null,
+      lucky_number: data.lucky_number || null,
+      lucky_time: data.lucky_time || null,
+      source: "aztro",
+    };
+
+    // 모든 필드 번역
+    return await translateFields(result);
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error("❌ [Aztro] Request timeout (6 seconds)");
+      throw new Error("AztroUnavailable: Request timeout");
+    }
+
+    console.error("❌ [Aztro] Error:", error);
+    throw error;
+  }
+}
+
+/**
+ * 유효한 별자리인지 확인
+ */
+function isValidSign(sign: string): sign is ZodiacSignEn {
+  const validSigns: ZodiacSignEn[] = [
+    "aries",
+    "taurus",
+    "gemini",
+    "cancer",
+    "leo",
+    "virgo",
+    "libra",
+    "scorpio",
+    "sagittarius",
+    "capricorn",
+    "aquarius",
+    "pisces",
+  ];
+  return validSigns.includes(sign as ZodiacSignEn);
+}
+
+/**
+ * 유효한 type인지 확인
+ */
+function isValidType(type: string): type is HoroscopeType {
+  return (
+    type === "basic" ||
+    type === "today" ||
+    type === "tomorrow" ||
+    type === "yesterday"
+  );
 }
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const sign = searchParams.get("sign") as ZodiacSignEn | null;
+    const signParam = searchParams.get("sign");
+    const typeParam = searchParams.get("type") || "today"; // 기본값 today
 
-    if (!sign) {
+    // sign 파라미터 검증
+    if (!signParam) {
       return NextResponse.json(
         { error: "Sign parameter is required" },
         { status: 400 }
       );
     }
 
-    // 유효한 별자리인지 확인
-    const validSigns: ZodiacSignEn[] = [
-      "aries",
-      "taurus",
-      "gemini",
-      "cancer",
-      "leo",
-      "virgo",
-      "libra",
-      "scorpio",
-      "sagittarius",
-      "capricorn",
-      "aquarius",
-      "pisces",
-    ];
-
-    if (!validSigns.includes(sign)) {
+    if (!isValidSign(signParam)) {
       return NextResponse.json(
-        { error: "Invalid zodiac sign" },
+        {
+          error: "Invalid zodiac sign",
+          message:
+            "Valid signs: aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius, pisces",
+        },
         { status: 400 }
       );
     }
 
-    // 오늘 날짜로 캐시 키 생성
-    const today = new Date().toISOString().split("T")[0];
-    const cacheKey = getCacheKey(sign, today);
-
-    // 캐시 확인
-    if (cache.has(cacheKey)) {
-      return NextResponse.json(cache.get(cacheKey));
+    // type 파라미터 검증
+    if (!isValidType(typeParam)) {
+      return NextResponse.json(
+        {
+          error: "Invalid type",
+          message: "Type must be 'basic', 'today', 'tomorrow', or 'yesterday'",
+        },
+        { status: 400 }
+      );
     }
 
-    // API에서 운세 가져오기
-    const horoscope = await fetchHoroscopeFromAPI(sign);
+    const sign: ZodiacSignEn = signParam;
+    const type: HoroscopeType = typeParam;
 
-    // 캐시에 저장 (하루 동안 유지)
-    cache.set(cacheKey, horoscope);
+    console.log(
+      `🌐 [Server Route] Fetching horoscope for ${sign}, type: ${type}`
+    );
 
-    // 캐시 정리 (하루가 지난 항목 제거)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-    for (const [key] of cache.entries()) {
-      if (key.includes(yesterdayStr)) {
-        cache.delete(key);
+    let result: UnifiedHoroscopeResponse;
+
+    try {
+      if (type === "basic") {
+        // API Ninjas 사용 (무료) - date 파라미터 절대 사용 안 함
+        try {
+          result = await fetchFromApiNinjas(sign);
+        } catch (apiNinjasError) {
+          console.warn(
+            "⚠️ [Server Route] API Ninjas failed, trying Aztro as fallback"
+          );
+          // API Ninjas 실패 시 Aztro API로 폴백
+          try {
+            result = await fetchFromAztro(sign, "today");
+            result.source = "fallback";
+            result.warning = "API Ninjas temporarily unavailable, using Aztro";
+            // warning도 번역
+            result = await translateFields(result);
+          } catch (aztroError) {
+            // 둘 다 실패하면 에러 throw
+            throw apiNinjasError;
+          }
+        }
+      } else {
+        // Aztro API 사용 (프리미엄: today, tomorrow, yesterday)
+        try {
+          result = await fetchFromAztro(sign, type);
+        } catch (aztroError) {
+          const isAztroUnavailable =
+            aztroError instanceof Error &&
+            aztroError.message.includes("AztroUnavailable");
+
+          if (isAztroUnavailable) {
+            console.warn(
+              "⚠️ [Server Route] Aztro unavailable, trying API Ninjas as fallback"
+            );
+            console.warn(
+              "⚠️ [Server Route] Aztro error:",
+              aztroError instanceof Error
+                ? aztroError.message
+                : String(aztroError)
+            );
+          } else {
+            console.warn(
+              "⚠️ [Server Route] Aztro failed, trying API Ninjas as fallback"
+            );
+          }
+
+          // Aztro 실패 시 API Ninjas로 폴백 (basic으로)
+          try {
+            result = await fetchFromApiNinjas(sign);
+            result.source = "fallback";
+            result.type = type; // 원래 요청한 type 유지
+            result.warning = "Aztro temporarily unavailable, using API Ninjas";
+            // warning도 번역
+            result = await translateFields(result);
+          } catch (apiNinjasError) {
+            // 둘 다 실패하면 에러 throw
+            throw aztroError;
+          }
+        }
       }
-    }
 
-    return NextResponse.json(horoscope);
+      console.log(`✅ [Server Route] Successfully fetched horoscope`);
+      console.log(`📊 [Server Route] Source: ${result.source}`);
+
+      return NextResponse.json(result, {
+        headers: {
+          "Cache-Control": "no-store, must-revalidate",
+          "X-API-Source": result.source,
+        },
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(`❌ [Server Route] All API calls failed:`, errorMessage);
+
+      // 에러 메시지도 한국어로 번역
+      const translatedErrorMessage = await translateToKorean(
+        "별자리 API 호출에 실패했습니다. 잠시 후 다시 시도해주세요."
+      );
+
+      // 외부 API 실패 시 502 Bad Gateway
+      return NextResponse.json(
+        {
+          error: errorMessage || "Failed to fetch horoscope from API",
+          message: translatedErrorMessage,
+          sign: sign,
+          type: type,
+        },
+        {
+          status: 502,
+          headers: {
+            "Cache-Control": "no-store, must-revalidate",
+          },
+        }
+      );
+    }
   } catch (error) {
-    console.error("Horoscope API error:", error);
+    console.error("❌ [Server Route] Unexpected error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch horoscope" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

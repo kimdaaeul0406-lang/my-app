@@ -81,13 +81,13 @@ export default function Page() {
     const items = [
       {
         kicker: "TODAY FLOW",
-        statement: "오늘은 결론보다 ‘정리’가 먼저인 날이에요.",
+        statement: "오늘은 결론보다 '정리'가 먼저인 날이에요.",
         desc: "급하게 답을 찾기보다, 마음의 순서를 정돈하면 흐름이 편해져요.",
         tags: ["정리", "호흡", "선택"],
       },
       {
         kicker: "TODAY FLOW",
-        statement: "오늘은 ‘확신’보다 ‘감각’을 믿는 편이 좋아요.",
+        statement: "오늘은 '확신'보다 '감각'을 믿는 편이 좋아요.",
         desc: "작은 신호를 놓치지 않으면, 방향이 자연스럽게 잡혀요.",
         tags: ["직감", "흐름", "균형"],
       },
@@ -158,41 +158,9 @@ export default function Page() {
 
   // 기록
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  useEffect(() => {
-    const g =
-      gender === "female" ? "여성" : gender === "male" ? "남성" : "선택 안 함";
-    const note = hasBirth
-      ? `입력 기반(데모) · ${g}${hasTime ? " · 시간 포함" : ""}`
-      : "기본 데모 결과";
-    return note;
-  }, [birth, time, gender]);
 
-  const sajuResultByTopic = useMemo(() => {
-    const map: Record<
-      SajuTopic,
-      { title: string; text: string; tags: string[] }
-    > = {
-      연애: {
-        title: "관계의 결을 정리하면, 마음이 편해져요.",
-        text: "오늘은 밀어붙이기보다 ‘대화의 여백’을 남기는 편이 좋아요. 말이 줄면 진심이 더 또렷해져요.",
-        tags: ["배려", "거리감", "정리"],
-      },
-      재물: {
-        title: "지출의 ‘이유’를 확인하면 흐름이 바뀌어요.",
-        text: "오늘은 작은 충동이 커질 수 있어요. 구매 전에 ‘왜 필요하지?’를 한 번만 묻고 결정하면 깔끔해요.",
-        tags: ["절제", "기준", "현명"],
-      },
-      직장: {
-        title: "속도보다 정렬이 먼저인 날이에요.",
-        text: "할 일을 늘리기보다 우선순위를 맞추면 시간이 벌려요. 오늘은 ‘정리한 사람이 이기는 날’이에요.",
-        tags: ["우선순위", "집중", "정렬"],
-      },
-      건강: {
-        title: "몸이 보내는 작은 신호를 놓치지 마세요.",
-        text: "오늘은 무리보다 루틴이 중요해요. 짧은 스트레칭과 물 한 컵만으로도 컨디션이 달라져요.",
-        tags: ["루틴", "회복", "호흡"],
-      },
-    };
+  // localStorage에서 히스토리 로드
+  useEffect(() => {
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
       if (!raw) return;
@@ -240,12 +208,12 @@ export default function Page() {
       {
         name: "THE MOON",
         title: "흐림 속에서도 길은 있어요.",
-        text: "오늘은 모든 걸 확정하기보다, 감정을 관찰하는 쪽이 좋아요. 불확실함은 ‘정보 부족’일 수 있어요.",
+        text: "오늘은 모든 걸 확정하기보다, 감정을 관찰하는 쪽이 좋아요. 불확실함은 '정보 부족'일 수 있어요.",
         tags: ["관찰", "직감", "유예"],
       },
       {
         name: "THE SUN",
-        title: "정답이 아니라 ‘확신’이 자라요.",
+        title: "정답이 아니라 '확신'이 자라요.",
         text: "오늘은 작은 성취가 큰 자신감으로 이어져요. 시작을 미루지 말고, 가볍게 움직여봐요.",
         tags: ["성취", "기쁨", "시작"],
       },
@@ -394,7 +362,7 @@ export default function Page() {
           </div>
         </section>
 
-        {/* FLOW (사주 세계: 밝음) */}
+        {/* FLOW (별자리 세계: 밝음) */}
         <section className="sectionTight reveal" ref={flowRef as any}>
           <div className="container center">
             <h2 className="h2 stagger d1">오늘의 흐름</h2>
@@ -428,11 +396,11 @@ export default function Page() {
               </div>
 
               <Link
-                href="/saju"
+                href="/zodiac"
                 className="btnTiny"
                 style={{ textDecoration: "none" }}
               >
-                사주 확인하기
+                별자리 확인하기
               </Link>
               <Link
                 href="/tarot"
@@ -469,11 +437,11 @@ export default function Page() {
               </div>
 
               <Link
-                href="/saju"
+                href="/zodiac"
                 className="btnTiny"
                 style={{ textDecoration: "none" }}
               >
-                사주 확인하기
+                별자리 확인하기
               </Link>
               <Link
                 href="/tarot"
@@ -491,7 +459,7 @@ export default function Page() {
           <div className="container center">
             <h2 className="h2 stagger d1">믿고 볼 수 있도록</h2>
             <p className="p stagger d2">
-              공포·불안 조장 없이, 오늘의 선택을 “정리”하는 서비스예요.
+              공포·불안 조장 없이, 오늘의 선택을 "정리"하는 서비스예요.
             </p>
 
             <div className="trustRow stagger d3">
@@ -524,7 +492,7 @@ export default function Page() {
                   <div className="principleTitle">행동으로 이어지는 조언</div>
                 </div>
                 <div className="principleDesc">
-                  “그래서 오늘 뭘 하면 좋을지”가 남도록 방향을 정리해요.
+                  "그래서 오늘 뭘 하면 좋을지"가 남도록 방향을 정리해요.
                 </div>
               </div>
 
@@ -872,7 +840,7 @@ export default function Page() {
                   <div style={{ fontWeight: 900 }}>
                     아직 저장된 기록이 없어요.
                   </div>
-                  <div className="p">사주/타로 결과에서 “저장”을 눌러봐.</div>
+                  <div className="p">별자리/타로 결과에서 "저장"을 눌러봐.</div>
                 </div>
               ) : (
                 history.map((h) => (
@@ -941,7 +909,7 @@ export default function Page() {
               </li>
               <li>의료·법률·투자 조언을 대체하지 않아요.</li>
               <li>
-                오늘의 선택을 “정리”하는 서비스로, 스스로의 판단을 돕는 데
+                오늘의 선택을 "정리"하는 서비스로, 스스로의 판단을 돕는 데
                 집중해요.
               </li>
             </ul>
@@ -967,8 +935,8 @@ export default function Page() {
                 result={tarotResult}
                 onSaveFree={() => saveTarot(false)}
                 onSavePremium={() => {
-                  router.push("/plan");
-                  showToast("프리미엄 해석은 구독 후 열려요(데모)");
+                  // 프리미엄 해석 표시 (구독 페이지로 이동하지 않음)
+                  showToast("프리미엄 해석을 확인하세요");
                 }}
                 onClose={() => setModal(null)}
               />
@@ -1017,76 +985,6 @@ function Modal({
 /* ===== TAROT Modal (PC: hover 살짝 / click 완전 뒤집힘, Mobile: 선택 후 바탕 탭하면 초기화) ===== */
 function TarotModal({
   picked,
-  setTopic,
-  baseNote,
-  result,
-  onSave,
-  onClose,
-}: {
-  topic: SajuTopic;
-  setTopic: (t: SajuTopic) => void;
-  baseNote: string;
-  result: { title: string; text: string; tags: string[] };
-  onSave: () => void;
-  onClose: () => void;
-}) {
-  const topics: SajuTopic[] = ["연애", "재물", "직장", "건강"];
-
-  return (
-    <>
-      <p className="p" style={{ marginTop: 0 }}>
-        {baseNote} · 오늘의 흐름을 “짧게, 과장 없이” 정리해요.
-      </p>
-
-      <div className="tabRow" aria-label="사주 분야">
-        {topics.map((t) => (
-          <button
-            key={t}
-            className={`tabBtn ${t === topic ? "on" : ""}`}
-            onClick={() => setTopic(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      <div className="card cardPad lift" style={{ marginTop: 12 }}>
-        <div style={{ fontWeight: 900, letterSpacing: -0.01 }}>
-          {result.title}
-        </div>
-        <div className="p" style={{ marginTop: 8 }}>
-          {result.text}
-        </div>
-
-        <div className="chipRow">
-          <span className="chip">{topic}</span>
-          {result.tags.map((t) => (
-            <span className="chip" key={t}>
-              {t}
-            </span>
-          ))}
-        </div>
-
-        <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-          <button className="btn btnPrimary btnWide" onClick={onSave}>
-            기록에 저장하기
-          </button>
-          <button className="btn btnGhost btnWide" onClick={onClose}>
-            닫기
-          </button>
-        </div>
-
-        <div className="smallHelp" style={{ marginTop: 10 }}>
-          * 이 결과는 데모예요. API 연결 후 실제 계산 결과로 교체하면 돼요.
-        </div>
-      </div>
-    </>
-  );
-}
-
-/* ===== TAROT Modal (PC: hover 살짝 / click 완전 뒤집힘, Mobile: 선택 후 바탕 탭하면 초기화) ===== */
-function TarotModal({
-  picked,
   flipped,
   onPick,
   onReset,
@@ -1105,6 +1003,7 @@ function TarotModal({
   onClose: () => void;
 }) {
   const [canHover, setCanHover] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   useEffect(() => {
     const m = window.matchMedia("(hover: hover) and (pointer: fine)");
     const apply = () => setCanHover(m.matches);
@@ -1115,7 +1014,7 @@ function TarotModal({
 
   const [hovered, setHovered] = useState<number | null>(null);
 
-  // 모바일에서 “빈 바탕 탭”으로 초기화(카드/버튼 제외)
+  // 모바일에서 "빈 바탕 탭"으로 초기화(카드/버튼 제외)
   const onEmptyTapReset = (e: React.PointerEvent<HTMLDivElement>) => {
     if (canHover) return; // PC는 굳이 바탕탭 리셋 없음
     const el = e.target as HTMLElement;
@@ -1209,8 +1108,16 @@ function TarotModal({
               기록에 저장하기
             </button>
 
-            <button className="btn btnGhost btnWide" onClick={onSavePremium}>
-              프리미엄으로 더 깊게(잠금)
+            <button
+              className="btn btnGhost btnWide"
+              onClick={() => {
+                setIsPremium(true);
+                onSavePremium();
+              }}
+            >
+              {isPremium
+                ? "프리미엄 해석 보는 중"
+                : "프리미엄으로 더 깊게 보기"}
             </button>
 
             <button className="btn btnGhost btnWide" onClick={onReset}>
@@ -1253,7 +1160,7 @@ function PlanModal({
   return (
     <>
       <p className="p" style={{ marginTop: 0 }}>
-        결제는 다음 단계에서 연결해요. 지금은 “플랜 UX”만 잡아두는 데모예요.
+        결제는 다음 단계에서 연결해요. 지금은 "플랜 UX"만 잡아두는 데모예요.
       </p>
 
       <div className="card cardPad lift" style={{ marginTop: 12 }}>

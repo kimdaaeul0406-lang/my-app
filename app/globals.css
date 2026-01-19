@@ -1804,7 +1804,7 @@ button {
 }
 
 .tarotBack::before {
-  content: "☽";
+  content: "";
   position: absolute;
   top: 12%;
   left: 50%;
@@ -2602,6 +2602,43 @@ button {
   margin-bottom: 6px;
 }
 
+/* PC 버전: 별자리 페이지 글씨 크기 증가 */
+@media (min-width: 769px) {
+  .zodiacSectionKicker {
+    font-size: 13px;
+  }
+
+  .zodiacSectionDesc {
+    font-size: 15px;
+  }
+
+  .zodiacInputLabel {
+    font-size: 14px;
+  }
+
+  .zodiacName {
+    font-size: 22px;
+  }
+
+  .zodiacDateRange {
+    font-size: 13px;
+  }
+
+  .zodiacHoroscopeTitle {
+    font-size: 16px;
+  }
+
+  .zodiacCategoryLabel {
+    font-size: 15px;
+  }
+
+  /* 별자리 페이지의 본문 텍스트도 크게 */
+  .zodiacSection .p {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+}
+
 /* ===== 프리미엄 게이트 스타일 ===== */
 .premiumGate {
   position: relative;
@@ -2647,4 +2684,26 @@ button {
   font-size: 13px;
   color: var(--muted);
   line-height: 1.6;
+}
+
+/* ===== Skeleton Loading UI ===== */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(43, 38, 42, 0.08) 0%,
+    rgba(43, 38, 42, 0.12) 50%,
+    rgba(43, 38, 42, 0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }

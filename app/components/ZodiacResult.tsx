@@ -45,7 +45,10 @@ export default function ZodiacResult({
   if (error) {
     return (
       <div className="card cardPad" style={{ marginTop: 16 }}>
-        <div className="p" style={{ textAlign: "center", color: "var(--muted)" }}>
+        <div
+          className="p"
+          style={{ textAlign: "center", color: "var(--muted)" }}
+        >
           {error}
         </div>
       </div>
@@ -82,7 +85,7 @@ export default function ZodiacResult({
           <div style={{ marginTop: 12, display: "grid", gap: 16 }}>
             {horoscopeData.love && (
               <div>
-                <div className="zodiacCategoryLabel">💕 연애</div>
+                <div className="zodiacCategoryLabel">연애</div>
                 <div className="p" style={{ marginTop: 6 }}>
                   {horoscopeData.love}
                 </div>
@@ -90,7 +93,7 @@ export default function ZodiacResult({
             )}
             {horoscopeData.money && (
               <div>
-                <div className="zodiacCategoryLabel">💰 금전</div>
+                <div className="zodiacCategoryLabel">금전</div>
                 <div className="p" style={{ marginTop: 6 }}>
                   {horoscopeData.money}
                 </div>
@@ -98,7 +101,7 @@ export default function ZodiacResult({
             )}
             {horoscopeData.work && (
               <div>
-                <div className="zodiacCategoryLabel">💼 일</div>
+                <div className="zodiacCategoryLabel">일</div>
                 <div className="p" style={{ marginTop: 6 }}>
                   {horoscopeData.work}
                 </div>
@@ -113,7 +116,7 @@ export default function ZodiacResult({
             <div style={{ marginTop: 12, display: "grid", gap: 16 }}>
               {horoscopeData.love && (
                 <div>
-                  <div className="zodiacCategoryLabel">💕 연애</div>
+                  <div className="zodiacCategoryLabel">연애</div>
                   <div className="p" style={{ marginTop: 6, opacity: 0.5 }}>
                     {horoscopeData.love}
                   </div>
@@ -121,7 +124,7 @@ export default function ZodiacResult({
               )}
               {horoscopeData.money && (
                 <div>
-                  <div className="zodiacCategoryLabel">💰 금전</div>
+                  <div className="zodiacCategoryLabel">금전</div>
                   <div className="p" style={{ marginTop: 6, opacity: 0.5 }}>
                     {horoscopeData.money}
                   </div>
@@ -129,7 +132,7 @@ export default function ZodiacResult({
               )}
               {horoscopeData.work && (
                 <div>
-                  <div className="zodiacCategoryLabel">💼 일</div>
+                  <div className="zodiacCategoryLabel">일</div>
                   <div className="p" style={{ marginTop: 6, opacity: 0.5 }}>
                     {horoscopeData.work}
                   </div>

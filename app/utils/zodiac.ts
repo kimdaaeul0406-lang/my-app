@@ -54,7 +54,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "양자리",
       nameEn: "aries",
-      icon: "♈",
+      icon: "",
       dateRange: "3/21 - 4/19",
     };
   }
@@ -62,7 +62,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "황소자리",
       nameEn: "taurus",
-      icon: "♉",
+      icon: "",
       dateRange: "4/20 - 5/20",
     };
   }
@@ -70,7 +70,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "쌍둥이자리",
       nameEn: "gemini",
-      icon: "♊",
+      icon: "",
       dateRange: "5/21 - 6/20",
     };
   }
@@ -78,7 +78,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "게자리",
       nameEn: "cancer",
-      icon: "♋",
+      icon: "",
       dateRange: "6/21 - 7/22",
     };
   }
@@ -86,7 +86,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "사자자리",
       nameEn: "leo",
-      icon: "♌",
+      icon: "",
       dateRange: "7/23 - 8/22",
     };
   }
@@ -94,7 +94,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "처녀자리",
       nameEn: "virgo",
-      icon: "♍",
+      icon: "",
       dateRange: "8/23 - 9/22",
     };
   }
@@ -102,7 +102,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "천칭자리",
       nameEn: "libra",
-      icon: "♎",
+      icon: "",
       dateRange: "9/23 - 10/22",
     };
   }
@@ -110,7 +110,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "전갈자리",
       nameEn: "scorpio",
-      icon: "♏",
+      icon: "",
       dateRange: "10/23 - 11/21",
     };
   }
@@ -118,7 +118,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "사수자리",
       nameEn: "sagittarius",
-      icon: "♐",
+      icon: "",
       dateRange: "11/22 - 12/21",
     };
   }
@@ -126,7 +126,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "염소자리",
       nameEn: "capricorn",
-      icon: "♑",
+      icon: "",
       dateRange: "12/22 - 1/19",
     };
   }
@@ -134,7 +134,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
     return {
       name: "물병자리",
       nameEn: "aquarius",
-      icon: "♒",
+      icon: "",
       dateRange: "1/20 - 2/18",
     };
   }
@@ -142,7 +142,7 @@ export function calculateZodiac(month: number, day: number): ZodiacInfo {
   return {
     name: "물고기자리",
     nameEn: "pisces",
-    icon: "♓",
+    icon: "",
     dateRange: "2/19 - 3/20",
   };
 }
