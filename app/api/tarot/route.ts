@@ -26,9 +26,8 @@ export async function POST(request: Request) {
     }
 
     // 타로 프롬프트 생성
-    const prompt = `당신은 전문 타로 해석가입니다. 타로카드 "${cardNameKo}(${cardName})" ${
-      isReversed ? "역방향" : "정방향"
-    }에 대한 오늘의 운세를 한국어로 해석해주세요.
+    const prompt = `당신은 전문 타로 해석가입니다. 타로카드 "${cardNameKo}(${cardName})" ${isReversed ? "역방향" : "정방향"
+      }에 대한 오늘의 운세를 한국어로 해석해주세요.
 
 타로카드 정보:
 - 카드명: ${cardNameKo} (${cardName})
@@ -55,7 +54,7 @@ export async function POST(request: Request) {
     console.log("Using Key:", process.env.GEMINI_API_KEY?.slice(-4));
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: "gemma-3-27b-it" });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

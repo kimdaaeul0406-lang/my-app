@@ -309,9 +309,21 @@ export default function SajuPage() {
                 {/* 로딩 */}
                 {loading && (
                   <div className="card cardPad lift" style={{ marginTop: 16 }}>
-                    <div style={{ padding: "20px 0", textAlign: "center" }}>
-                      <div className="p" style={{ color: "var(--muted)" }}>
+                    <div style={{ padding: "40px 0", textAlign: "center" }}>
+                      <div style={{
+                        width: 40,
+                        height: 40,
+                        border: "3px solid var(--muted)",
+                        borderTop: "3px solid var(--gold-main)",
+                        borderRadius: "50%",
+                        margin: "0 auto 16px",
+                        animation: "spin 1s linear infinite"
+                      }} />
+                      <div className="p" style={{ color: "var(--muted)", fontWeight: 600 }}>
                         사주를 해석하고 있어요...
+                      </div>
+                      <div className="smallHelp" style={{ marginTop: 8 }}>
+                        잠시만 기다려주세요 🌙
                       </div>
                     </div>
                   </div>
@@ -341,7 +353,7 @@ export default function SajuPage() {
 
                 {/* 결과 */}
                 {result && !loading && (
-                  <div className="card cardPad lift" style={{ marginTop: 16 }}>
+                  <div className="card cardPad lift fadeSlideUp" style={{ marginTop: 16 }}>
                     {/* 전체 운세 */}
                     {result.overview && (
                       <div style={{ marginTop: 8 }}>

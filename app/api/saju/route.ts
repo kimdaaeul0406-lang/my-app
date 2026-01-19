@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const apiKey = process.env.GEMINI_API_KEY;
-    
+
     if (!apiKey) {
       console.error('[Saju API] ❌ GEMINI_API_KEY가 설정되지 않았습니다');
       return NextResponse.json(
@@ -13,24 +13,24 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-    
+
     console.log('[Saju API] 요청 받음:', body);
-    
+
     const { birthDate, birthTime, gender, calendar } = body;
-    
+
     if (!birthDate || !gender) {
       return NextResponse.json(
         { success: false, error: 'birthDate와 gender는 필수입니다' },
         { status: 400 }
       );
     }
-    
+
     // 사주 프롬프트 생성
     const calendarText = calendar === 'lunar' ? '음력' : '양력';
     const genderText = gender === 'male' ? '남성' : '여성';
     const timeText = birthTime ? ` 출생 시간: ${birthTime}` : ' 출생 시간: 모름';
     const [year, month, day] = birthDate.split('-');
-    
+
     const prompt = `당신은 전문 사주명리학자입니다. ${calendarText} ${year}년 ${month}월 ${day}일${timeText} 출생 ${genderText}의 사주팔자를 분석하여 운세를 작성해주세요.
 
 생년월일시 정보:
@@ -58,22 +58,22 @@ ${birthTime ? `- 출생 시간: ${birthTime}` : '- 출생 시간: 알 수 없음
 - overview 필드는 절대 비워두지 마세요
 - 세련되고 신비로운 톤으로 작성해주세요
 - 사주명리학의 전통적인 관점을 바탕으로 작성하되, 현대적이고 실용적인 해석을 제공해주세요`;
-    
+
     console.log('[Saju API] Gemini 호출 시작');
     console.log("Using Key:", process.env.GEMINI_API_KEY?.slice(-4));
-    
+
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-    
+    const model = genAI.getGenerativeModel({ model: "gemma-3-27b-it" });
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const resultText = response.text();
     console.log('[Saju API] 응답 받음 (전체):', resultText);
     console.log('[Saju API] 응답 받음 (처음 200자):', resultText.substring(0, 200));
-    
+
     // JSON 파싱 시도 (여러 패턴 시도)
     let jsonMatch = resultText.match(/\{[\s\S]*\}/);
-    
+
     // 코드 블록 안에 있는 경우도 처리
     if (!jsonMatch) {
       jsonMatch = resultText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
@@ -81,17 +81,17 @@ ${birthTime ? `- 출생 시간: ${birthTime}` : '- 출생 시간: 알 수 없음
         jsonMatch = [jsonMatch[1], jsonMatch[1]];
       }
     }
-    
+
     // 코드 블록 없이 JSON만 있는 경우
     if (!jsonMatch) {
       jsonMatch = resultText.match(/\{[\s\S]*?\}/);
     }
-    
+
     if (jsonMatch && jsonMatch[0]) {
       try {
         const parsedResult = JSON.parse(jsonMatch[0]);
         console.log('[Saju API] 파싱된 결과:', JSON.stringify(parsedResult, null, 2));
-        
+
         // 필수 필드 검증
         if (!parsedResult.overview || parsedResult.overview.trim() === '') {
           console.error('[Saju API] ❌ 필수 필드(overview)가 없거나 비어있음');
@@ -101,16 +101,16 @@ ${birthTime ? `- 출생 시간: ${birthTime}` : '- 출생 시간: 알 수 없음
             { status: 500 }
           );
         }
-        
+
         // 모든 필드가 있는지 확인
         const requiredFields = ['overview', 'personality', 'love', 'career', 'money', 'thisYear', 'advice', 'luckyElement', 'luckyColor', 'keywords'];
         const missingFields = requiredFields.filter(field => !parsedResult[field] && parsedResult[field] !== 0);
-        
+
         if (missingFields.length > 0) {
           console.warn('[Saju API] ⚠️ 누락된 필드:', missingFields);
           // 필수 필드만 확인하고 나머지는 기본값으로 채움
         }
-        
+
         return NextResponse.json({ success: true, data: parsedResult });
       } catch (parseError) {
         console.error('[Saju API] ❌ JSON 파싱 실패:', parseError);
@@ -122,7 +122,7 @@ ${birthTime ? `- 출생 시간: ${birthTime}` : '- 출생 시간: 알 수 없음
         );
       }
     }
-    
+
     // JSON 형식이 아닌 경우
     console.error('[Saju API] ❌ JSON 형식이 아님');
     console.error('[Saju API] 전체 응답:', resultText);
@@ -130,7 +130,7 @@ ${birthTime ? `- 출생 시간: ${birthTime}` : '- 출생 시간: 알 수 없음
       { success: false, error: 'Gemini 응답이 JSON 형식이 아닙니다. 응답: ' + resultText.substring(0, 100) },
       { status: 500 }
     );
-    
+
   } catch (error) {
     console.error('[Saju API] ❌ 에러:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

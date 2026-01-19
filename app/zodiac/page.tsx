@@ -39,28 +39,28 @@ interface HoroscopeData {
 
 // 모든 별자리 목록
 const allZodiacs: ZodiacInfo[] = [
-  { name: "양자리", nameEn: "aries", icon: "", dateRange: "3/21 - 4/19" },
-  { name: "황소자리", nameEn: "taurus", icon: "", dateRange: "4/20 - 5/20" },
-  { name: "쌍둥이자리", nameEn: "gemini", icon: "", dateRange: "5/21 - 6/20" },
-  { name: "게자리", nameEn: "cancer", icon: "", dateRange: "6/21 - 7/22" },
-  { name: "사자자리", nameEn: "leo", icon: "", dateRange: "7/23 - 8/22" },
-  { name: "처녀자리", nameEn: "virgo", icon: "", dateRange: "8/23 - 9/22" },
-  { name: "천칭자리", nameEn: "libra", icon: "", dateRange: "9/23 - 10/22" },
-  { name: "전갈자리", nameEn: "scorpio", icon: "", dateRange: "10/23 - 11/21" },
+  { name: "양자리", nameEn: "aries", icon: "♈", dateRange: "3/21 - 4/19" },
+  { name: "황소자리", nameEn: "taurus", icon: "♉", dateRange: "4/20 - 5/20" },
+  { name: "쌍둥이자리", nameEn: "gemini", icon: "♊", dateRange: "5/21 - 6/20" },
+  { name: "게자리", nameEn: "cancer", icon: "♋", dateRange: "6/21 - 7/22" },
+  { name: "사자자리", nameEn: "leo", icon: "♌", dateRange: "7/23 - 8/22" },
+  { name: "처녀자리", nameEn: "virgo", icon: "♍", dateRange: "8/23 - 9/22" },
+  { name: "천칭자리", nameEn: "libra", icon: "♎", dateRange: "9/23 - 10/22" },
+  { name: "전갈자리", nameEn: "scorpio", icon: "♏", dateRange: "10/23 - 11/21" },
   {
     name: "사수자리",
     nameEn: "sagittarius",
-    icon: "",
+    icon: "♐",
     dateRange: "11/22 - 12/21",
   },
   {
     name: "염소자리",
     nameEn: "capricorn",
-    icon: "",
+    icon: "♑",
     dateRange: "12/22 - 1/19",
   },
-  { name: "물병자리", nameEn: "aquarius", icon: "", dateRange: "1/20 - 2/18" },
-  { name: "물고기자리", nameEn: "pisces", icon: "", dateRange: "2/19 - 3/20" },
+  { name: "물병자리", nameEn: "aquarius", icon: "♒", dateRange: "1/20 - 2/18" },
+  { name: "물고기자리", nameEn: "pisces", icon: "♓", dateRange: "2/19 - 3/20" },
 ];
 
 export default function ZodiacPage() {
@@ -119,7 +119,7 @@ export default function ZodiacPage() {
           .catch(() => ({ success: false, error: "API 오류" }));
         throw new Error(
           errorData.error ||
-            "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
+          "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
         );
       }
 
@@ -254,11 +254,10 @@ export default function ZodiacPage() {
                                 color: isSelected
                                   ? "var(--cream)"
                                   : "var(--navy-dark)",
-                                border: `2px solid ${
-                                  isSelected
-                                    ? "var(--navy)"
-                                    : "rgba(43, 38, 42, 0.1)"
-                                }`,
+                                border: `2px solid ${isSelected
+                                  ? "var(--navy)"
+                                  : "rgba(43, 38, 42, 0.1)"
+                                  }`,
                                 borderRadius: 12,
                                 fontWeight: isSelected ? 700 : 500,
                                 cursor: "pointer",
@@ -295,7 +294,10 @@ export default function ZodiacPage() {
                                 }
                               }}
                             >
-                              <span style={{ fontSize: 15, fontWeight: 600 }}>
+                              <span style={{ fontSize: 20, marginBottom: 4 }}>
+                                {zodiac.icon}
+                              </span>
+                              <span style={{ fontSize: 13, fontWeight: 600 }}>
                                 {zodiac.name}
                               </span>
                             </button>
@@ -460,7 +462,7 @@ export default function ZodiacPage() {
               )}
 
               {zodiacInfo && horoscopeData && (
-                <div>
+                <div className="fadeSlideUp">
                   {/* 별자리 정보 */}
                   <div className="zodiacResultHeader">
                     <div className="zodiacIcon">{zodiacInfo.icon}</div>

@@ -55,6 +55,18 @@ export default function Page() {
     setIsMounted(true);
   }, []);
 
+  // 맨 위로 가기 버튼 표시 상태
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // 스크롤 위치 감지
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // Reveal
   useEffect(() => {
     // 페이지 로드 시 최상단으로 스크롤
@@ -703,8 +715,8 @@ export default function Page() {
                         {h.type === "SAJU"
                           ? "SAJU"
                           : h.type === "ZODIAC"
-                          ? "ZODIAC"
-                          : "TAROT"}
+                            ? "ZODIAC"
+                            : "TAROT"}
                         {h.isPremium ? " · PREMIUM" : ""}
                       </span>
                       <span className="muted">
@@ -792,6 +804,35 @@ export default function Page() {
         )}
 
         {toast && <div className="toast">{toast}</div>}
+
+        {/* 맨 위로 가기 버튼 */}
+        {showScrollTop && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            style={{
+              position: "fixed",
+              bottom: 24,
+              right: 24,
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              background: "var(--navy-dark)",
+              color: "var(--cream)",
+              border: "none",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 20,
+              zIndex: 1000,
+              transition: "transform 0.2s ease, opacity 0.2s ease",
+            }}
+            aria-label="맨 위로 가기"
+          >
+            ↑
+          </button>
+        )}
       </div>
     </main>
   );

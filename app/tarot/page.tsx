@@ -53,35 +53,14 @@ type ShuffleStage =
   | "flipping" // 카드 뒤집기
   | "result"; // 결과 표시
 
-// 날짜 기반 시드 생성 함수 (매일 자정 기준)
-function getDateSeed(): number {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1;
-  const day = today.getDate();
-  return year * 10000 + month * 100 + day;
-}
-
-// 시드 기반 랜덤 생성기 (간단한 LCG 알고리즘)
-function seededRandom(seed: number): () => number {
-  let state = seed;
-  return () => {
-    state = (state * 1103515245 + 12345) & 0x7fffffff;
-    return state / 0x7fffffff;
-  };
-}
-
-// 날짜 기반으로 고정된 3장의 카드 인덱스 반환
-function getTodayCardIndices(totalCards: number): number[] {
-  const seed = getDateSeed();
-  const random = seededRandom(seed);
-
+// 순수 랜덤으로 3장의 카드 인덱스 반환
+function getRandomCardIndices(totalCards: number): number[] {
   const indices: number[] = [];
   const available = Array.from({ length: totalCards }, (_, i) => i);
 
   // 3장 선택
   for (let i = 0; i < 3; i++) {
-    const randomIndex = Math.floor(random() * available.length);
+    const randomIndex = Math.floor(Math.random() * available.length);
     indices.push(available[randomIndex]);
     available.splice(randomIndex, 1);
   }
@@ -97,6 +76,7 @@ function TarotShufflePicker({
   selectedSpreadIndex,
   shufflePhase = 0,
   onCardImageClick,
+  isReversed = false,
 }: {
   cards: TarotCard[];
   onCardSelect?: (cardIndex: number, spreadIndex: number) => void;
@@ -105,6 +85,7 @@ function TarotShufflePicker({
   selectedSpreadIndex: number | null;
   shufflePhase?: number;
   onCardImageClick?: () => void;
+  isReversed?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
@@ -156,11 +137,11 @@ function TarotShufflePicker({
     };
   }, [cards.length]);
 
-  // spread 단계로 넘어갈 때만 카드 3장 선택 (버튼 클릭 후)
+  // spread 단계로 넘어갈 때마다 새로운 랜덤 카드 3장 선택
   useEffect(() => {
     if (stage === "spread" && isClient && spreadCards.length === 0) {
-      const todayIndices = getTodayCardIndices(cards.length);
-      setSpreadCards(todayIndices);
+      const randomIndices = getRandomCardIndices(cards.length);
+      setSpreadCards(randomIndices);
     }
   }, [stage, cards.length, isClient, spreadCards.length]);
 
@@ -204,9 +185,8 @@ function TarotShufflePicker({
               rotation: 0,
             };
             // 정면으로 보이도록 모든 회전 제거 (rotateX, rotateY, rotateZ 모두 0)
-            transform = `translate(calc(-50% + ${
-              pos.offset
-            }px), calc(-50% + ${-pos.offset}px)) rotateX(0deg) rotateY(0deg) rotateZ(0deg)`;
+            transform = `translate(calc(-50% + ${pos.offset
+              }px), calc(-50% + ${-pos.offset}px)) rotateX(0deg) rotateY(0deg) rotateZ(0deg)`;
             opacity = 1;
             zIndex = i;
           } else if (stage === "shuffling") {
@@ -265,11 +245,9 @@ function TarotShufflePicker({
             let rotationAngle = rotationValue;
             if (rotationValue > maxRotation) rotationAngle = maxRotation;
             if (rotationValue < -maxRotation) rotationAngle = -maxRotation;
-            transform = `translate(calc(-50% + ${
-              xMove + posX * (isMobileForTransform ? 0.1 : 0.3)
-            }px), calc(-50% + ${
-              yMove + posY * (isMobileForTransform ? 0.08 : 0.2)
-            }px)) rotate(${rotationAngle}deg)`;
+            transform = `translate(calc(-50% + ${xMove + posX * (isMobileForTransform ? 0.1 : 0.3)
+              }px), calc(-50% + ${yMove + posY * (isMobileForTransform ? 0.08 : 0.2)
+              }px)) rotate(${rotationAngle}deg)`;
             // 모바일에서는 transition 시간과 delay를 조정하여 부드럽게
             const transitionDuration = isMobileForTransform ? 0.3 : 0.25;
             const cardDelay = i * (isMobileForTransform ? 0.005 : 0.008);
@@ -387,9 +365,8 @@ function TarotShufflePicker({
           return (
             <div
               key={card.id}
-              className={`tarotShuffleCard spread stage-${stage} ${
-                isSelected ? "selected" : ""
-              }`}
+              className={`tarotShuffleCard spread stage-${stage} ${isSelected ? "selected" : ""
+                }`}
               style={cardStyle}
               onClick={() => {
                 // spread 단계에서만 카드 선택
@@ -507,6 +484,8 @@ function TarotShufflePicker({
                               ? "pointer"
                               : "default",
                           touchAction: "manipulation", // 모바일 터치 최적화
+                          transform: isSelected && isReversed ? "rotate(180deg)" : "none",
+                          transition: "transform 0.3s ease",
                         }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -582,6 +561,7 @@ export default function TarotPage() {
   } | null>(null);
   const [loadingApi, setLoadingApi] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isReversed, setIsReversed] = useState(false);
 
   // 단계별 상태 관리 (새로운 셔플 방식) - 인트로 제거, stacked에서 시작
   // 초기에는 카드가 보이지 않도록 "waiting" 단계 추가
@@ -683,6 +663,7 @@ export default function TarotPage() {
     setApiResult(null);
     setApiError(null);
     setLoadingApi(false);
+    setIsReversed(false);
   };
 
   const pickTarot = async (cardIndex: number, spreadIndex: number) => {
@@ -705,17 +686,28 @@ export default function TarotPage() {
     const cardInfo = MAJOR_ARCANA.find((c) => c.id === selectedCard.id);
     const nameKo = cardInfo?.nameKo || selectedCard.title;
 
+    // 랜덤으로 역방향 결정 (50% 확률)
+    const reversed = Math.random() < 0.5;
+    setIsReversed(reversed);
+
     // API 호출
     try {
-      const response = await fetch("/api/tarot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cardName: selectedCard.name,
-          cardNameKo: nameKo,
-          isReversed: false,
-        }),
-      });
+      let response;
+      try {
+        response = await fetch("/api/tarot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cardName: selectedCard.name,
+            cardNameKo: nameKo,
+            isReversed: reversed,
+          }),
+        });
+      } catch (fetchError) {
+        // 네트워크 오류 (모바일에서 자주 발생)
+        console.error("Network fetch error:", fetchError);
+        throw new Error("네트워크 연결을 확인해주세요. 잠시 후 다시 시도해주세요 🌙");
+      }
 
       if (!response.ok) {
         const errorData = await response
@@ -723,7 +715,7 @@ export default function TarotPage() {
           .catch(() => ({ success: false, error: "API 오류" }));
         throw new Error(
           errorData.error ||
-            "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
+          "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
         );
       }
 
@@ -995,8 +987,20 @@ export default function TarotPage() {
               {stage === "stacked" && "덱을 탭하여 셔플하세요"}
               {stage === "spread" && "직감으로 한 장을 선택하세요"}
               {stage === "shuffling" && "카드를 섞고 있어요..."}
-              {(stage === "selecting" || stage === "flipping") &&
-                "카드를 확인하고 있어요..."}
+              {(stage === "selecting" || stage === "flipping") && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <span style={{
+                    width: 16,
+                    height: 16,
+                    border: "2px solid var(--muted)",
+                    borderTop: "2px solid var(--gold-main)",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                    display: "inline-block"
+                  }} />
+                  타로를 해석하고 있어요...
+                </span>
+              )}
               {stage === "result" && "오늘의 메시지입니다"}
             </p>
 
@@ -1035,6 +1039,7 @@ export default function TarotPage() {
                 selectedSpreadIndex={pickedSpreadIndex}
                 shufflePhase={shuffleCount}
                 onCardImageClick={() => setShowCardImageModal(true)}
+                isReversed={isReversed}
               />
             </div>
 
@@ -1044,9 +1049,21 @@ export default function TarotPage() {
                 style={{ marginTop: 100 }}
               >
                 {loadingApi && (
-                  <div style={{ padding: "20px 0", textAlign: "center" }}>
-                    <div className="p" style={{ color: "var(--muted)" }}>
+                  <div style={{ padding: "40px 0", textAlign: "center" }}>
+                    <div style={{
+                      width: 40,
+                      height: 40,
+                      border: "3px solid var(--muted)",
+                      borderTop: "3px solid var(--gold-main)",
+                      borderRadius: "50%",
+                      margin: "0 auto 16px",
+                      animation: "spin 1s linear infinite"
+                    }} />
+                    <div className="p" style={{ color: "var(--muted)", fontWeight: 600 }}>
                       타로를 해석하고 있어요...
+                    </div>
+                    <div className="smallHelp" style={{ marginTop: 8 }}>
+                      잠시만 기다려주세요 🌙
                     </div>
                   </div>
                 )}
@@ -1060,7 +1077,7 @@ export default function TarotPage() {
                 )}
 
                 {!loadingApi && !apiError && apiResult && (
-                  <>
+                  <div className="fadeSlideUp">
                     <div
                       style={{
                         display: "flex",
@@ -1068,7 +1085,19 @@ export default function TarotPage() {
                         gap: 10,
                       }}
                     >
-                      <div style={{ fontWeight: 900 }}>{tarotResult.name}</div>
+                      <div style={{ fontWeight: 900 }}>
+                        {tarotResult.name}
+                        {isReversed && (
+                          <span style={{
+                            marginLeft: 8,
+                            fontSize: 12,
+                            color: "var(--gold-main)",
+                            fontWeight: 600
+                          }}>
+                            역방향
+                          </span>
+                        )}
+                      </div>
                       <div className="muted">오늘의 메시지</div>
                     </div>
 
@@ -1090,9 +1119,8 @@ export default function TarotPage() {
                         return (
                           <button
                             key={category}
-                            className={`tabBtn ${
-                              category === selectedCategory ? "on" : ""
-                            }`}
+                            className={`tabBtn ${category === selectedCategory ? "on" : ""
+                              }`}
                             onClick={() => setSelectedCategory(category)}
                           >
                             {labels[category]}
@@ -1128,7 +1156,7 @@ export default function TarotPage() {
                         )}
                       </>
                     )}
-                  </>
+                  </div>
                 )}
 
                 {!loadingApi && !apiError && apiResult && (
@@ -1166,8 +1194,7 @@ export default function TarotPage() {
 
                 {!loadingApi && !apiError && apiResult && (
                   <div className="smallHelp" style={{ marginTop: 10 }}>
-                    * 매일 자정(00:00)을 기준으로 새로운 카드가 선택돼요.
-                    <br />* 오늘의 결과는 하루 동안 유지됩니다
+                    * 다시 뽑기를 누르면 새로운 카드를 뽑을 수 있어요.
                   </div>
                 )}
               </div>
@@ -1319,6 +1346,37 @@ export default function TarotPage() {
           </div>
         </section>
       </div>
+
+      {/* 로딩 중 터치 방지 오버레이 */}
+      {loadingApi && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.3)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              border: "4px solid rgba(255,255,255,0.3)",
+              borderTop: "4px solid var(--gold-main)",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }}
+          />
+          <div style={{ color: "var(--cream)", fontSize: 14, fontWeight: 600 }}>
+            타로를 해석하고 있어요...
+          </div>
+        </div>
+      )}
     </main>
   );
 }

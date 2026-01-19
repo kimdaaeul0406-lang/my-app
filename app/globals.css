@@ -1,32 +1,48 @@
 :root {
   /* ===== New Color System (Night Sky + Gold) ===== */
-  --paper: #faf9f7; /* 밝은 섹션 배경 */
-  --bg: #f4efe9; /* 전체: 따뜻한 베이지 */
+  --paper: #faf9f7;
+  /* 밝은 섹션 배경 */
+  --bg: #f4efe9;
+  /* 전체: 따뜻한 베이지 */
   --text: #2b262a;
   --muted: rgba(43, 38, 42, 0.62);
 
   /* Navy (밤하늘) */
-  --navy-dark: #1a2332; /* 딥 네이비 - Hero 메인 */
-  --navy-mid: #2d3561; /* 인디고 - 그라데이션 중간 */
-  --navy-light: #3d4a6e; /* 라이트 네이비 - 그라데이션 끝 */
-  --ink: #243a48; /* 기존 블루 (호환) */
-  --deep: #1b2a34; /* 타로 밤 배경 */
-  --deep2: #223642; /* 타로 카드/박스 */
+  --navy-dark: #1a2332;
+  /* 딥 네이비 - Hero 메인 */
+  --navy-mid: #2d3561;
+  /* 인디고 - 그라데이션 중간 */
+  --navy-light: #3d4a6e;
+  /* 라이트 네이비 - 그라데이션 끝 */
+  --ink: #243a48;
+  /* 기존 블루 (호환) */
+  --deep: #1b2a34;
+  /* 타로 밤 배경 */
+  --deep2: #223642;
+  /* 타로 카드/박스 */
 
   /* Gold (별, 포인트) */
-  --gold-bright: #e8b563; /* 밝은 골드 - 별 반짝임 */
-  --gold-main: #d4a574; /* 메인 골드 - 버튼, CTA */
-  --gold-soft: #c9a87c; /* 부드러운 골드 */
-  --gold: #d8c6a8; /* 기존 골드 (호환) */
+  --gold-bright: #e8b563;
+  /* 밝은 골드 - 별 반짝임 */
+  --gold-main: #d4a574;
+  /* 메인 골드 - 버튼, CTA */
+  --gold-soft: #c9a87c;
+  /* 부드러운 골드 */
+  --gold: #d8c6a8;
+  /* 기존 골드 (호환) */
 
   /* Cream & Brown */
-  --cream: #f5f1e8; /* 크림 - 어두운 배경 위 텍스트 */
-  --brown: #7a5f52; /* 브라운 포인트 */
+  --cream: #f5f1e8;
+  /* 크림 - 어두운 배경 위 텍스트 */
+  --brown: #7a5f52;
+  /* 브라운 포인트 */
   --brownSoft: rgba(122, 95, 82, 0.18);
 
   /* Mystical */
-  --purple: #5b4a6f; /* 딥 퍼플 - 프리미엄 */
-  --rose: #e8c7cc; /* 로즈 포인트 */
+  --purple: #5b4a6f;
+  /* 딥 퍼플 - 프리미엄 */
+  --rose: #e8c7cc;
+  /* 로즈 포인트 */
 
   --card: rgba(255, 255, 255, 0.78);
   --cardLine: rgba(43, 38, 42, 0.08);
@@ -85,12 +101,10 @@ button {
   margin: 0 auto;
   min-height: 100vh;
   position: relative;
-  background: linear-gradient(
-    180deg,
-    var(--paper) 0%,
-    var(--bg) 42%,
-    var(--bg) 100%
-  );
+  background: linear-gradient(180deg,
+      var(--paper) 0%,
+      var(--bg) 42%,
+      var(--bg) 100%);
 }
 
 /* 모바일 기본: PC 전용 요소 숨김 */
@@ -108,28 +122,24 @@ button {
   overflow: hidden;
   pointer-events: none;
 }
+
 .bgFX::before {
   content: "";
   position: absolute;
   inset: -140px;
-  background: radial-gradient(
-      900px 680px at 50% 6%,
+  background: radial-gradient(900px 680px at 50% 6%,
       rgba(36, 58, 72, 0.4),
-      transparent 58%
-    ),
-    radial-gradient(
-      760px 520px at 18% 35%,
+      transparent 58%),
+    radial-gradient(760px 520px at 18% 35%,
       rgba(122, 95, 82, 0.25),
-      transparent 60%
-    ),
-    radial-gradient(
-      840px 700px at 76% 78%,
+      transparent 60%),
+    radial-gradient(840px 700px at 76% 78%,
       rgba(47, 78, 94, 0.22),
-      transparent 62%
-    );
+      transparent 62%);
   filter: blur(18px);
   animation: aurora 24s ease-in-out infinite alternate;
 }
+
 .bgFX::after {
   content: "";
   position: absolute;
@@ -138,14 +148,17 @@ button {
   background-image: radial-gradient(rgba(0, 0, 0, 1) 0.6px, transparent 0.6px);
   background-size: 18px 18px;
 }
+
 @keyframes aurora {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
     opacity: 1;
   }
+
   50% {
     opacity: 0.95;
   }
+
   100% {
     transform: translate3d(-12px, -14px, 0) scale(1.03);
     opacity: 1;
@@ -161,17 +174,21 @@ button {
 .section {
   padding: 52px var(--pad);
 }
+
 .sectionTight {
   padding: 52px var(--pad);
 }
+
 .container {
   width: 100%;
   max-width: var(--container);
   margin: 0 auto;
 }
+
 .center {
   text-align: center;
 }
+
 .left {
   text-align: left;
 }
@@ -184,6 +201,7 @@ button {
   transition: opacity 0.9s ease,
     transform 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
+
 .reveal.on {
   opacity: 1;
   transform: translate(var(--rx), 0px);
@@ -194,22 +212,28 @@ button {
   transform: translateY(12px);
   transition: opacity 0.9s ease, transform 0.9s ease;
 }
+
 .reveal.on .stagger {
   opacity: 1;
   transform: translateY(0);
 }
+
 .d1 {
   transition-delay: 0.05s;
 }
+
 .d2 {
   transition-delay: 0.12s;
 }
+
 .d3 {
   transition-delay: 0.2s;
 }
+
 .d4 {
   transition-delay: 0.28s;
 }
+
 .d5 {
   transition-delay: 0.36s;
 }
@@ -218,12 +242,10 @@ button {
 /* Night Sky Hero */
 .nightSky {
   position: relative;
-  background: linear-gradient(
-    180deg,
-    var(--navy-dark) 0%,
-    var(--navy-mid) 50%,
-    var(--navy-light) 100%
-  );
+  background: linear-gradient(180deg,
+      var(--navy-dark) 0%,
+      var(--navy-mid) 50%,
+      var(--navy-light) 100%);
   overflow: hidden;
   padding: 60px 0;
 }
@@ -259,11 +281,13 @@ button {
 }
 
 @keyframes twinkle {
+
   0%,
   100% {
     opacity: 0.3;
     transform: scale(1);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.2);
@@ -294,12 +318,10 @@ button {
 }
 
 .nightSky .heroTitle {
-  background: linear-gradient(
-    180deg,
-    var(--cream) 0%,
-    rgba(245, 241, 232, 0.95) 40%,
-    rgba(245, 241, 232, 0.85) 100%
-  );
+  background: linear-gradient(180deg,
+      var(--cream) 0%,
+      rgba(245, 241, 232, 0.95) 40%,
+      rgba(245, 241, 232, 0.85) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -328,12 +350,10 @@ button {
 }
 
 .nightSky .heroDivider {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(245, 241, 232, 0.15) 50%,
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(245, 241, 232, 0.15) 50%,
+      transparent);
 }
 
 /* 버튼 - 골드 포인트 */
@@ -383,6 +403,7 @@ button {
   margin: 0;
   color: var(--ink);
 }
+
 .tagline {
   margin: 12px 0 0;
   font-size: 12px;
@@ -396,6 +417,7 @@ button {
   letter-spacing: -0.01em;
   color: var(--navy-dark);
 }
+
 .p {
   margin: 10px 0 0;
   font-size: 13px;
@@ -413,6 +435,7 @@ button {
   letter-spacing: 0.12em;
   font-weight: 900;
 }
+
 .heroDot {
   width: 4px;
   height: 4px;
@@ -426,12 +449,10 @@ button {
   line-height: 1.12;
   font-weight: 900;
   letter-spacing: -0.03em;
-  background: linear-gradient(
-    180deg,
-    rgba(27, 42, 52, 1) 0%,
-    rgba(36, 58, 72, 0.98) 40%,
-    rgba(47, 78, 94, 0.85) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(27, 42, 52, 1) 0%,
+      rgba(36, 58, 72, 0.98) 40%,
+      rgba(47, 78, 94, 0.85) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -460,6 +481,7 @@ button {
   font-size: 12px;
   color: rgba(43, 38, 42, 0.84);
 }
+
 .identityBadge {
   padding: 6px 10px;
   border-radius: 999px;
@@ -475,13 +497,11 @@ button {
   width: 132px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(36, 58, 72, 0.26),
-    rgba(122, 95, 82, 0.2),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(36, 58, 72, 0.26),
+      rgba(122, 95, 82, 0.2),
+      transparent);
 }
 
 .heroCtaRow {
@@ -489,6 +509,7 @@ button {
   display: grid;
   gap: 10px;
 }
+
 .heroLink {
   background: transparent;
   border: none;
@@ -500,9 +521,11 @@ button {
   text-underline-offset: 4px;
   transition: color 0.2s ease;
 }
+
 .heroLink:hover {
   color: rgba(36, 58, 72, 0.9);
 }
+
 .miniRow {
   margin-top: 16px;
   display: inline-flex;
@@ -521,18 +544,22 @@ button {
   font-size: 14px;
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
+
 .btn:active {
   transform: translateY(1px);
 }
+
 .btnPrimary {
   background: linear-gradient(135deg, var(--navy-mid), var(--navy-dark));
   color: var(--cream);
   font-weight: 900;
   box-shadow: 0 18px 40px rgba(26, 35, 50, 0.24);
 }
+
 .btnPrimary:hover {
   box-shadow: 0 22px 52px rgba(26, 35, 50, 0.28);
 }
+
 .btnGhost {
   background: rgba(255, 255, 255, 0.68);
   color: var(--navy-dark);
@@ -541,6 +568,7 @@ button {
   backdrop-filter: blur(10px);
   font-weight: 700;
 }
+
 .btnWide {
   width: 100%;
 }
@@ -556,6 +584,7 @@ button {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+
 .btnTiny:hover {
   color: var(--navy-dark);
 }
@@ -568,13 +597,16 @@ button {
   backdrop-filter: blur(12px);
   border: 1px solid var(--cardLine);
 }
+
 .cardPad {
   padding: 18px;
 }
+
 .cardLine {
   position: relative;
   overflow: hidden;
 }
+
 .cardLine::before {
   content: "";
   position: absolute;
@@ -583,18 +615,18 @@ button {
   top: 10px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(36, 58, 72, 0.22),
-    rgba(122, 95, 82, 0.16),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(36, 58, 72, 0.22),
+      rgba(122, 95, 82, 0.16),
+      transparent);
 }
+
 .lift {
   transition: transform 0.22s ease, box-shadow 0.22s ease,
     border-color 0.22s ease;
 }
+
 .lift:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadowStrong);
@@ -609,6 +641,7 @@ button {
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .chip {
   font-size: 11px;
   padding: 8px 10px;
@@ -624,6 +657,7 @@ button {
   background: rgba(216, 198, 168, 0.26);
   border-color: rgba(216, 198, 168, 0.22);
 }
+
 .chipRose {
   background: rgba(232, 199, 204, 0.28);
   border-color: rgba(232, 199, 204, 0.22);
@@ -637,6 +671,7 @@ button {
   letter-spacing: 0.1em;
   font-weight: 900;
 }
+
 .flowStatement {
   margin: 12px 0 0;
   font-size: 18px;
@@ -645,12 +680,14 @@ button {
   letter-spacing: -0.02em;
   color: var(--navy-dark);
 }
+
 .flowDesc {
   margin: 10px 0 0;
   font-size: 12px;
   color: rgba(26, 35, 50, 0.7);
   line-height: 1.7;
 }
+
 .flowCtas {
   margin-top: 16px;
   display: grid;
@@ -665,6 +702,7 @@ button {
   gap: 10px;
   flex-wrap: wrap;
 }
+
 .trustPill {
   padding: 10px 12px;
   border-radius: 999px;
@@ -675,11 +713,13 @@ button {
   gap: 8px;
   align-items: baseline;
 }
+
 .trustNum {
   font-weight: 900;
   letter-spacing: -0.01em;
   color: var(--navy-dark);
 }
+
 .trustLabel {
   font-size: 11px;
   color: rgba(26, 35, 50, 0.6);
@@ -691,6 +731,7 @@ button {
   display: grid;
   gap: 10px;
 }
+
 .principleCard {
   border-radius: var(--rXL);
   background: rgba(255, 255, 255, 0.74);
@@ -700,6 +741,7 @@ button {
   padding: 16px 16px;
   text-align: center;
 }
+
 .principleTop {
   display: flex;
   flex-direction: column;
@@ -707,15 +749,18 @@ button {
   gap: 10px;
   margin-bottom: 8px;
 }
+
 .principleIcon {
   display: none;
 }
+
 .principleTitle {
   font-weight: 900;
   letter-spacing: -0.01em;
   font-size: 14px;
   color: var(--navy-dark);
 }
+
 .principleDesc {
   margin-top: 6px;
   font-size: 12px;
@@ -734,10 +779,12 @@ button {
   width: 100%;
   max-width: 320px;
 }
+
 .reviewItem.left {
   justify-self: start;
   --rx: -12px;
 }
+
 .reviewItem.right {
   justify-self: end;
   --rx: 12px;
@@ -751,31 +798,34 @@ button {
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
 }
+
 .reviewTop {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .avatar {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    rgba(36, 58, 72, 0.16),
-    rgba(122, 95, 82, 0.14)
-  );
+  background: linear-gradient(135deg,
+      rgba(36, 58, 72, 0.16),
+      rgba(122, 95, 82, 0.14));
 }
+
 .name {
   font-weight: 900;
   font-size: 13px;
   color: var(--navy-dark);
 }
+
 .stars {
   margin-top: 2px;
   font-size: 11px;
   color: var(--gold-main);
 }
+
 .reviewText {
   margin: 10px 0 0;
   font-size: 12px;
@@ -785,11 +835,9 @@ button {
 
 /* ===== TAROT Dark Section (✅ 리뷰 가독성 개선 + 하단 여백 확대) ===== */
 .taroSection {
-  background: radial-gradient(
-      680px 420px at 50% 0%,
+  background: radial-gradient(680px 420px at 50% 0%,
       rgba(232, 181, 99, 0.08),
-      transparent 60%
-    ),
+      transparent 60%),
     linear-gradient(180deg, var(--navy-mid) 0%, var(--navy-dark) 100%);
   color: var(--cream);
   border-top: 1px solid rgba(245, 241, 232, 0.1);
@@ -797,56 +845,68 @@ button {
   padding-bottom: 72px;
   margin-bottom: 32px;
 }
+
 .taroSection .p {
   color: rgba(250, 249, 247, 0.7);
 }
+
 .taroSection .h2 {
   color: rgba(250, 249, 247, 0.92);
 }
+
 .taroSection .trustPill {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.1);
 }
+
 .taroSection .trustNum {
   color: var(--cream);
 }
+
 .taroSection .trustLabel {
   color: rgba(250, 249, 247, 0.65);
 }
+
 /* ✅ 리뷰 카드 텍스트 밝게 */
 .taroSection .reviewCardZ {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 0 18px 52px rgba(0, 0, 0, 0.3);
 }
+
 .taroSection .name {
   color: rgba(250, 249, 247, 0.95);
 }
+
 .taroSection .reviewText {
   color: rgba(250, 249, 247, 0.78);
 }
+
 .taroSection .stars {
   color: rgba(216, 198, 168, 0.9);
 }
+
 .taroSection .avatar {
-  background: linear-gradient(
-    135deg,
-    rgba(216, 198, 168, 0.18),
-    rgba(122, 95, 82, 0.14)
-  );
+  background: linear-gradient(135deg,
+      rgba(216, 198, 168, 0.18),
+      rgba(122, 95, 82, 0.14));
 }
+
 .taroSection .chip {
   color: rgba(250, 249, 247, 0.88);
   background: rgba(122, 95, 82, 0.18);
   border-color: rgba(255, 255, 255, 0.06);
 }
+
 .taroSection .principleCard {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
 }
+
 .taroSection .principleTitle {
   color: rgba(250, 249, 247, 0.92);
 }
+
 .taroSection .principleDesc {
   color: rgba(250, 249, 247, 0.7);
 }
@@ -857,6 +917,7 @@ button {
   padding: 0;
   margin: 48px 0 0;
 }
+
 .subscribeOrb {
   display: none;
 }
@@ -879,6 +940,7 @@ button {
   padding: 20px 20px 16px;
   background: rgba(250, 249, 247, 0.5);
 }
+
 .pricingTabBtn {
   flex: 1;
   border: none;
@@ -891,6 +953,7 @@ button {
   font-weight: 900;
   transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
+
 .pricingTabBtn.active {
   background: rgba(255, 255, 255, 0.95);
   color: rgba(36, 58, 72, 0.98);
@@ -904,12 +967,11 @@ button {
   text-align: left;
   background: rgba(255, 255, 255, 0.3);
 }
+
 .pricingSection.premium {
-  background: linear-gradient(
-    180deg,
-    rgba(250, 249, 247, 0.5) 0%,
-    rgba(244, 239, 233, 0.7) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(250, 249, 247, 0.5) 0%,
+      rgba(244, 239, 233, 0.7) 100%);
   margin-top: 12px;
   border-radius: 0 0 calc(var(--rXL) - 2px) calc(var(--rXL) - 2px);
 }
@@ -930,11 +992,13 @@ button {
   letter-spacing: 0.12em;
   margin-bottom: 12px;
 }
+
 .pricingBadge.free {
   background: rgba(122, 95, 82, 0.08);
   border: 1px solid rgba(122, 95, 82, 0.12);
   color: rgba(122, 95, 82, 1);
 }
+
 .pricingBadge.premium {
   background: linear-gradient(135deg, var(--purple), var(--navy-light));
   border: 1px solid rgba(91, 74, 111, 0.3);
@@ -959,6 +1023,7 @@ button {
 .pricingDivider {
   display: none;
 }
+
 .segment {
   margin: 14px auto 0;
   display: inline-flex;
@@ -969,6 +1034,7 @@ button {
   border: 1px solid var(--cardLine);
   backdrop-filter: blur(10px);
 }
+
 .segBtn {
   border: none;
   cursor: pointer;
@@ -980,6 +1046,7 @@ button {
   font-weight: 900;
   transition: all 0.2s ease;
 }
+
 .segBtn.on {
   background: rgba(36, 58, 72, 0.1);
   color: rgba(43, 38, 42, 0.9);
@@ -990,29 +1057,34 @@ button {
   display: grid;
   gap: 12px;
 }
+
 .subHeader {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: start;
 }
+
 .subKicker {
   font-size: 11px;
   color: rgba(36, 58, 72, 0.92);
   letter-spacing: 0.1em;
   font-weight: 900;
 }
+
 .subTitle {
   margin: 8px 0 0;
   font-size: 14px;
   font-weight: 900;
 }
+
 .subDesc {
   margin: 8px 0 0;
   font-size: 12px;
   color: var(--muted);
   line-height: 1.6;
 }
+
 .price {
   font-weight: 900;
   font-size: 16px;
@@ -1042,6 +1114,7 @@ button {
   perspective: 1200px;
   width: 100%;
 }
+
 .flipCard {
   position: relative;
   width: 100%;
@@ -1049,16 +1122,20 @@ button {
   transition: transform 0.62s cubic-bezier(0.22, 0.61, 0.36, 1),
     min-height 0.62s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
+
 /* ✅ 모바일 클릭 피드백 강화 */
 .flipCard:active {
   transform: scale(0.98);
 }
+
 .flipCard.isFlipped {
   transform: rotateY(180deg);
 }
+
 .flipCard.isFlipped:active {
   transform: rotateY(180deg) scale(0.98);
 }
+
 .flipFace {
   width: 100%;
   backface-visibility: hidden;
@@ -1068,15 +1145,18 @@ button {
   padding: 12px 18px;
   transition: opacity 0.3s ease, box-shadow 0.3s ease;
 }
+
 /* ✅ Front는 기본 위치, Back은 절대 위치로 겹침 */
 .flipFace:first-child {
   position: relative;
   background: var(--card);
 }
+
 .flipCard.isFlipped .flipFace:first-child {
   opacity: 0;
   pointer-events: none;
 }
+
 .flipFace:last-child {
   position: absolute;
   top: 0;
@@ -1085,68 +1165,71 @@ button {
   opacity: 0;
   pointer-events: none;
 }
+
 .flipCard.isFlipped .flipFace:last-child {
   opacity: 1;
   pointer-events: auto;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
+
 /* ✅ 세련된 다크 톤 (골드 제거) */
 .flipBack {
   transform: rotateY(180deg);
-  background: radial-gradient(
-      520px 300px at 50% 0%,
+  background: radial-gradient(520px 300px at 50% 0%,
       rgba(47, 78, 94, 0.15),
-      transparent 62%
-    ),
-    radial-gradient(
-      420px 360px at 80% 85%,
+      transparent 62%),
+    radial-gradient(420px 360px at 80% 85%,
       rgba(122, 95, 82, 0.12),
-      transparent 66%
-    ),
-    linear-gradient(
-      180deg,
+      transparent 66%),
+    linear-gradient(180deg,
       rgba(27, 42, 52, 0.96) 0%,
-      rgba(34, 54, 66, 0.98) 100%
-    );
+      rgba(34, 54, 66, 0.98) 100%);
   color: rgba(250, 249, 247, 0.92);
   border-color: rgba(47, 78, 94, 0.4);
 }
+
 .flipBack .price {
   color: rgba(250, 249, 247, 0.95);
 }
+
 .flipBack .premiumLabel {
   color: rgba(250, 249, 247, 0.92);
 }
+
 .flipBack .premiumList {
   color: rgba(250, 249, 247, 0.78);
 }
+
 .flipBack .premiumBlock {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
 }
+
 .flipBack .premiumPill {
   background: rgba(47, 78, 94, 0.3);
   border-color: rgba(47, 78, 94, 0.4);
   color: rgba(250, 249, 247, 0.88);
 }
+
 .flipBack .btn {
   color: rgba(250, 249, 247, 0.92);
 }
+
 .flipBack .btnPrimary {
-  background: linear-gradient(
-    180deg,
-    rgba(47, 78, 94, 1) 0%,
-    rgba(36, 58, 72, 1) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(47, 78, 94, 1) 0%,
+      rgba(36, 58, 72, 1) 100%);
   color: #fff;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
 }
+
 .flipBack .btnGhost {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.2);
   color: rgba(250, 249, 247, 0.88);
 }
+
 .flipBack .smallHelp {
   color: rgba(250, 249, 247, 0.62);
 }
@@ -1157,18 +1240,21 @@ button {
   display: grid;
   gap: 12px;
 }
+
 .premiumBlock {
   padding: 14px 14px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.64);
   border: 1px solid rgba(43, 38, 42, 0.08);
 }
+
 .premiumBlockTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
+
 .premiumLabel {
   font-weight: 900;
   font-size: 13px;
@@ -1177,6 +1263,7 @@ button {
   align-items: center;
   gap: 8px;
 }
+
 .premiumPill {
   font-size: 11px;
   font-weight: 900;
@@ -1185,6 +1272,7 @@ button {
   background: rgba(36, 58, 72, 0.1);
   border: 1px solid rgba(36, 58, 72, 0.14);
 }
+
 .premiumList {
   margin: 12px 0 0;
   padding-left: 18px;
@@ -1192,6 +1280,7 @@ button {
   font-size: 12px;
   color: rgba(26, 35, 50, 0.75);
 }
+
 .premiumList li {
   margin-top: 6px;
 }
@@ -1206,17 +1295,20 @@ button {
   backdrop-filter: blur(12px);
   border: 1px solid var(--cardLine);
 }
+
 .field {
   display: grid;
   gap: 8px;
   margin-top: 12px;
   text-align: left;
 }
+
 .label {
   font-size: 12px;
   color: rgba(26, 35, 50, 0.7);
   font-weight: 600;
 }
+
 .input {
   width: 100%;
   padding: 14px 14px;
@@ -1227,13 +1319,16 @@ button {
   color: var(--navy-dark);
   font-weight: 500;
 }
+
 .input::placeholder {
   color: rgba(26, 35, 50, 0.4);
 }
+
 .input:focus {
   border-color: var(--navy-light);
   box-shadow: 0 0 0 4px rgba(45, 53, 97, 0.1);
 }
+
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1246,6 +1341,7 @@ button {
   gap: 8px;
   flex-wrap: wrap;
 }
+
 .tabBtn {
   border: 1px solid rgba(26, 35, 50, 0.15);
   background: rgba(255, 255, 255, 0.7);
@@ -1256,6 +1352,7 @@ button {
   color: var(--navy-dark);
   font-weight: 600;
 }
+
 .tabBtn.on {
   border-color: var(--navy-light);
   background: rgba(45, 53, 97, 0.1);
@@ -1276,15 +1373,16 @@ button {
 }
 
 /* 최근 기록 빈 박스 중앙 정렬 */
-.historyWrap > .card.cardPad {
+.historyWrap>.card.cardPad {
   margin: 0 auto;
   max-width: 400px;
   text-align: center !important;
 }
 
-.historyWrap > .card.cardPad.left {
+.historyWrap>.card.cardPad.left {
   text-align: center !important;
 }
+
 .historyCard {
   padding: 14px;
   border-radius: 18px;
@@ -1295,12 +1393,14 @@ button {
   transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     opacity 0.4s ease;
 }
+
 .historyTop {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
 }
+
 .badge {
   font-size: 11px;
   padding: 6px 9px;
@@ -1309,15 +1409,18 @@ button {
   color: rgba(43, 38, 42, 0.86);
   font-weight: 900;
 }
+
 .muted {
   color: rgba(43, 38, 42, 0.58);
   font-size: 11px;
 }
+
 .historyTitle {
   margin-top: 8px;
   font-weight: 900;
   letter-spacing: -0.01em;
 }
+
 .historyText {
   margin-top: 6px;
   font-size: 12px;
@@ -1329,6 +1432,7 @@ button {
 .tarotArea {
   margin-top: 12px;
 }
+
 .tarotPickRow {
   margin-top: 12px;
   display: flex;
@@ -1366,7 +1470,8 @@ button {
   transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1),
     opacity 0.3s ease;
   will-change: transform;
-  margin-left: -46px; /* 카드 너비의 절반 */
+  margin-left: -46px;
+  /* 카드 너비의 절반 */
 }
 
 .tarotFanCard.current {
@@ -1404,7 +1509,8 @@ button {
   transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     outline 0.2s ease, opacity 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform, opacity;
-  margin-left: -46px; /* 카드 너비의 절반 */
+  margin-left: -46px;
+  /* 카드 너비의 절반 */
   touch-action: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -1449,7 +1555,8 @@ button {
   width: 92px;
   height: 138px;
   cursor: pointer;
-  will-change: transform; /* GPU 가속으로 부드러운 애니메이션 */
+  will-change: transform;
+  /* GPU 가속으로 부드러운 애니메이션 */
   -webkit-font-smoothing: antialiased;
 }
 
@@ -1468,13 +1575,11 @@ button {
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  background: linear-gradient(
-    160deg,
-    #e8e4f0 0%,
-    #d4cfe8 30%,
-    #c9c2e0 70%,
-    #e0dced 100%
-  );
+  background: linear-gradient(160deg,
+      #e8e4f0 0%,
+      #d4cfe8 30%,
+      #c9c2e0 70%,
+      #e0dced 100%);
   border: 1px solid rgba(180, 170, 200, 0.4);
   box-shadow: 0 4px 12px rgba(130, 120, 160, 0.15);
   display: flex;
@@ -1493,17 +1598,13 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-      1.5px 1.5px at 20% 30%,
+  background: radial-gradient(1.5px 1.5px at 20% 30%,
       rgba(160, 140, 200, 0.6),
-      transparent
-    ),
+      transparent),
     radial-gradient(1px 1px at 40% 70%, rgba(180, 160, 210, 0.5), transparent),
-    radial-gradient(
-      1.5px 1.5px at 60% 20%,
+    radial-gradient(1.5px 1.5px at 60% 20%,
       rgba(150, 130, 190, 0.6),
-      transparent
-    ),
+      transparent),
     radial-gradient(1px 1px at 80% 60%, rgba(170, 150, 200, 0.5), transparent),
     radial-gradient(2px 2px at 30% 50%, rgba(140, 120, 180, 0.7), transparent),
     radial-gradient(1px 1px at 70% 80%, rgba(160, 140, 200, 0.5), transparent);
@@ -1536,11 +1637,8 @@ button {
 
 .tarotShuffleCard.spread:hover {
   /* 각 카드의 원래 x 위치를 유지하면서 위로 올라가고 확대 */
-  transform: translate(
-      calc(-50% + var(--hover-x-offset, 0px)),
-      calc(-50% - 15px)
-    )
-    scale(1.08) !important;
+  transform: translate(calc(-50% + var(--hover-x-offset, 0px)),
+      calc(-50% - 15px)) scale(1.08) !important;
   z-index: 50 !important;
   filter: brightness(1.05);
 }
@@ -1590,7 +1688,8 @@ button {
     transform-origin: center center !important;
     /* 실제 모바일에서 viewport 변화에 영향받지 않도록 고정 */
     transform: translate(-50%, -50%) scale(2) !important;
-    will-change: auto; /* 스크롤 시 재계산 방지 */
+    will-change: auto;
+    /* 스크롤 시 재계산 방지 */
     /* 터치 이벤트 최적화 */
     touch-action: manipulation;
   }
@@ -1698,11 +1797,13 @@ button {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
     transform: translateX(-50%) scale(1);
   }
+
   50% {
     opacity: 0.8;
     transform: translateX(-50%) scale(1.05);
@@ -1722,11 +1823,13 @@ button {
     transform: translateY(0);
   }
 }
+
 .tarotFlip {
   width: 92px;
   height: 124px;
   perspective: 900px;
 }
+
 .tarotInner {
   width: 100%;
   height: 100%;
@@ -1735,12 +1838,17 @@ button {
   transform-style: preserve-3d;
   transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
+
 .tarotInner.preview {
   transform: rotateY(14deg);
-} /* ✅ PC hover는 "살짝만" */
+}
+
+/* ✅ PC hover는 "살짝만" */
 .tarotInner.flipped {
   transform: rotateY(180deg);
-} /* ✅ 클릭/선택 시 완전 뒤집힘 */
+}
+
+/* ✅ 클릭/선택 시 완전 뒤집힘 */
 
 /* 타로 단계별 카드 애니메이션 */
 .tarotFanPickerCard.stage-selecting {
@@ -1760,42 +1868,34 @@ button {
   border: 1px solid rgba(43, 38, 42, 0.1);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.14);
 }
+
 .tarotBack {
   background:
-    /* 별 패턴 - 작은 점들 */ radial-gradient(
-      1px 1px at 10% 15%,
+    /* 별 패턴 - 작은 점들 */
+    radial-gradient(1px 1px at 10% 15%,
       rgba(255, 255, 255, 0.6),
-      transparent
-    ),
+      transparent),
     radial-gradient(1px 1px at 25% 35%, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(
-      1.5px 1.5px at 45% 10%,
+    radial-gradient(1.5px 1.5px at 45% 10%,
       rgba(255, 255, 255, 0.7),
-      transparent
-    ),
+      transparent),
     radial-gradient(1px 1px at 60% 45%, rgba(255, 255, 255, 0.4), transparent),
     radial-gradient(1px 1px at 75% 20%, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(
-      1.5px 1.5px at 85% 55%,
+    radial-gradient(1.5px 1.5px at 85% 55%,
       rgba(255, 255, 255, 0.5),
-      transparent
-    ),
+      transparent),
     radial-gradient(1px 1px at 30% 70%, rgba(255, 255, 255, 0.4), transparent),
     radial-gradient(1px 1px at 55% 80%, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(
-      1.5px 1.5px at 90% 85%,
+    radial-gradient(1.5px 1.5px at 90% 85%,
       rgba(255, 255, 255, 0.6),
-      transparent
-    ),
+      transparent),
     radial-gradient(1px 1px at 15% 90%, rgba(255, 255, 255, 0.4), transparent),
     /* 은은한 빛 효과 */
-      radial-gradient(
-        ellipse 80% 50% at 50% 50%,
-        rgba(139, 115, 179, 0.15),
-        transparent 70%
-      ),
+    radial-gradient(ellipse 80% 50% at 50% 50%,
+      rgba(139, 115, 179, 0.15),
+      transparent 70%),
     /* 메인 그라데이션 - 깊은 남보라색 */
-      linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #1a1a2e 100%);
+    linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #1a1a2e 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1826,6 +1926,7 @@ button {
   color: rgba(212, 190, 152, 0.6);
   text-shadow: 0 0 6px rgba(212, 190, 152, 0.3);
 }
+
 .tarotFront {
   transform: rotateY(180deg);
   background: rgba(255, 255, 255, 0.9);
@@ -1856,10 +1957,12 @@ button {
   margin-left: auto;
   margin-right: auto;
 }
+
 .reassureTitle {
   font-weight: 900;
   letter-spacing: -0.01em;
 }
+
 .reassureList {
   margin: 10px 0 0;
   padding-left: 18px;
@@ -1893,6 +1996,7 @@ button {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1917,6 +2021,7 @@ button {
     opacity: 0;
     transform: translateY(20px) scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1985,7 +2090,8 @@ button {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 80px; /* ✅ 18px → 80px (하단 버튼과 안전한 거리) */
+  bottom: 80px;
+  /* ✅ 18px → 80px (하단 버튼과 안전한 거리) */
   transform: translateX(-50%);
   z-index: 70;
   background: rgba(255, 255, 255, 0.92);
@@ -2004,6 +2110,7 @@ button {
     opacity: 0;
     transform: translateX(-50%) translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
@@ -2012,6 +2119,7 @@ button {
 
 /* Motion safety */
 @media (prefers-reduced-motion: reduce) {
+
   .bgFX::before,
   .subscribeOrb,
   .reveal,
@@ -2069,8 +2177,10 @@ button {
 
   /* Hero CTA 버튼: 높이 +8px, 글자 +2px */
   .nightSky .heroCtaRow .btn {
-    font-size: 16px; /* 14px + 2px */
-    padding: 22px 18px; /* 14px + 8px = 22px */
+    font-size: 16px;
+    /* 14px + 2px */
+    padding: 22px 18px;
+    /* 14px + 8px = 22px */
   }
 
   /* Hero 덩어리를 위로 60px 이동 */
@@ -2094,7 +2204,7 @@ button {
   }
 
   /* Hero 아래 첫 섹션: top padding 40px 줄이기 (100px → 60px) */
-  .nightSky.section + .sectionTight:not(.taroSection) {
+  .nightSky.section+.sectionTight:not(.taroSection) {
     padding-top: 60px;
     padding-bottom: 80px;
     padding-left: 32px;
@@ -2311,7 +2421,7 @@ button {
   }
 
   /* 항목이 1개일 때: 중앙 정렬 */
-  .historyWrap > .historyCard:only-child {
+  .historyWrap>.historyCard:only-child {
     margin-left: auto;
     margin-right: auto;
     max-width: 720px;
@@ -2319,14 +2429,14 @@ button {
   }
 
   /* 항목이 2개 이상일 때: 모든 항목을 가로로 배치 */
-  .historyWrap > .historyCard {
+  .historyWrap>.historyCard {
     flex-shrink: 0;
     max-width: 720px;
     min-width: 300px;
   }
 
   /* 빈 박스는 중앙 정렬 유지 */
-  .historyWrap > .card.cardPad {
+  .historyWrap>.card.cardPad {
     align-self: center;
     max-width: 400px;
   }
@@ -2421,7 +2531,8 @@ button {
   .tarotFanPickerCard {
     width: 160px;
     height: 240px;
-    margin-left: -80px; /* 카드 너비의 절반 */
+    margin-left: -80px;
+    /* 카드 너비의 절반 */
   }
 
   /* 셔플 덱 PC */
@@ -2436,11 +2547,8 @@ button {
 
   .tarotShuffleCard.spread:hover {
     /* 각 카드의 원래 x 위치를 유지하면서 위로 올라가고 확대 */
-    transform: translate(
-        calc(-50% + var(--hover-x-offset, 0px)),
-        calc(-50% - 20px)
-      )
-      scale(1.08) !important;
+    transform: translate(calc(-50% + var(--hover-x-offset, 0px)),
+        calc(-50% - 20px)) scale(1.08) !important;
   }
 
   .deckClickOverlay {
@@ -2476,7 +2584,7 @@ button {
   }
 
   /* 결과 카드 내부 간격 축소 */
-  .card.cardPad > div[style*="marginTop"] {
+  .card.cardPad>div[style*="marginTop"] {
     margin-top: 8px !important;
   }
 
@@ -2484,7 +2592,7 @@ button {
     margin-top: 12px;
   }
 
-  .card.cardPad > div[style*="display: grid"] {
+  .card.cardPad>div[style*="display: grid"] {
     margin-top: 12px !important;
     gap: 8px !important;
   }
@@ -2688,12 +2796,10 @@ button {
 
 /* ===== Skeleton Loading UI ===== */
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(43, 38, 42, 0.08) 0%,
-    rgba(43, 38, 42, 0.12) 50%,
-    rgba(43, 38, 42, 0.08) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(43, 38, 42, 0.08) 0%,
+      rgba(43, 38, 42, 0.12) 50%,
+      rgba(43, 38, 42, 0.08) 100%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.5s ease-in-out infinite;
   border-radius: 4px;
@@ -2703,7 +2809,36 @@ button {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
+}
+
+/* ===== Spinner Loading Animation ===== */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== Fade Slide Up Animation (결과 카드용) ===== */
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fadeSlideUp {
+  animation: fadeSlideUp 0.5s ease-out forwards;
 }

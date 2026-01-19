@@ -38,3 +38,8 @@ CREATE TRIGGER update_subscribers_updated_at
   BEFORE UPDATE ON subscribers
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS 활성화 (Row Level Security)
+ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE readings ENABLE ROW LEVEL SECURITY;
+
