@@ -47,74 +47,83 @@ export default function SajuPage() {
   // 생년월일 입력 핸들러
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBirthDate(e.target.value);
+    // 입력 변경 시 결과 초기화
+    setResult(null);
+    setError(null);
   };
 
-  // 사주 API 호출
-  useEffect(() => {
-    if (!birthDate || !gender) {
-      setResult(null);
+  // 사주 API 호출 함수 (버튼 클릭 시 호출)
+  const fetchSaju = async () => {
+    if (!birthDate || !gender || loading) return; // 필수값 없거나 이미 로딩 중이면 중복 호출 방지
+
+    setLoading(true);
+    setError(null);
+
+    // 캐시 확인
+    const cacheKey = getSajuCacheKey(
+      birthDate.replace(/-/g, ""),
+      gender
+    );
+    const cached = getCachedData<SajuResult>(cacheKey);
+    if (cached) {
+      setResult(cached);
+      setLoading(false);
       return;
     }
 
-    const fetchSaju = async () => {
-      setLoading(true);
-      setError(null);
+    try {
+      const response = await fetch("/api/saju", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          birthDate,
+          birthTime: birthTime || null,
+          gender,
+          calendar,
+        }),
+      });
 
-      // 캐시 확인
-      const cacheKey = getSajuCacheKey(
-        birthDate.replace(/-/g, ""),
-        gender
-      );
-      const cached = getCachedData<SajuResult>(cacheKey);
-      if (cached) {
-        setResult(cached);
-        setLoading(false);
-        return;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ success: false, error: "API 오류" }));
+        throw new Error(errorData.error || "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
       }
 
-      try {
-        const response = await fetch("/api/saju", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            birthDate,
-            birthTime: birthTime || null,
-            gender,
-            calendar,
-          }),
-        });
+      const result = await response.json();
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ success: false, error: "API 오류" }));
-          throw new Error(errorData.error || "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error(result.error || "API 호출 실패");
-        }
-
-        const data: SajuResult = result.data;
-
-        if (!data.overview) {
-          throw new Error("사주 데이터를 가져올 수 없어요");
-        }
-
-        // 캐시 저장
-        setCachedData(cacheKey, data);
-        setResult(data);
-      } catch (err) {
-        console.error(`❌ [Saju] Error:`, err);
-        setError(err instanceof Error ? err.message : "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
-        setResult(null);
-      } finally {
-        setLoading(false);
+      if (!result.success) {
+        throw new Error(result.error || "API 호출 실패");
       }
-    };
 
-    fetchSaju();
-  }, [birthDate, birthTime, gender, calendar]);
+      // 응답 데이터 정리 (옵셔널 체이닝으로 안전하게 처리)
+      const data = result.data;
+      const sajuData: SajuResult = {
+        overview: data.overview || "",
+        personality: data.personality || "",
+        love: data.love || "",
+        career: data.career || "",
+        money: data.money || "",
+        thisYear: data.thisYear || "",
+        advice: data.advice || "",
+        luckyElement: data.luckyElement || "",
+        luckyColor: data.luckyColor || "",
+        keywords: data.keywords || [],
+      };
+
+      if (!sajuData.overview) {
+        throw new Error("사주 데이터를 가져올 수 없어요");
+      }
+
+      // 캐시 저장
+      setCachedData(cacheKey, sajuData);
+      setResult(sajuData);
+    } catch (err) {
+      console.error(`❌ [Saju] Error:`, err);
+      setError(err instanceof Error ? err.message : "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const saveSaju = () => {
     if (!result || !birthDate || !gender) return;
@@ -198,7 +207,11 @@ export default function SajuPage() {
                         type="time"
                         className="input"
                         value={birthTime}
-                        onChange={(e) => setBirthTime(e.target.value)}
+                        onChange={(e) => {
+                          setBirthTime(e.target.value);
+                          setResult(null);
+                          setError(null);
+                        }}
                         placeholder="모르면 비워두세요"
                         style={{ width: "100%" }}
                       />
@@ -215,14 +228,22 @@ export default function SajuPage() {
                       <div style={{ display: "flex", gap: 12 }}>
                         <button
                           className={`btn ${gender === "male" ? "btnPrimary" : "btnGhost"}`}
-                          onClick={() => setGender("male")}
+                          onClick={() => {
+                            setGender("male");
+                            setResult(null);
+                            setError(null);
+                          }}
                           style={{ flex: 1 }}
                         >
                           남성
                         </button>
                         <button
                           className={`btn ${gender === "female" ? "btnPrimary" : "btnGhost"}`}
-                          onClick={() => setGender("female")}
+                          onClick={() => {
+                            setGender("female");
+                            setResult(null);
+                            setError(null);
+                          }}
                           style={{ flex: 1 }}
                         >
                           여성
@@ -238,14 +259,22 @@ export default function SajuPage() {
                       <div style={{ display: "flex", gap: 12 }}>
                         <button
                           className={`btn ${calendar === "solar" ? "btnPrimary" : "btnGhost"}`}
-                          onClick={() => setCalendar("solar")}
+                          onClick={() => {
+                            setCalendar("solar");
+                            setResult(null);
+                            setError(null);
+                          }}
                           style={{ flex: 1 }}
                         >
                           양력
                         </button>
                         <button
                           className={`btn ${calendar === "lunar" ? "btnPrimary" : "btnGhost"}`}
-                          onClick={() => setCalendar("lunar")}
+                          onClick={() => {
+                            setCalendar("lunar");
+                            setResult(null);
+                            setError(null);
+                          }}
                           style={{ flex: 1 }}
                         >
                           음력
@@ -254,6 +283,28 @@ export default function SajuPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* 운세 보기 버튼 */}
+                {!result && !loading && (
+                  <div className="card cardPad lift" style={{ marginTop: 16 }}>
+                    <div style={{ padding: "20px 0", textAlign: "center" }}>
+                      <div className="p" style={{ marginBottom: 20, color: "var(--muted)" }}>
+                        생년월일과 성별을 입력한 후 운세를 확인해보세요.
+                      </div>
+                      <button
+                        className="btn btnPrimary btnWide"
+                        onClick={fetchSaju}
+                        disabled={loading || !birthDate || !gender}
+                        style={{
+                          opacity: (loading || !birthDate || !gender) ? 0.6 : 1,
+                          cursor: (loading || !birthDate || !gender) ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {loading ? "사주를 해석하고 있어요..." : "오늘의 운세 보기"}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* 로딩 */}
                 {loading && (
@@ -270,9 +321,20 @@ export default function SajuPage() {
                 {error && !loading && (
                   <div className="card cardPad lift" style={{ marginTop: 16 }}>
                     <div style={{ padding: "20px 0", textAlign: "center" }}>
-                      <div className="p" style={{ color: "var(--muted)" }}>
+                      <div className="p" style={{ color: "var(--muted)", marginBottom: 16 }}>
                         {error}
                       </div>
+                      <button
+                        className="btn btnPrimary"
+                        onClick={fetchSaju}
+                        disabled={loading || !birthDate || !gender}
+                        style={{
+                          opacity: (loading || !birthDate || !gender) ? 0.6 : 1,
+                          cursor: (loading || !birthDate || !gender) ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {loading ? "해석 중..." : "다시 시도"}
+                      </button>
                     </div>
                   </div>
                 )}

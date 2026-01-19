@@ -69,7 +69,7 @@ export function setCachedData<T>(key: string, data: T): void {
  */
 export function getTarotCacheKey(cardName: string): string {
   const today = getTodayDate();
-  return `tarot-${cardName}-${today}`;
+  return `tarot-v2-${cardName}-${today}`;
 }
 
 /**
@@ -79,7 +79,7 @@ export function getTarotCacheKey(cardName: string): string {
  */
 export function getHoroscopeCacheKey(zodiacSign: string): string {
   const today = getTodayDate();
-  return `horoscope-${zodiacSign}-${today}`;
+  return `horoscope-v2-${zodiacSign}-${today}`;
 }
 
 /**
@@ -90,5 +90,5 @@ export function getHoroscopeCacheKey(zodiacSign: string): string {
  */
 export function getSajuCacheKey(birthDate: string, gender: string): string {
   const today = getTodayDate();
-  return `saju-${birthDate}-${gender}-${today}`;
+  return `saju-v2-${birthDate}-${gender}-${today}`;
 }

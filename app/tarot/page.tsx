@@ -686,7 +686,9 @@ export default function TarotPage() {
   };
 
   const pickTarot = async (cardIndex: number, spreadIndex: number) => {
-    if (picked !== null) return;
+    // 중복 호출 방지: 이미 선택했거나 로딩 중이면 무시
+    if (picked !== null || loadingApi) return;
+
     setPicked(cardIndex);
     setPickedSpreadIndex(spreadIndex);
     setCurrentCardIndex(cardIndex);
@@ -1023,7 +1025,8 @@ export default function TarotPage() {
               <TarotShufflePicker
                 cards={fanDeckCards}
                 onCardSelect={(cardIndex, spreadIndex) => {
-                  if (stage === "spread") {
+                  // 로딩 중이거나 이미 선택했으면 클릭 무시
+                  if (stage === "spread" && !loadingApi && picked === null) {
                     pickTarot(cardIndex, spreadIndex);
                   }
                 }}

@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { type ZodiacInfo } from "../utils/zodiac";
-import { getCachedData, setCachedData, getHoroscopeCacheKey } from "../utils/cache";
+import {
+  getCachedData,
+  setCachedData,
+  getHoroscopeCacheKey,
+} from "../utils/cache";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -43,8 +47,18 @@ const allZodiacs: ZodiacInfo[] = [
   { name: "처녀자리", nameEn: "virgo", icon: "", dateRange: "8/23 - 9/22" },
   { name: "천칭자리", nameEn: "libra", icon: "", dateRange: "9/23 - 10/22" },
   { name: "전갈자리", nameEn: "scorpio", icon: "", dateRange: "10/23 - 11/21" },
-  { name: "사수자리", nameEn: "sagittarius", icon: "", dateRange: "11/22 - 12/21" },
-  { name: "염소자리", nameEn: "capricorn", icon: "", dateRange: "12/22 - 1/19" },
+  {
+    name: "사수자리",
+    nameEn: "sagittarius",
+    icon: "",
+    dateRange: "11/22 - 12/21",
+  },
+  {
+    name: "염소자리",
+    nameEn: "capricorn",
+    icon: "",
+    dateRange: "12/22 - 1/19",
+  },
   { name: "물병자리", nameEn: "aquarius", icon: "", dateRange: "1/20 - 2/18" },
   { name: "물고기자리", nameEn: "pisces", icon: "", dateRange: "2/19 - 3/20" },
 ];
@@ -66,83 +80,83 @@ export default function ZodiacPage() {
       setZodiacInfo(selectedZodiac);
       setHoroscopeData(null);
       setError(null);
-      setLoading(true);
       setShowModal(true);
     } else {
       setZodiacInfo(null);
     }
   }, [selectedZodiac]);
 
-  // 별자리가 계산되면 운세 가져오기
-  useEffect(() => {
-    if (!zodiacInfo) {
-      setHoroscopeData(null);
+  // 운세 가져오기 함수 (버튼 클릭 시 호출)
+  const fetchHoroscope = async () => {
+    if (!zodiacInfo || loading) return; // 이미 로딩 중이면 중복 호출 방지
+
+    setLoading(true);
+    setError(null);
+
+    // 캐시 확인
+    const cacheKey = getHoroscopeCacheKey(zodiacInfo.nameEn);
+    const cached = getCachedData<HoroscopeData>(cacheKey);
+    if (cached) {
+      setHoroscopeData(cached);
+      setLoading(false);
       return;
     }
 
-    const fetchHoroscope = async () => {
-      setLoading(true);
-      setError(null);
-      
-      // 캐시 확인
-      const cacheKey = getHoroscopeCacheKey(zodiacInfo.nameEn);
-      const cached = getCachedData<HoroscopeData>(cacheKey);
-      if (cached) {
-        setHoroscopeData(cached);
-        setLoading(false);
-        return;
+    try {
+      const response = await fetch("/api/horoscope", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sign: zodiacInfo.nameEn,
+          signName: zodiacInfo.name,
+          date: new Date().toISOString().split("T")[0],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ success: false, error: "API 오류" }));
+        throw new Error(
+          errorData.error ||
+            "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
+        );
       }
 
-      try {
-        const response = await fetch("/api/horoscope", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sign: zodiacInfo.nameEn,
-            signName: zodiacInfo.name,
-            date: new Date().toISOString().split('T')[0],
-          }),
-        });
+      const result = await response.json();
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ success: false, error: "API 오류" }));
-          throw new Error(errorData.error || "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
-        }
-
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.error || "API 호출 실패");
-        }
-
-        // 응답 데이터 정리
-        const data = result.data;
-        const horoscopeData: HoroscopeData = {
-          message: data.message || "",
-          love: data.love || "",
-          career: data.career || "",
-          money: data.money || "",
-          advice: data.advice || "",
-          luckyNumber: data.luckyNumber || 0,
-          luckyColor: data.luckyColor || "",
-          keywords: data.keywords || [],
-        };
-
-        // 캐시 저장
-        setCachedData(cacheKey, horoscopeData);
-        setHoroscopeData(horoscopeData);
-      } catch (err) {
-        console.error(`❌ [Client] Error:`, err);
-        setError(err instanceof Error ? err.message : "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
-        setHoroscopeData(null);
-      } finally {
-        setLoading(false);
+      if (!result.success) {
+        throw new Error(result.error || "API 호출 실패");
       }
-    };
 
-    fetchHoroscope();
-  }, [zodiacInfo]);
+      // 응답 데이터 정리
+      const data = result.data;
+      const horoscopeData: HoroscopeData = {
+        message: data.message || "",
+        love: data.love || "",
+        career: data.career || "",
+        money: data.money || "",
+        advice: data.advice || "",
+        luckyNumber: data.luckyNumber || 0,
+        luckyColor: data.luckyColor || "",
+        keywords: data.keywords || [],
+      };
 
+      // 캐시 저장
+      setCachedData(cacheKey, horoscopeData);
+      setHoroscopeData(horoscopeData);
+    } catch (err) {
+      console.error(`❌ [Client] Error:`, err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
+      );
+      setHoroscopeData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const saveZodiac = () => {
     if (!zodiacInfo || !horoscopeData) return;
@@ -152,7 +166,12 @@ export default function ZodiacPage() {
       type: "ZODIAC",
       title: `[별자리] ${zodiacInfo.name} - 오늘의 흐름`,
       text: horoscopeData.message || "",
-      tags: [zodiacInfo.name, "별자리", "오늘의 흐름", ...(horoscopeData.keywords || [])],
+      tags: [
+        zodiacInfo.name,
+        "별자리",
+        "오늘의 흐름",
+        ...(horoscopeData.keywords || []),
+      ],
       createdAt: Date.now(),
     };
 
@@ -204,7 +223,10 @@ export default function ZodiacPage() {
                 <div className="zodiacInputSection" style={{ marginTop: 20 }}>
                   <div className="zodiacInputRow">
                     <div className="zodiacInputField" style={{ width: "100%" }}>
-                      <label className="zodiacInputLabel" style={{ textAlign: "center", marginBottom: 16 }}>
+                      <label
+                        className="zodiacInputLabel"
+                        style={{ textAlign: "center", marginBottom: 16 }}
+                      >
                         내 별자리 선택하기
                       </label>
                       <div
@@ -217,7 +239,8 @@ export default function ZodiacPage() {
                         }}
                       >
                         {allZodiacs.map((zodiac) => {
-                          const isSelected = selectedZodiac?.nameEn === zodiac.nameEn;
+                          const isSelected =
+                            selectedZodiac?.nameEn === zodiac.nameEn;
                           return (
                             <button
                               key={zodiac.nameEn}
@@ -231,7 +254,11 @@ export default function ZodiacPage() {
                                 color: isSelected
                                   ? "var(--cream)"
                                   : "var(--navy-dark)",
-                                border: `2px solid ${isSelected ? "var(--navy)" : "rgba(43, 38, 42, 0.1)"}`,
+                                border: `2px solid ${
+                                  isSelected
+                                    ? "var(--navy)"
+                                    : "rgba(43, 38, 42, 0.1)"
+                                }`,
                                 borderRadius: 12,
                                 fontWeight: isSelected ? 700 : 500,
                                 cursor: "pointer",
@@ -241,23 +268,30 @@ export default function ZodiacPage() {
                                 alignItems: "center",
                                 justifyContent: "center",
                                 gap: 4,
-                                transform: isSelected ? "scale(1.05)" : "scale(1)",
+                                transform: isSelected
+                                  ? "scale(1.05)"
+                                  : "scale(1)",
                                 boxShadow: isSelected
                                   ? "0 4px 12px rgba(43, 38, 42, 0.15)"
                                   : "0 2px 4px rgba(43, 38, 42, 0.05)",
                               }}
                               onMouseEnter={(e) => {
                                 if (!isSelected) {
-                                  e.currentTarget.style.backgroundColor = "rgba(43, 38, 42, 0.05)";
-                                  e.currentTarget.style.transform = "scale(1.02)";
-                                  e.currentTarget.style.borderColor = "rgba(43, 38, 42, 0.2)";
+                                  e.currentTarget.style.backgroundColor =
+                                    "rgba(43, 38, 42, 0.05)";
+                                  e.currentTarget.style.transform =
+                                    "scale(1.02)";
+                                  e.currentTarget.style.borderColor =
+                                    "rgba(43, 38, 42, 0.2)";
                                 }
                               }}
                               onMouseLeave={(e) => {
                                 if (!isSelected) {
-                                  e.currentTarget.style.backgroundColor = "var(--cream)";
+                                  e.currentTarget.style.backgroundColor =
+                                    "var(--cream)";
                                   e.currentTarget.style.transform = "scale(1)";
-                                  e.currentTarget.style.borderColor = "rgba(43, 38, 42, 0.1)";
+                                  e.currentTarget.style.borderColor =
+                                    "rgba(43, 38, 42, 0.1)";
                                 }
                               }}
                             >
@@ -271,8 +305,6 @@ export default function ZodiacPage() {
                     </div>
                   </div>
                 </div>
-
-
               </div>
             </div>
           </div>
@@ -281,14 +313,8 @@ export default function ZodiacPage() {
 
       {/* 모달 팝업 */}
       {showModal && (
-        <div
-          className="modalOverlay"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="modalSheet"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="modalOverlay" onClick={() => setShowModal(false)}>
+          <div className="modalSheet" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div className="modalTitle">
                 {zodiacInfo ? `${zodiacInfo.name} 운세` : "별자리 운세"}
@@ -302,6 +328,28 @@ export default function ZodiacPage() {
               </button>
             </div>
             <div className="modalBody">
+              {!horoscopeData && !loading && !error && (
+                <div style={{ padding: "20px 0", textAlign: "center" }}>
+                  <div
+                    className="p"
+                    style={{ marginBottom: 20, color: "var(--muted)" }}
+                  >
+                    {zodiacInfo?.name}의 오늘의 운세를 확인해보세요.
+                  </div>
+                  <button
+                    className="btn btnPrimary btnWide"
+                    onClick={fetchHoroscope}
+                    disabled={loading}
+                    style={{
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {loading ? "운세를 불러오는 중..." : "오늘의 운세 보기"}
+                  </button>
+                </div>
+              )}
+
               {loading && (
                 <div style={{ padding: "20px 0" }}>
                   {/* 로딩 스켈레톤 */}
@@ -384,27 +432,26 @@ export default function ZodiacPage() {
 
               {error && (
                 <div style={{ padding: "20px 0", textAlign: "center" }}>
-                  <div className="p" style={{ color: "var(--muted)" }}>
+                  <div
+                    className="p"
+                    style={{ color: "var(--muted)", marginBottom: 16 }}
+                  >
                     {error}
                   </div>
                   <button
-                    className="btn btnGhost"
-                    style={{ marginTop: 16 }}
-                    onClick={() => setShowModal(false)}
+                    className="btn btnPrimary"
+                    style={{
+                      marginRight: 8,
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? "not-allowed" : "pointer",
+                    }}
+                    onClick={fetchHoroscope}
+                    disabled={loading}
                   >
-                    닫기
+                    {loading ? "해석 중..." : "다시 시도"}
                   </button>
-                </div>
-              )}
-
-              {zodiacInfo && !loading && !error && !horoscopeData && (
-                <div style={{ padding: "20px 0", textAlign: "center" }}>
-                  <div className="p" style={{ color: "var(--muted)" }}>
-                    데이터 없음 - API 호출이 실패했거나 응답이 없습니다.
-                  </div>
                   <button
                     className="btn btnGhost"
-                    style={{ marginTop: 16 }}
                     onClick={() => setShowModal(false)}
                   >
                     닫기
@@ -476,30 +523,48 @@ export default function ZodiacPage() {
                   )}
 
                   {/* 행운의 숫자, 색상, 키워드 */}
-                  <div style={{ marginTop: 20, display: "flex", flexWrap: "wrap", gap: 12 }}>
+                  <div
+                    style={{
+                      marginTop: 20,
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 12,
+                    }}
+                  >
                     {horoscopeData.luckyNumber && (
                       <div>
-                        <span className="zodiacCategoryLabel" style={{ marginRight: 8 }}>행운의 숫자</span>
+                        <span
+                          className="zodiacCategoryLabel"
+                          style={{ marginRight: 8 }}
+                        >
+                          행운의 숫자
+                        </span>
                         <span className="p">{horoscopeData.luckyNumber}</span>
                       </div>
                     )}
                     {horoscopeData.luckyColor && (
                       <div>
-                        <span className="zodiacCategoryLabel" style={{ marginRight: 8 }}>행운의 색상</span>
+                        <span
+                          className="zodiacCategoryLabel"
+                          style={{ marginRight: 8 }}
+                        >
+                          행운의 색상
+                        </span>
                         <span className="p">{horoscopeData.luckyColor}</span>
                       </div>
                     )}
                   </div>
 
-                  {horoscopeData.keywords && horoscopeData.keywords.length > 0 && (
-                    <div className="chipRow" style={{ marginTop: 12 }}>
-                      {horoscopeData.keywords.map((keyword) => (
-                        <span className="chip" key={keyword}>
-                          {keyword}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {horoscopeData.keywords &&
+                    horoscopeData.keywords.length > 0 && (
+                      <div className="chipRow" style={{ marginTop: 12 }}>
+                        {horoscopeData.keywords.map((keyword) => (
+                          <span className="chip" key={keyword}>
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                   <div className="smallHelp" style={{ marginTop: 12 }}>
                     * 오늘의 결과는 하루 동안 유지됩니다
