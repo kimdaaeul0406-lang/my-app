@@ -139,9 +139,8 @@ export default function Page() {
 
   const [freeEmail, setFreeEmail] = useState("");
   const submitFree = () => {
-    if (!freeEmail.includes("@")) return showToast("이메일 형식을 확인해줘.");
-    showToast("무료 구독 신청 완료(데모)");
-    setFreeEmail("");
+    // Stibee 구독 페이지로 이동
+    window.open("https://page.stibee.com/subscriptions/467092", "_blank");
   };
 
   // 프리미엄 카드 뒤집기 - 제거됨 (팝업 방식으로 변경)
@@ -579,12 +578,6 @@ export default function Page() {
                   </div>
 
                   <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-                    <input
-                      className="input"
-                      placeholder="이메일을 입력해 주세요"
-                      value={freeEmail}
-                      onChange={(e) => setFreeEmail(e.target.value)}
-                    />
                     <button
                       className="btn btnPrimary btnWide"
                       onClick={submitFree}
@@ -592,8 +585,7 @@ export default function Page() {
                       무료로 구독 시작하기
                     </button>
                     <div className="smallHelp">
-                      * 데모 UI입니다. 실제 발송/인증은 API 연결 후 구현하면
-                      돼요.
+                      * 클릭하면 구독 페이지로 이동합니다.
                     </div>
                   </div>
                 </div>
@@ -710,12 +702,6 @@ export default function Page() {
                   </div>
 
                   <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
-                    <input
-                      className="input"
-                      placeholder="이메일을 입력해 주세요"
-                      value={freeEmail}
-                      onChange={(e) => setFreeEmail(e.target.value)}
-                    />
                     <button
                       className="btn btnPrimary btnWide"
                       onClick={submitFree}
@@ -723,8 +709,7 @@ export default function Page() {
                       무료로 구독 시작하기
                     </button>
                     <div className="smallHelp" style={{ textAlign: "center" }}>
-                      * 데모 UI입니다. 실제 발송/인증은 API 연결 후 구현하면
-                      돼요.
+                      * 클릭하면 구독 페이지로 이동합니다.
                     </div>
                   </div>
                 </div>
