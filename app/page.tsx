@@ -166,6 +166,8 @@ export default function Page() {
           showToast("타로 결과를 기록에 저장했어");
         } else if (saved === "zodiac") {
           showToast("별자리 결과를 기록에 저장했어");
+        } else if (saved === "saju") {
+          showToast("사주 결과를 기록에 저장했어");
         }
       }, 100);
     }
@@ -273,10 +275,12 @@ export default function Page() {
           <div className="container center">
             <h1 className="brand stagger d1">LUMEN</h1>
             <p className="tagline stagger d2">
-              과장 없이, 오늘의 흐름을 정리하는 타로 & 별자리
+              과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리
             </p>
 
             <div className="heroEyebrow stagger d3">
+              <span>사주</span>
+              <span className="heroDot" />
               <span>타로</span>
               <span className="heroDot" />
               <span>별자리</span>
@@ -291,7 +295,7 @@ export default function Page() {
             </div>
 
             <div className="heroSub stagger d5">
-              타로는 선택을, 별자리는 흐름을.
+              사주는 본질을, 타로는 선택을, 별자리는 흐름을.
               <br />
               하루의 방향을 조용히 정리해요.
             </div>
@@ -300,6 +304,9 @@ export default function Page() {
               className="identityLine stagger d5"
               style={{ justifyContent: "center" }}
             >
+              <span className="identityBadge">사주</span>
+              <span>본질·정리</span>
+              <span className="heroDot" />
               <span className="identityBadge">타로</span>
               <span>선택·메시지</span>
               <span className="heroDot" />
@@ -375,9 +382,16 @@ export default function Page() {
               </div>
 
               <Link
-                href="/zodiac"
+                href="/saju"
                 className="btnTiny"
                 style={{ textDecoration: "none" }}
+              >
+                사주 확인하기
+              </Link>
+              <Link
+                href="/zodiac"
+                className="btnTiny"
+                style={{ marginLeft: 8, textDecoration: "none" }}
               >
                 별자리 확인하기
               </Link>
@@ -416,9 +430,16 @@ export default function Page() {
               </div>
 
               <Link
-                href="/zodiac"
+                href="/saju"
                 className="btnTiny"
                 style={{ textDecoration: "none" }}
+              >
+                사주 확인하기
+              </Link>
+              <Link
+                href="/zodiac"
+                className="btnTiny"
+                style={{ marginLeft: 8, textDecoration: "none" }}
               >
                 별자리 확인하기
               </Link>
@@ -619,12 +640,12 @@ export default function Page() {
           <div className="container center">
             <h2 className="h2 stagger d1">나의 흐름, 무료로 시작하기</h2>
             <p className="p stagger d2">
-              타로는 당신의 선택을 말하고, 별자리는 오늘의 흐름을 알려줍니다.
+              사주는 본질을, 타로는 선택을, 별자리는 오늘의 흐름을 알려줍니다.
             </p>
 
-            <div className="stagger d3" style={{ marginTop: 20 }}>
+            <div className="stagger d3" style={{ marginTop: 20, display: "grid", gap: 10 }}>
               <Link
-                href="/tarot"
+                href="/saju"
                 className="btn btnPrimary btnWide"
                 style={{
                   textAlign: "center",
@@ -632,7 +653,29 @@ export default function Page() {
                   display: "block",
                 }}
               >
+                사주 확인하기
+              </Link>
+              <Link
+                href="/tarot"
+                className="btn btnGhost btnWide"
+                style={{
+                  textAlign: "center",
+                  textDecoration: "none",
+                  display: "block",
+                }}
+              >
                 타로 카드 뽑기
+              </Link>
+              <Link
+                href="/zodiac"
+                className="btn btnGhost btnWide"
+                style={{
+                  textAlign: "center",
+                  textDecoration: "none",
+                  display: "block",
+                }}
+              >
+                별자리 확인하기
               </Link>
             </div>
           </div>
@@ -650,7 +693,7 @@ export default function Page() {
                   <div style={{ fontWeight: 900 }}>
                     아직 저장된 기록이 없어요.
                   </div>
-                  <div className="p">별자리/타로 결과에서 "저장"을 눌러봐.</div>
+                  <div className="p">사주/별자리/타로 결과에서 "저장"을 눌러봐.</div>
                 </div>
               ) : (
                 history.map((h) => (

@@ -3,7 +3,7 @@ import { Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
 
 export const metadata = {
   title: "LUMEN",
-  description: "사주 & 타로 랜딩",
+  description: "사주 & 타로 & 별자리 랜딩",
 };
 
 const sans = Noto_Sans_KR({

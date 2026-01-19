@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import ZodiacSection from "../components/ZodiacSection";
-import { calculateZodiac, type ZodiacInfo } from "../utils/zodiac";
+import { type ZodiacInfo } from "../utils/zodiac";
+import { getCachedData, setCachedData, getHoroscopeCacheKey } from "../utils/cache";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -23,58 +23,55 @@ type HistoryItem = {
 };
 
 interface HoroscopeData {
-  date: string | null;
-  sign: string;
-  horoscope: string;
-  description?: string;
-  mood?: string | null;
-  color?: string | null;
-  lucky_number?: string | number | null;
-  lucky_time?: string | null;
-  source?: "aztro" | "api-ninjas";
-  type?: "basic" | "today" | "tomorrow" | "yesterday";
-  // 프리미엄: 카테고리별 운세
-  love?: string | null;
-  money?: string | null;
-  work?: string | null;
+  message: string;
+  love: string;
+  career: string;
+  money: string;
+  advice: string;
+  luckyNumber: number;
+  luckyColor: string;
+  keywords: string[];
 }
+
+// 모든 별자리 목록
+const allZodiacs: ZodiacInfo[] = [
+  { name: "양자리", nameEn: "aries", icon: "", dateRange: "3/21 - 4/19" },
+  { name: "황소자리", nameEn: "taurus", icon: "", dateRange: "4/20 - 5/20" },
+  { name: "쌍둥이자리", nameEn: "gemini", icon: "", dateRange: "5/21 - 6/20" },
+  { name: "게자리", nameEn: "cancer", icon: "", dateRange: "6/21 - 7/22" },
+  { name: "사자자리", nameEn: "leo", icon: "", dateRange: "7/23 - 8/22" },
+  { name: "처녀자리", nameEn: "virgo", icon: "", dateRange: "8/23 - 9/22" },
+  { name: "천칭자리", nameEn: "libra", icon: "", dateRange: "9/23 - 10/22" },
+  { name: "전갈자리", nameEn: "scorpio", icon: "", dateRange: "10/23 - 11/21" },
+  { name: "사수자리", nameEn: "sagittarius", icon: "", dateRange: "11/22 - 12/21" },
+  { name: "염소자리", nameEn: "capricorn", icon: "", dateRange: "12/22 - 1/19" },
+  { name: "물병자리", nameEn: "aquarius", icon: "", dateRange: "1/20 - 2/18" },
+  { name: "물고기자리", nameEn: "pisces", icon: "", dateRange: "2/19 - 3/20" },
+];
 
 export default function ZodiacPage() {
   const router = useRouter();
-  const [birthMonth, setBirthMonth] = useState("");
-  const [birthDay, setBirthDay] = useState("");
+  const [selectedZodiac, setSelectedZodiac] = useState<ZodiacInfo | null>(null);
   const [zodiacInfo, setZodiacInfo] = useState<ZodiacInfo | null>(null);
   const [horoscopeData, setHoroscopeData] = useState<HoroscopeData | null>(
     null
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPremium, setIsPremium] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-  // 생일 입력 시 별자리 자동 계산
+  // 별자리 선택 시 zodiacInfo 설정 및 모달 열기
   useEffect(() => {
-    // 생일이 변경되면 이전 운세 데이터 초기화
-    setHoroscopeData(null);
-    setError(null);
-    setLoading(false);
-
-    if (birthMonth && birthDay) {
-      try {
-        const month = parseInt(birthMonth, 10);
-        const day = parseInt(birthDay, 10);
-        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-          const zodiac = calculateZodiac(month, day);
-          setZodiacInfo(zodiac);
-        } else {
-          setZodiacInfo(null);
-        }
-      } catch {
-        setZodiacInfo(null);
-      }
+    if (selectedZodiac) {
+      setZodiacInfo(selectedZodiac);
+      setHoroscopeData(null);
+      setError(null);
+      setLoading(true);
+      setShowModal(true);
     } else {
       setZodiacInfo(null);
     }
-  }, [birthMonth, birthDay]);
+  }, [selectedZodiac]);
 
   // 별자리가 계산되면 운세 가져오기
   useEffect(() => {
@@ -86,74 +83,53 @@ export default function ZodiacPage() {
     const fetchHoroscope = async () => {
       setLoading(true);
       setError(null);
-      try {
-        // API Ninjas가 계속 실패하므로 Aztro API 사용 (type=today)
-        const apiUrl = `/api/horoscope?sign=${zodiacInfo.nameEn}&type=today`;
-        console.log(`🌐 [Client] Fetching horoscope from: ${apiUrl}`);
+      
+      // 캐시 확인
+      const cacheKey = getHoroscopeCacheKey(zodiacInfo.nameEn);
+      const cached = getCachedData<HoroscopeData>(cacheKey);
+      if (cached) {
+        setHoroscopeData(cached);
+        setLoading(false);
+        return;
+      }
 
+      try {
+        const apiUrl = `/api/horoscope?sign=${zodiacInfo.nameEn}`;
         const response = await fetch(apiUrl, {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          // 캐시 비활성화하여 항상 서버에서 최신 데이터 가져오기
+          headers: { "Content-Type": "application/json" },
           cache: "no-store",
         });
 
-        console.log(`📥 [Client] Response status: ${response.status}`);
-
         if (!response.ok) {
-          let errorData: any = {};
-          try {
-            const text = await response.text();
-            console.log(`❌ [Client] Error response text:`, text);
-            errorData = text
-              ? JSON.parse(text)
-              : { error: `HTTP ${response.status}` };
-          } catch (parseError) {
-            console.error(
-              `❌ [Client] Failed to parse error response:`,
-              parseError
-            );
-            errorData = {
-              error: `HTTP ${response.status}`,
-              message: "서버에서 에러 응답을 받았습니다.",
-            };
-          }
-
-          console.error(`❌ [Client] API error:`, errorData);
-          console.error(`❌ [Client] Response status: ${response.status}`);
-          console.error(
-            `❌ [Client] Response headers:`,
-            Object.fromEntries(response.headers.entries())
-          );
-
-          const errorMessage =
-            errorData.message ||
-            errorData.error ||
-            `HTTP ${response.status}: 운세를 가져오는데 실패했어요`;
-          throw new Error(errorMessage);
+          const errorData = await response.json().catch(() => ({ error: "API 오류" }));
+          throw new Error(errorData.error || "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
         }
 
         const data = await response.json();
-        console.log(`✅ [Client] Received data:`, data);
-
-        // API 호출 실패 시 null 처리
-        if (data.error || !data.description) {
-          console.warn(`⚠️ [Client] API returned error or empty data`);
-          setHoroscopeData(null);
-          setError(data.error || "운세 데이터를 가져올 수 없어요");
-          return;
+        
+        if (data.error) {
+          throw new Error(data.error);
         }
 
-        // 새로운 API 응답 형식에 맞게 변환 (description -> horoscope)
-        setHoroscopeData({
-          ...data,
-          horoscope: data.description, // description을 horoscope로 매핑
-        });
+        // 응답 데이터 정리
+        const horoscopeData: HoroscopeData = {
+          message: data.message || "",
+          love: data.love || "",
+          career: data.career || "",
+          money: data.money || "",
+          advice: data.advice || "",
+          luckyNumber: data.luckyNumber || 0,
+          luckyColor: data.luckyColor || "",
+          keywords: data.keywords || [],
+        };
+
+        // 캐시 저장
+        setCachedData(cacheKey, horoscopeData);
+        setHoroscopeData(horoscopeData);
       } catch (err) {
         console.error(`❌ [Client] Error:`, err);
-        setError(err instanceof Error ? err.message : "오류가 발생했어요");
+        setError(err instanceof Error ? err.message : "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
         setHoroscopeData(null);
       } finally {
         setLoading(false);
@@ -163,37 +139,17 @@ export default function ZodiacPage() {
     fetchHoroscope();
   }, [zodiacInfo]);
 
-  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (
-      value === "" ||
-      (parseInt(value, 10) >= 1 && parseInt(value, 10) <= 12)
-    ) {
-      setBirthMonth(value);
-    }
-  };
 
-  const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (
-      value === "" ||
-      (parseInt(value, 10) >= 1 && parseInt(value, 10) <= 31)
-    ) {
-      setBirthDay(value);
-    }
-  };
-
-  const saveZodiac = (isPremium = false) => {
+  const saveZodiac = () => {
     if (!zodiacInfo || !horoscopeData) return;
 
     const item: HistoryItem = {
       id: uid(),
       type: "ZODIAC",
       title: `[별자리] ${zodiacInfo.name} - 오늘의 흐름`,
-      text: horoscopeData.horoscope,
-      tags: [zodiacInfo.name, "별자리", "오늘의 흐름"],
+      text: horoscopeData.message || "",
+      tags: [zodiacInfo.name, "별자리", "오늘의 흐름", ...(horoscopeData.keywords || [])],
       createdAt: Date.now(),
-      isPremium,
     };
 
     try {
@@ -226,7 +182,7 @@ export default function ZodiacPage() {
 
             <h1 className="h2 stagger d1">별자리 운세(데모)</h1>
             <p className="p stagger d2">
-              생일을 입력하면 오늘의 별자리 흐름을 알려드려요.
+              별자리를 선택하면 오늘의 별자리 흐름을 알려드려요.
             </p>
 
             <div className="stagger d3" style={{ marginTop: 20 }}>
@@ -240,578 +196,336 @@ export default function ZodiacPage() {
                   </div>
                 </div>
 
-                <div className="zodiacInputSection">
+                {/* 별자리 선택 */}
+                <div className="zodiacInputSection" style={{ marginTop: 20 }}>
                   <div className="zodiacInputRow">
-                    <div className="zodiacInputField">
-                      <label className="zodiacInputLabel">생일</label>
-                      <div className="zodiacInputGroup">
-                        <input
-                          type="text"
-                          className="input"
-                          placeholder="월"
-                          value={birthMonth}
-                          onChange={handleMonthChange}
-                          maxLength={2}
-                          style={{ width: "60px", textAlign: "center" }}
-                        />
-                        <span
-                          style={{ margin: "0 8px", color: "var(--muted)" }}
-                        >
-                          /
-                        </span>
-                        <input
-                          type="text"
-                          className="input"
-                          placeholder="일"
-                          value={birthDay}
-                          onChange={handleDayChange}
-                          maxLength={2}
-                          style={{ width: "60px", textAlign: "center" }}
-                        />
+                    <div className="zodiacInputField" style={{ width: "100%" }}>
+                      <label className="zodiacInputLabel" style={{ textAlign: "center", marginBottom: 16 }}>
+                        내 별자리 선택하기
+                      </label>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, 1fr)",
+                          gap: 12,
+                          maxWidth: "500px",
+                          margin: "0 auto",
+                        }}
+                      >
+                        {allZodiacs.map((zodiac) => {
+                          const isSelected = selectedZodiac?.nameEn === zodiac.nameEn;
+                          return (
+                            <button
+                              key={zodiac.nameEn}
+                              onClick={() => setSelectedZodiac(zodiac)}
+                              style={{
+                                padding: "20px 12px",
+                                fontSize: 14,
+                                backgroundColor: isSelected
+                                  ? "var(--navy)"
+                                  : "var(--cream)",
+                                color: isSelected
+                                  ? "var(--cream)"
+                                  : "var(--navy-dark)",
+                                border: `2px solid ${isSelected ? "var(--navy)" : "rgba(43, 38, 42, 0.1)"}`,
+                                borderRadius: 12,
+                                fontWeight: isSelected ? 700 : 500,
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 4,
+                                transform: isSelected ? "scale(1.05)" : "scale(1)",
+                                boxShadow: isSelected
+                                  ? "0 4px 12px rgba(43, 38, 42, 0.15)"
+                                  : "0 2px 4px rgba(43, 38, 42, 0.05)",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.backgroundColor = "rgba(43, 38, 42, 0.05)";
+                                  e.currentTarget.style.transform = "scale(1.02)";
+                                  e.currentTarget.style.borderColor = "rgba(43, 38, 42, 0.2)";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.backgroundColor = "var(--cream)";
+                                  e.currentTarget.style.transform = "scale(1)";
+                                  e.currentTarget.style.borderColor = "rgba(43, 38, 42, 0.1)";
+                                }
+                              }}
+                            >
+                              <span style={{ fontSize: 15, fontWeight: 600 }}>
+                                {zodiac.name}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {loading && (
-                  <div className="card cardPad lift" style={{ marginTop: 16 }}>
-                    {/* 별자리 정보 스켈레톤 */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                      }}
-                    >
-                      <div
-                        className="skeleton"
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: "50%",
-                        }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div
-                          className="skeleton"
-                          style={{
-                            width: "60%",
-                            height: 20,
-                            borderRadius: 4,
-                            marginBottom: 8,
-                          }}
-                        />
-                        <div
-                          className="skeleton"
-                          style={{
-                            width: "40%",
-                            height: 14,
-                            borderRadius: 4,
-                          }}
-                        />
-                      </div>
-                    </div>
 
-                    {/* 운세 텍스트 스켈레톤 */}
-                    <div style={{ marginTop: 20 }}>
-                      <div
-                        className="skeleton"
-                        style={{
-                          width: "50%",
-                          height: 18,
-                          borderRadius: 4,
-                          marginBottom: 12,
-                        }}
-                      />
-                      <div
-                        className="skeleton"
-                        style={{
-                          width: "100%",
-                          height: 14,
-                          borderRadius: 4,
-                          marginBottom: 8,
-                        }}
-                      />
-                      <div
-                        className="skeleton"
-                        style={{
-                          width: "95%",
-                          height: 14,
-                          borderRadius: 4,
-                          marginBottom: 8,
-                        }}
-                      />
-                      <div
-                        className="skeleton"
-                        style={{
-                          width: "85%",
-                          height: 14,
-                          borderRadius: 4,
-                        }}
-                      />
-                    </div>
-
-                    {/* 프리미엄 정보 스켈레톤 (선택적) */}
-                    {isPremium && (
-                      <div
-                        style={{
-                          marginTop: 20,
-                          padding: 18,
-                          background:
-                            "linear-gradient(135deg, rgba(232, 181, 99, 0.08), rgba(232, 181, 99, 0.03))",
-                          borderRadius: 12,
-                          border: "1px solid rgba(232, 181, 99, 0.2)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            marginBottom: 16,
-                          }}
-                        >
-                          <div
-                            className="skeleton"
-                            style={{
-                              width: 60,
-                              height: 20,
-                              borderRadius: 999,
-                            }}
-                          />
-                          <div
-                            className="skeleton"
-                            style={{
-                              width: 80,
-                              height: 18,
-                              borderRadius: 4,
-                            }}
-                          />
-                        </div>
-                        <div
-                          style={{ marginTop: 12, display: "grid", gap: 12 }}
-                        >
-                          {[1, 2, 3, 4].map((i) => (
-                            <div
-                              key={i}
-                              style={{
-                                padding: 12,
-                                background: "rgba(255, 255, 255, 0.5)",
-                                borderRadius: 8,
-                              }}
-                            >
-                              <div
-                                className="skeleton"
-                                style={{
-                                  width: "40%",
-                                  height: 14,
-                                  borderRadius: 4,
-                                  marginBottom: 8,
-                                }}
-                              />
-                              <div
-                                className="skeleton"
-                                style={{
-                                  width: "60%",
-                                  height: 16,
-                                  borderRadius: 4,
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {error && (
-                  <div className="card cardPad" style={{ marginTop: 16 }}>
-                    <div
-                      className="p"
-                      style={{ textAlign: "center", color: "var(--muted)" }}
-                    >
-                      {error}
-                    </div>
-                  </div>
-                )}
-
-                {zodiacInfo && !loading && !error && !horoscopeData && (
-                  <div className="card cardPad" style={{ marginTop: 16 }}>
-                    <div
-                      className="p"
-                      style={{ textAlign: "center", color: "var(--muted)" }}
-                    >
-                      데이터 없음 - API 호출이 실패했거나 응답이 없습니다.
-                    </div>
-                  </div>
-                )}
-
-                {zodiacInfo && horoscopeData && horoscopeData.horoscope && (
-                  <div className="card cardPad lift" style={{ marginTop: 16 }}>
-                    {/* 별자리 정보 */}
-                    <div className="zodiacResultHeader">
-                      <div className="zodiacIcon">{zodiacInfo.icon}</div>
-                      <div>
-                        <div className="zodiacName">{zodiacInfo.name}</div>
-                        <div className="zodiacDateRange">
-                          {zodiacInfo.dateRange}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 오늘의 한 줄 운세 - 실제 API 응답 */}
-                    <div style={{ marginTop: 16 }}>
-                      <div className="zodiacHoroscopeTitle">
-                        오늘의 한 줄 운세
-                      </div>
-                      <div className="p" style={{ marginTop: 8 }}>
-                        {horoscopeData.horoscope ||
-                          "운세 데이터를 불러오는 중..."}
-                      </div>
-                      {/* API 응답 디버깅 정보 (개발용) */}
-                      {process.env.NODE_ENV === "development" && (
-                        <details
-                          style={{
-                            marginTop: 12,
-                            fontSize: 11,
-                            color: "var(--muted)",
-                          }}
-                        >
-                          <summary style={{ cursor: "pointer" }}>
-                            API 응답 확인
-                          </summary>
-                          <pre
-                            style={{
-                              marginTop: 8,
-                              padding: 8,
-                              background: "var(--navy-light)",
-                              borderRadius: 4,
-                              overflow: "auto",
-                              fontSize: 10,
-                            }}
-                          >
-                            {JSON.stringify(horoscopeData, null, 2)}
-                          </pre>
-                        </details>
-                      )}
-                    </div>
-
-                    {/* 프리미엄: 카테고리별 운세 (연애/금전/일) */}
-                    {isPremium && (
-                      <div
-                        style={{
-                          marginTop: 20,
-                          padding: 18,
-                          background:
-                            "linear-gradient(135deg, rgba(232, 181, 99, 0.08), rgba(232, 181, 99, 0.03))",
-                          borderRadius: 12,
-                          border: "1px solid rgba(232, 181, 99, 0.2)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            marginBottom: 16,
-                          }}
-                        >
-                          <span className="chip chipGold">프리미엄</span>
-                          <div
-                            className="zodiacHoroscopeTitle"
-                            style={{ margin: 0 }}
-                          >
-                            카테고리별 운세
-                          </div>
-                        </div>
-                        <div
-                          style={{ marginTop: 12, display: "grid", gap: 16 }}
-                        >
-                          {horoscopeData.love && (
-                            <div
-                              style={{
-                                padding: 12,
-                                background: "rgba(255, 255, 255, 0.5)",
-                                borderRadius: 8,
-                                border: "1px solid rgba(232, 181, 99, 0.15)",
-                              }}
-                            >
-                              <div className="zodiacCategoryLabel">연애</div>
-                              <div
-                                className="p"
-                                style={{ marginTop: 6, fontWeight: 500 }}
-                              >
-                                {horoscopeData.love}
-                              </div>
-                            </div>
-                          )}
-                          {horoscopeData.money && (
-                            <div
-                              style={{
-                                padding: 12,
-                                background: "rgba(255, 255, 255, 0.5)",
-                                borderRadius: 8,
-                                border: "1px solid rgba(232, 181, 99, 0.15)",
-                              }}
-                            >
-                              <div className="zodiacCategoryLabel">금전</div>
-                              <div
-                                className="p"
-                                style={{ marginTop: 6, fontWeight: 500 }}
-                              >
-                                {horoscopeData.money}
-                              </div>
-                            </div>
-                          )}
-                          {horoscopeData.work && (
-                            <div
-                              style={{
-                                padding: 12,
-                                background: "rgba(255, 255, 255, 0.5)",
-                                borderRadius: 8,
-                                border: "1px solid rgba(232, 181, 99, 0.15)",
-                              }}
-                            >
-                              <div className="zodiacCategoryLabel">일</div>
-                              <div
-                                className="p"
-                                style={{ marginTop: 6, fontWeight: 500 }}
-                              >
-                                {horoscopeData.work}
-                              </div>
-                            </div>
-                          )}
-                          {!horoscopeData.love &&
-                            !horoscopeData.money &&
-                            !horoscopeData.work && (
-                              <div
-                                className="p"
-                                style={{
-                                  textAlign: "center",
-                                  color: "var(--muted)",
-                                  padding: 20,
-                                }}
-                              >
-                                카테고리별 운세 데이터를 불러오는 중입니다...
-                                <br />
-                                <span style={{ fontSize: 11 }}>
-                                  (API에서 카테고리별 운세를 제공하지 않을 수
-                                  있습니다)
-                                </span>
-                              </div>
-                            )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 프리미엄: 추가 정보 (기분, 색, 숫자, 시간) */}
-                    {isPremium && (
-                      <div
-                        style={{
-                          marginTop: 20,
-                          padding: 18,
-                          background:
-                            "linear-gradient(135deg, rgba(232, 181, 99, 0.08), rgba(232, 181, 99, 0.03))",
-                          borderRadius: 12,
-                          border: "1px solid rgba(232, 181, 99, 0.2)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            marginBottom: 16,
-                          }}
-                        >
-                          <span className="chip chipGold">프리미엄</span>
-                          <div
-                            className="zodiacHoroscopeTitle"
-                            style={{ margin: 0 }}
-                          >
-                            추가 정보
-                          </div>
-                        </div>
-                        <div
-                          style={{ marginTop: 12, display: "grid", gap: 12 }}
-                        >
-                          {horoscopeData.mood && (
-                            <div
-                              style={{
-                                padding: 12,
-                                background: "rgba(255, 255, 255, 0.5)",
-                                borderRadius: 8,
-                                border: "1px solid rgba(232, 181, 99, 0.15)",
-                              }}
-                            >
-                              <div className="zodiacCategoryLabel">기분</div>
-                              <div
-                                className="p"
-                                style={{ marginTop: 6, fontWeight: 500 }}
-                              >
-                                {horoscopeData.mood}
-                              </div>
-                            </div>
-                          )}
-                          {horoscopeData.color && (
-                            <div
-                              style={{
-                                padding: 12,
-                                background: "rgba(255, 255, 255, 0.5)",
-                                borderRadius: 8,
-                                border: "1px solid rgba(232, 181, 99, 0.15)",
-                              }}
-                            >
-                              <div className="zodiacCategoryLabel">
-                                행운의 색
-                              </div>
-                              <div
-                                className="p"
-                                style={{ marginTop: 6, fontWeight: 500 }}
-                              >
-                                {horoscopeData.color}
-                              </div>
-                            </div>
-                          )}
-                          {horoscopeData.lucky_number && (
-                            <div
-                              style={{
-                                padding: 12,
-                                background: "rgba(255, 255, 255, 0.5)",
-                                borderRadius: 8,
-                                border: "1px solid rgba(232, 181, 99, 0.15)",
-                              }}
-                            >
-                              <div className="zodiacCategoryLabel">
-                                행운의 숫자
-                              </div>
-                              <div
-                                className="p"
-                                style={{
-                                  marginTop: 6,
-                                  fontWeight: 500,
-                                  fontSize: 18,
-                                  color: "var(--gold-main)",
-                                }}
-                              >
-                                {horoscopeData.lucky_number}
-                              </div>
-                            </div>
-                          )}
-                          {horoscopeData.lucky_time && (
-                            <div
-                              style={{
-                                padding: 12,
-                                background: "rgba(255, 255, 255, 0.5)",
-                                borderRadius: 8,
-                                border: "1px solid rgba(232, 181, 99, 0.15)",
-                              }}
-                            >
-                              <div className="zodiacCategoryLabel">
-                                행운의 시간
-                              </div>
-                              <div
-                                className="p"
-                                style={{ marginTop: 6, fontWeight: 500 }}
-                              >
-                                {horoscopeData.lucky_time}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 프리미엄이 아닐 때 안내 */}
-                    {!isPremium && (
-                      <div
-                        style={{
-                          marginTop: 16,
-                          padding: 16,
-                          background: "var(--navy-light)",
-                          borderRadius: 8,
-                          textAlign: "center",
-                        }}
-                      >
-                        <div
-                          className="p"
-                          style={{
-                            marginBottom: 12,
-                            color: "rgba(255, 255, 255, 0.9)",
-                          }}
-                        >
-                          프리미엄으로 더 깊은 해석을 확인하세요
-                        </div>
-                        <button
-                          className="btn btnGhost btnWide"
-                          onClick={() => setIsPremium(true)}
-                          style={{ color: "rgba(255, 255, 255, 0.95)" }}
-                        >
-                          프리미엄으로 더 깊게 보기
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="smallHelp" style={{ marginTop: 12 }}>
-                      * 오늘의 결과는 하루 동안 유지됩니다
-                    </div>
-
-                    {/* 저장 버튼 */}
-                    <div style={{ marginTop: 16, display: "grid", gap: 8 }}>
-                      <button
-                        className="btn btnPrimary btnWide"
-                        onClick={() => saveZodiac(false)}
-                      >
-                        기록에 저장하기
-                      </button>
-
-                      {!isPremium && (
-                        <button
-                          className="btn btnGhost btnWide"
-                          onClick={() => setIsPremium(true)}
-                        >
-                          프리미엄으로 더 깊게 보기
-                        </button>
-                      )}
-                      {isPremium && (
-                        <button
-                          className="btn btnGhost btnWide"
-                          onClick={() => setIsPremium(false)}
-                          style={{
-                            background: "rgba(232, 181, 99, 0.1)",
-                            color: "var(--gold-main)",
-                            borderColor: "rgba(232, 181, 99, 0.3)",
-                          }}
-                        >
-                          기본 보기로 전환
-                        </button>
-                      )}
-
-                      <Link
-                        href="/"
-                        className="btn btnGhost btnWide"
-                        style={{ textAlign: "center", textDecoration: "none" }}
-                      >
-                        돌아가기
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-                {!zodiacInfo && birthMonth && birthDay && (
-                  <div
-                    className="smallHelp"
-                    style={{ marginTop: 12, textAlign: "center" }}
-                  >
-                    생일을 올바르게 입력해주세요 (예: 08/17)
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </section>
       </div>
+
+      {/* 모달 팝업 */}
+      {showModal && (
+        <div
+          className="modalOverlay"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="modalSheet"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modalHeader">
+              <div className="modalTitle">
+                {zodiacInfo ? `${zodiacInfo.name} 운세` : "별자리 운세"}
+              </div>
+              <button
+                className="closeBtn"
+                onClick={() => setShowModal(false)}
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modalBody">
+              {loading && (
+                <div style={{ padding: "20px 0" }}>
+                  {/* 로딩 스켈레톤 */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      marginBottom: 20,
+                    }}
+                  >
+                    <div
+                      className="skeleton"
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div
+                        className="skeleton"
+                        style={{
+                          width: "60%",
+                          height: 20,
+                          borderRadius: 4,
+                          marginBottom: 8,
+                        }}
+                      />
+                      <div
+                        className="skeleton"
+                        style={{
+                          width: "40%",
+                          height: 14,
+                          borderRadius: 4,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div
+                      className="skeleton"
+                      style={{
+                        width: "50%",
+                        height: 18,
+                        borderRadius: 4,
+                        marginBottom: 12,
+                      }}
+                    />
+                    <div
+                      className="skeleton"
+                      style={{
+                        width: "100%",
+                        height: 14,
+                        borderRadius: 4,
+                        marginBottom: 8,
+                      }}
+                    />
+                    <div
+                      className="skeleton"
+                      style={{
+                        width: "95%",
+                        height: 14,
+                        borderRadius: 4,
+                        marginBottom: 8,
+                      }}
+                    />
+                    <div
+                      className="skeleton"
+                      style={{
+                        width: "85%",
+                        height: 14,
+                        borderRadius: 4,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div style={{ padding: "20px 0", textAlign: "center" }}>
+                  <div className="p" style={{ color: "var(--muted)" }}>
+                    {error}
+                  </div>
+                  <button
+                    className="btn btnGhost"
+                    style={{ marginTop: 16 }}
+                    onClick={() => setShowModal(false)}
+                  >
+                    닫기
+                  </button>
+                </div>
+              )}
+
+              {zodiacInfo && !loading && !error && !horoscopeData && (
+                <div style={{ padding: "20px 0", textAlign: "center" }}>
+                  <div className="p" style={{ color: "var(--muted)" }}>
+                    데이터 없음 - API 호출이 실패했거나 응답이 없습니다.
+                  </div>
+                  <button
+                    className="btn btnGhost"
+                    style={{ marginTop: 16 }}
+                    onClick={() => setShowModal(false)}
+                  >
+                    닫기
+                  </button>
+                </div>
+              )}
+
+              {zodiacInfo && horoscopeData && (
+                <div>
+                  {/* 별자리 정보 */}
+                  <div className="zodiacResultHeader">
+                    <div className="zodiacIcon">{zodiacInfo.icon}</div>
+                    <div>
+                      <div className="zodiacName">{zodiacInfo.name}</div>
+                      <div className="zodiacDateRange">
+                        {zodiacInfo.dateRange}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 전체 운세 */}
+                  {horoscopeData.message && (
+                    <div style={{ marginTop: 20 }}>
+                      <div className="zodiacHoroscopeTitle">오늘의 운세</div>
+                      <div className="p" style={{ marginTop: 8 }}>
+                        {horoscopeData.message}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 연애운 */}
+                  {horoscopeData.love && (
+                    <div style={{ marginTop: 20 }}>
+                      <div className="zodiacCategoryLabel">연애운</div>
+                      <div className="p" style={{ marginTop: 8 }}>
+                        {horoscopeData.love}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 직장/학업운 */}
+                  {horoscopeData.career && (
+                    <div style={{ marginTop: 20 }}>
+                      <div className="zodiacCategoryLabel">직장/학업운</div>
+                      <div className="p" style={{ marginTop: 8 }}>
+                        {horoscopeData.career}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 금전운 */}
+                  {horoscopeData.money && (
+                    <div style={{ marginTop: 20 }}>
+                      <div className="zodiacCategoryLabel">금전운</div>
+                      <div className="p" style={{ marginTop: 8 }}>
+                        {horoscopeData.money}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 조언 */}
+                  {horoscopeData.advice && (
+                    <div style={{ marginTop: 20 }}>
+                      <div className="zodiacCategoryLabel">조언</div>
+                      <div className="p" style={{ marginTop: 8 }}>
+                        {horoscopeData.advice}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 행운의 숫자, 색상, 키워드 */}
+                  <div style={{ marginTop: 20, display: "flex", flexWrap: "wrap", gap: 12 }}>
+                    {horoscopeData.luckyNumber && (
+                      <div>
+                        <span className="zodiacCategoryLabel" style={{ marginRight: 8 }}>행운의 숫자</span>
+                        <span className="p">{horoscopeData.luckyNumber}</span>
+                      </div>
+                    )}
+                    {horoscopeData.luckyColor && (
+                      <div>
+                        <span className="zodiacCategoryLabel" style={{ marginRight: 8 }}>행운의 색상</span>
+                        <span className="p">{horoscopeData.luckyColor}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {horoscopeData.keywords && horoscopeData.keywords.length > 0 && (
+                    <div className="chipRow" style={{ marginTop: 12 }}>
+                      {horoscopeData.keywords.map((keyword) => (
+                        <span className="chip" key={keyword}>
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="smallHelp" style={{ marginTop: 12 }}>
+                    * 오늘의 결과는 하루 동안 유지됩니다
+                  </div>
+
+                  {/* 저장 버튼 */}
+                  <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
+                    <button
+                      className="btn btnPrimary btnWide"
+                      onClick={() => {
+                        saveZodiac();
+                        setShowModal(false);
+                      }}
+                    >
+                      기록에 저장하기
+                    </button>
+
+                    <button
+                      className="btn btnGhost btnWide"
+                      onClick={() => setShowModal(false)}
+                    >
+                      닫기
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

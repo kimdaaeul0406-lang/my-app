@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import tarotCardsData from "../data/tarot-cards.json";
-import ZodiacSection from "../components/ZodiacSection";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -44,6 +43,7 @@ type TarotCard = {
 
 // 셔플 애니메이션 타로 카드 피커
 type ShuffleStage =
+  | "waiting" // 버튼 클릭 대기 (카드 안 보임)
   | "intro" // 카드들이 중앙으로 모이는 애니메이션
   | "stacked" // 덱이 쌓여있는 상태 (클릭 대기)
   | "shuffling" // 셔플 애니메이션
@@ -155,13 +155,13 @@ function TarotShufflePicker({
     };
   }, [cards.length]);
 
-  // stacked 단계에서 오늘의 카드 3장 선택 (날짜 기반 - 매일 자정 기준)
+  // spread 단계로 넘어갈 때만 카드 3장 선택 (버튼 클릭 후)
   useEffect(() => {
-    if (stage === "stacked" && isClient) {
+    if (stage === "spread" && isClient && spreadCards.length === 0) {
       const todayIndices = getTodayCardIndices(cards.length);
       setSpreadCards(todayIndices);
     }
-  }, [stage, cards.length, isClient]);
+  }, [stage, cards.length, isClient, spreadCards.length]);
 
   // 셔플마다 새로운 랜덤 위치 생성 (더 자연스러운 애니메이션)
   // shufflePhase가 변경될 때마다 새로운 랜덤 위치 생성
@@ -562,12 +562,10 @@ export default function TarotPage() {
   );
   const [flipped, setFlipped] = useState(false);
   const [canHover, setCanHover] = useState(false);
-  const [hovered, setHovered] = useState<number | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCardImageModal, setShowCardImageModal] = useState(false);
   const [selectedCategory, setSelectedCategory] =
     useState<TarotCategory>("advice");
-  const [isPremium, setIsPremium] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(
     null
@@ -575,7 +573,8 @@ export default function TarotPage() {
   const [swipeOffset, setSwipeOffset] = useState(0);
 
   // 단계별 상태 관리 (새로운 셔플 방식) - 인트로 제거, stacked에서 시작
-  const [stage, setStage] = useState<ShuffleStage>("stacked");
+  // 초기에는 카드가 보이지 않도록 "waiting" 단계 추가
+  const [stage, setStage] = useState<ShuffleStage>("waiting");
 
   useEffect(() => {
     const m = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -590,11 +589,20 @@ export default function TarotPage() {
   // 셔플 카운터 (여러 번 반복)
   const [shuffleCount, setShuffleCount] = useState(0);
 
-  // 덱 클릭 시 셔플 시작
+  // 타로 뽑기 버튼 클릭 시 셔플 시작
   const startShuffle = () => {
-    if (stage !== "stacked") return;
+    if (stage !== "waiting" && stage !== "stacked") return;
     setShuffleCount(0);
-    setStage("shuffling");
+    // waiting에서 시작하면 먼저 stacked로 이동
+    if (stage === "waiting") {
+      setStage("stacked");
+      // stacked 단계로 이동한 후 바로 셔플 시작
+      setTimeout(() => {
+        setStage("shuffling");
+      }, 100);
+    } else {
+      setStage("shuffling");
+    }
   };
 
   // 모바일 감지 (셔플 속도 조정용)
@@ -657,7 +665,7 @@ export default function TarotPage() {
     setPicked(null);
     setPickedSpreadIndex(null);
     setFlipped(false);
-    setStage("stacked"); // intro 제거로 stacked로 초기화
+    setStage("waiting"); // 초기 상태로 리셋 (카드 안 보임)
     setSelectedCategory("advice");
     setCurrentCardIndex(0);
     setShuffleCount(0); // 셔플 카운터도 리셋
@@ -793,7 +801,7 @@ export default function TarotPage() {
     setSwipeOffset(0);
   };
 
-  const saveTarot = (isPremium = false) => {
+  const saveTarot = () => {
     if (!tarotResult || !currentInterpretation) return;
 
     const categoryLabels: Record<TarotCategory, string> = {
@@ -810,7 +818,6 @@ export default function TarotPage() {
       text: currentInterpretation.text,
       tags: currentInterpretation.tags,
       createdAt: Date.now(),
-      isPremium,
     };
 
     try {
@@ -850,8 +857,9 @@ export default function TarotPage() {
               </Link>
             </div>
 
-            <h1 className="h2 stagger d1">타로 카드(데모)</h1>
+            <h1 className="h2 stagger d1">타로 카드</h1>
             <p className="p stagger d2">
+              {stage === "waiting" && "타로 카드를 뽑아보세요"}
               {stage === "stacked" && "덱을 탭하여 셔플하세요"}
               {stage === "spread" && "직감으로 한 장을 선택하세요"}
               {stage === "shuffling" && "카드를 섞고 있어요..."}
@@ -859,6 +867,18 @@ export default function TarotPage() {
                 "카드를 확인하고 있어요..."}
               {stage === "result" && "오늘의 메시지입니다"}
             </p>
+
+            {/* 타로 뽑기 버튼 (waiting 단계에서만 표시) */}
+            {stage === "waiting" && (
+              <div className="stagger d3" style={{ marginTop: 20 }}>
+                <button
+                  className="btn btnPrimary btnWide"
+                  onClick={startShuffle}
+                >
+                  타로 뽑기
+                </button>
+              </div>
+            )}
 
             <div
               className="tarotArea stagger d3"
@@ -868,6 +888,7 @@ export default function TarotPage() {
                   startShuffle();
                 }
               }}
+              style={{ display: stage === "waiting" ? "none" : "block" }}
             >
               <TarotShufflePicker
                 cards={fanDeckCards}
@@ -901,150 +922,73 @@ export default function TarotPage() {
                 </div>
 
                 {/* 카테고리 선택 탭 */}
-                {!isPremium && (
-                  <div
-                    className="tabRow"
-                    style={{ marginTop: 12 }}
-                    aria-label="타로 카테고리"
-                  >
-                    {(["love", "money", "work", "advice"] as TarotCategory[]).map(
-                      (category) => {
-                        const labels: Record<TarotCategory, string> = {
-                          love: "연애",
-                          money: "금전",
-                          work: "직장",
-                          advice: "조언",
-                        };
-                        return (
-                          <button
-                            key={category}
-                            className={`tabBtn ${
-                              category === selectedCategory ? "on" : ""
-                            }`}
-                            onClick={() => setSelectedCategory(category)}
-                          >
-                            {labels[category]}
-                          </button>
-                        );
-                      }
-                    )}
-                  </div>
-                )}
+                <div
+                  className="tabRow"
+                  style={{ marginTop: 12 }}
+                  aria-label="타로 카테고리"
+                >
+                  {(["love", "money", "work", "advice"] as TarotCategory[]).map(
+                    (category) => {
+                      const labels: Record<TarotCategory, string> = {
+                        love: "연애",
+                        money: "금전",
+                        work: "직장",
+                        advice: "조언",
+                      };
+                      return (
+                        <button
+                          key={category}
+                          className={`tabBtn ${
+                            category === selectedCategory ? "on" : ""
+                          }`}
+                          onClick={() => setSelectedCategory(category)}
+                        >
+                          {labels[category]}
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
 
-                {/* 프리미엄: 모든 카테고리 해석 표시 */}
-                {isPremium && tarotResult ? (
-                  <div style={{ marginTop: 12 }}>
-                    <div className="zodiacHoroscopeTitle" style={{ marginBottom: 16 }}>
-                      모든 카테고리 해석
-                    </div>
-                    <div style={{ display: "grid", gap: 20 }}>
-                      {(["love", "money", "work", "advice"] as TarotCategory[]).map(
-                        (category) => {
-                          const labels: Record<TarotCategory, string> = {
-                            love: "연애",
-                            money: "금전",
-                            work: "직장",
-                            advice: "조언",
-                          };
-                          const interpretation = tarotResult.interpretations[category];
-                          return (
-                            <div key={category}>
-                              <div className="zodiacCategoryLabel">
-                                {labels[category]}
-                              </div>
-                              <div
-                                style={{
-                                  marginTop: 8,
-                                  fontWeight: 900,
-                                  letterSpacing: -0.01,
-                                }}
-                              >
-                                {interpretation.title}
-                              </div>
-                              <div className="p" style={{ marginTop: 6 }}>
-                                {interpretation.text}
-                              </div>
-                              <div className="chipRow" style={{ marginTop: 8 }}>
-                                {interpretation.tags.map((t) => (
-                                  <span className="chip" key={t}>
-                                    {t}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  /* 무료: 선택된 카테고리만 표시 */
-                  currentInterpretation && (
-                    <>
-                      <div
-                        style={{
-                          marginTop: 12,
-                          fontWeight: 900,
-                          letterSpacing: -0.01,
-                        }}
-                      >
-                        {currentInterpretation.title}
-                      </div>
-                      <div className="p">{currentInterpretation.text}</div>
-
-                      <div className="chipRow">
-                        {currentInterpretation.tags.map((t) => (
-                          <span className="chip" key={t}>
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  )
-                )}
-
-                {/* 프리미엄이 아닐 때 안내 */}
-                {!isPremium && (
-                  <div
-                    style={{
-                      marginTop: 16,
-                      padding: 16,
-                      background: "var(--navy-light)",
-                      borderRadius: 8,
-                      textAlign: "center",
-                    }}
-                  >
+                {/* 선택된 카테고리 해석 표시 */}
+                {currentInterpretation && (
+                  <>
                     <div
-                      className="p"
                       style={{
-                        marginBottom: 12,
-                        color: "rgba(255, 255, 255, 0.9)",
+                        marginTop: 12,
+                        fontWeight: 900,
+                        letterSpacing: -0.01,
                       }}
                     >
-                      프리미엄으로 모든 카테고리 해석을 확인하세요
+                      {currentInterpretation.title}
                     </div>
-                  </div>
+                    <div className="p" style={{ marginTop: 6 }}>
+                      {currentInterpretation.text}
+                    </div>
+
+                    <div className="chipRow" style={{ marginTop: 8 }}>
+                      {currentInterpretation.tags.map((t) => (
+                        <span className="chip" key={t}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </>
                 )}
 
-                <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
-                  <button
-                    className="btn btnGhost btnWide"
-                    onClick={() => setShowDetailModal(true)}
-                  >
-                    자세히보기
-                  </button>
+                <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
                   <button
                     className="btn btnPrimary btnWide"
-                    onClick={() => saveTarot(false)}
+                    onClick={saveTarot}
                   >
                     기록에 저장하기
                   </button>
 
                   <button
                     className="btn btnGhost btnWide"
-                    onClick={() => setIsPremium(true)}
+                    onClick={() => setShowDetailModal(true)}
                   >
-                    프리미엄으로 더 깊게 보기
+                    자세히보기
                   </button>
 
                   <button className="btn btnGhost btnWide" onClick={resetTarot}>
@@ -1067,13 +1011,6 @@ export default function TarotPage() {
               </div>
             ) : null}
 
-            {/* 별자리 운세 섹션 - 타로 결과 아래 */}
-            {tarotResult && stage === "result" && (
-              <div className="stagger d5" style={{ marginTop: 40 }}>
-                <ZodiacSection isPremium={false} />
-              </div>
-            )}
-
             {/* 자세히보기 팝업 */}
             {showDetailModal && tarotResult && (
               <div
@@ -1085,11 +1022,7 @@ export default function TarotPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="modalHeader">
-                    <div className="modalTitle">
-                      {tarotResult.name}
-                      {currentInterpretation &&
-                        ` · ${currentInterpretation.title}`}
-                    </div>
+                    <div className="modalTitle">{tarotResult.name}</div>
                     <button
                       className="closeBtn"
                       onClick={() => setShowDetailModal(false)}
@@ -1099,23 +1032,56 @@ export default function TarotPage() {
                     </button>
                   </div>
                   <div className="modalBody">
-                    {currentInterpretation && (
-                      <>
-                        <div
-                          className="p"
-                          style={{ whiteSpace: "pre-line", lineHeight: 1.8 }}
-                        >
-                          {currentInterpretation.text}
-                        </div>
-                        <div className="chipRow" style={{ marginTop: 16 }}>
-                          {currentInterpretation.tags.map((t) => (
-                            <span className="chip" key={t}>
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      </>
-                    )}
+                    <div style={{ display: "grid", gap: 24 }}>
+                      {(
+                        ["love", "money", "work", "advice"] as TarotCategory[]
+                      ).map((category) => {
+                        const labels: Record<TarotCategory, string> = {
+                          love: "연애",
+                          money: "금전",
+                          work: "직장",
+                          advice: "조언",
+                        };
+                        const interpretation =
+                          tarotResult.interpretations[category];
+                        return (
+                          <div key={category}>
+                            <div
+                              className="zodiacCategoryLabel"
+                              style={{ marginBottom: 8 }}
+                            >
+                              {labels[category]}
+                            </div>
+                            <div
+                              style={{
+                                fontWeight: 900,
+                                letterSpacing: -0.01,
+                                marginBottom: 8,
+                              }}
+                            >
+                              {interpretation.title}
+                            </div>
+                            <div
+                              className="p"
+                              style={{
+                                whiteSpace: "pre-line",
+                                lineHeight: 1.8,
+                                marginBottom: 12,
+                              }}
+                            >
+                              {interpretation.text}
+                            </div>
+                            <div className="chipRow">
+                              {interpretation.tags.map((t) => (
+                                <span className="chip" key={t}>
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
