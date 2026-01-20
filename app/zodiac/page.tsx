@@ -884,7 +884,7 @@ export default function ZodiacPage() {
 
                   {horoscopeData.keywords &&
                     horoscopeData.keywords.length > 0 && (
-                      <div className="chipRow" style={{ marginTop: 12 }}>
+                      <div className="chipRow">
                         {horoscopeData.keywords.map((keyword) => (
                           <span className="chip" key={keyword}>
                             {keyword}

@@ -770,7 +770,7 @@ export default function SajuPage() {
 
                     {/* 키워드 */}
                     {result.keywords && result.keywords.length > 0 && (
-                      <div className="chipRow" style={{ marginTop: 12 }}>
+                      <div className="chipRow">
                         {result.keywords.map((keyword) => (
                           <span className="chip" key={keyword}>
                             {keyword}

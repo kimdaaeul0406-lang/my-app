@@ -1123,8 +1123,8 @@ button {
 
 /* Chips (브라운은 "작게") */
 .chipRow {
-  margin-top: 12px;
-  margin-bottom: 16px;
+  margin-top: 60px;
+  margin-bottom: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -3012,6 +3012,19 @@ button {
     margin-right: auto;
   }
 
+  /* PC에서 리뷰 카드 텍스트 위치 조정 */
+  .reviewCardZ {
+    padding: 10px 16px;
+  }
+
+  .reviewText {
+    margin-top: 6px;
+  }
+
+  .reviewTop {
+    margin-bottom: 4px;
+  }
+
   /* 하단 칩들 - PC에서 중앙 정렬 */
   .taroSection .chipRow {
     justify-content: center !important;
@@ -3080,11 +3093,20 @@ button {
 
   /* 페이지 제목과 설명 스케일 업 */
   .section .h2 {
-    font-size: 1.2em;
+    font-size: 25px;
   }
 
   .section .p {
-    font-size: 1.15em;
+    font-size: 10px;
+  }
+
+  /* 구독 섹션 PC 버전 폰트 사이즈 */
+  .subscribeFocus .h2 {
+    font-size: 25px;
+  }
+
+  .subscribeFocus .p {
+    font-size: 10px;
   }
 
   /* 폼 영역 PC 최적화 - 간격 축소 */
@@ -3222,7 +3244,7 @@ button {
   }
 
   .card.cardPad .chipRow {
-    margin-top: 12px;
+    margin-top: 60px;
   }
 
   .card.cardPad>div[style*="display: grid"] {

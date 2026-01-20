@@ -235,33 +235,37 @@ export default function Page() {
   const [subscribeEmailModalOpen, setSubscribeEmailModalOpen] = useState(false);
   
   const handleSubscribeEmail = async (email: string, saveEmail: boolean) => {
-    if (!sessionId) return;
-
-    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
-    if (saveEmail) {
-      try {
-        const saveResponse = await fetch("/api/user-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId: sessionId,
-            email: email,
-            saveEmail: true,
-          }),
-        });
-        if (!saveResponse.ok) {
-          console.warn("Failed to save email to DB (non-critical):", await saveResponse.json().catch(() => ({})));
-        }
-      } catch (error) {
-        console.warn("Failed to save email to DB (non-critical):", error);
-      }
-      setUserEmail(email);
+    if (!sessionId) {
+      showToast("세션이 없어요. 페이지를 새로고침해주세요.");
+      return;
     }
 
-    // subscribers 테이블에 저장
     try {
+      // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+      if (saveEmail) {
+        try {
+          const saveResponse = await fetch("/api/user-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              sessionId: sessionId,
+              email: email,
+              saveEmail: true,
+            }),
+          });
+          if (!saveResponse.ok) {
+            console.warn("Failed to save email to DB (non-critical):", await saveResponse.json().catch(() => ({})));
+          } else {
+            setUserEmail(email);
+          }
+        } catch (error) {
+          console.warn("Failed to save email to DB (non-critical):", error);
+        }
+      }
+
+      // subscribers 테이블에 저장 (구독 처리)
       const subscriberResponse = await fetch("/api/subscribers", {
         method: "POST",
         headers: {
@@ -274,17 +278,21 @@ export default function Page() {
       
       if (!subscriberResponse.ok) {
         const errorData = await subscriberResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || "구독 저장에 실패했어요");
+        const errorMessage = errorData.error || errorData.details || "구독 저장에 실패했어요";
+        console.error("Subscribe API error:", errorData);
+        throw new Error(errorMessage);
       }
 
-      showToast("구독이 완료되었어요!");
+      // 성공
+      showToast("구독이 완료되었어요! 매일 아침 이메일을 확인해주세요.");
       setSubscribeEmailModalOpen(false);
       
-      // Stibee 구독 페이지로 이동 (선택사항)
-      // window.open("https://page.stibee.com/subscriptions/467092", "_blank");
+      // 외부 페이지로 리다이렉트하지 않음 - 내부에서 처리 완료
     } catch (error) {
       console.error("Subscribe error:", error);
-      showToast(error instanceof Error ? error.message : "구독에 실패했어요");
+      const errorMessage = error instanceof Error ? error.message : "구독에 실패했어요";
+      showToast(errorMessage);
+      // 에러가 발생해도 모달은 열어둠 (사용자가 재시도할 수 있도록)
     }
   };
 
@@ -904,7 +912,7 @@ export default function Page() {
 
             <div
               className="chipRow"
-              style={{ justifyContent: "center", marginTop: 14 }}
+              style={{ justifyContent: "center" }}
             >
               <span className="chip chipGold">프리미엄</span>
               <span className="chip">과장 없음</span>
@@ -913,7 +921,7 @@ export default function Page() {
           </div>
         </section>
 
-        {/* SUBSCRIBE (통합 카드형) */}
+        {/* SUBSCRIBE (리디자인: 신뢰감 있고 감성적인 톤) */}
         <section className="reveal" ref={subscribeRef as any}>
           <div className="subscribeFocus">
             <div className="subscribeOrb" />
@@ -921,104 +929,110 @@ export default function Page() {
               className="container center"
               style={{ padding: "0 var(--pad)" }}
             >
-              <h2 className="h2 stagger d1">구독으로 매일 받기</h2>
-              <p className="p stagger d2">
-                아침에 딱 한 번, 오늘의 흐름이 정리되면 하루가 덜 흔들려요.
+              <h2 className="h2 stagger d1">아침에 한 번, 오늘의 흐름</h2>
+              <p className="p stagger d2" style={{ maxWidth: "600px", margin: "0 auto" }}>
+                매일 아침 이메일로 받는 오늘의 흐름. 불필요한 걱정 없이, 필요한 만큼만 정리해서 보내드려요.
               </p>
 
-              {/* 모바일: 통합 가격 카드 */}
-              <div className="pricingCard pricingMobile stagger d3">
-                {/* FREE 섹션 */}
-                <div className="pricingSection">
-                  <div className="pricingSectionHeader">
-                    <div>
-                      <div className="pricingBadge free">FREE</div>
-                      <div className="pricingTitle">무료로 구독해서 받기</div>
-                      <div className="pricingDesc">
-                        하루 1회, 오늘의 흐름 + 한 줄 조언을 보내드려요.
-                      </div>
+              {/* 서비스 설명 (사주/타로/별자리 위계) */}
+              <div className="stagger d3" style={{ marginTop: 32, maxWidth: "700px", marginLeft: "auto", marginRight: "auto" }}>
+                <div style={{ display: "grid", gap: 20, textAlign: "left" }}>
+                  <div style={{ padding: "20px", background: "rgba(26, 35, 50, 0.03)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.08)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                      <SajuIcon size={20} />
+                      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--navy-dark)" }}>사주</div>
+                    </div>
+                    <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.7)", lineHeight: 1.6, marginLeft: 32 }}>
+                      본질을 정리해요. 당신의 근본적인 흐름과 성향을 바탕으로 오늘의 방향을 제시합니다.
                     </div>
                   </div>
 
-                  <div className="chipRow">
-                    <span className="chip">오늘의 키워드</span>
-                    <span className="chip">한 줄 조언</span>
-                    <span className="chip">짧고 간결</span>
+                  <div style={{ padding: "20px", background: "rgba(26, 35, 50, 0.03)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.08)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                      <TarotIcon size={20} />
+                      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--navy-dark)" }}>타로</div>
+                    </div>
+                    <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.7)", lineHeight: 1.6, marginLeft: 32 }}>
+                      지금의 선택을 도와요. 현재 상황에서 필요한 메시지와 조언을 전달합니다.
+                    </div>
                   </div>
 
-                  <div style={{ marginTop: 12, display: "grid", gap: 10, width: "100%", maxWidth: "300px", marginLeft: "auto", marginRight: "auto" }}>
-                    <button
-                      className="btn btnPrimary btnWide"
-                      onClick={() => setSubscribeEmailModalOpen(true)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      무료로 구독 시작하기
-                    </button>
-                    <div className="smallHelp" style={{ textAlign: "center" }}>
-                      * 이메일을 입력하면 구독이 완료됩니다.
+                  <div style={{ padding: "20px", background: "rgba(26, 35, 50, 0.03)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.08)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                      <ZodiacIconSmall size={20} />
+                      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--navy-dark)" }}>별자리</div>
+                    </div>
+                    <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.7)", lineHeight: 1.6, marginLeft: 32 }}>
+                      오늘의 흐름을 보여요. 하루의 전반적인 기운과 주의할 점을 간결하게 정리합니다.
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* PC: 무료 구독 */}
-              <div
-                className="pricingDesktop stagger d3"
-              >
-                {/* FREE 섹션 */}
-                <div className="pricingSection" style={{ maxWidth: "500px", margin: "0 auto" }}>
-                  <div className="pricingSectionHeader">
-                    <div>
-                      <div className="pricingBadge free">FREE</div>
-                      <div className="pricingTitle">무료로 구독해서 받기</div>
-                      <div className="pricingDesc">
-                        하루 1회, 오늘의 흐름 + 한 줄 조언을 보내드려요.
+              {/* 구체적인 혜택 */}
+              <div className="stagger d4" style={{ marginTop: 40, maxWidth: "500px", marginLeft: "auto", marginRight: "auto" }}>
+                <div style={{ padding: "24px", background: "rgba(26, 35, 50, 0.04)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.1)" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--navy-dark)", marginBottom: 16, textAlign: "center" }}>
+                    오늘부터 받아보는 것
+                  </div>
+                  <div style={{ display: "grid", gap: 12 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold-main)", marginTop: 6, flexShrink: 0 }} />
+                      <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.75)", lineHeight: 1.6 }}>
+                        <strong style={{ color: "var(--navy-dark)" }}>오늘의 키워드</strong> - 하루를 관통하는 핵심 단어
                       </div>
                     </div>
-                    <div
-                      className="price"
-                      style={{ color: "var(--navy-dark)" }}
-                    >
-                      무료
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold-main)", marginTop: 6, flexShrink: 0 }} />
+                      <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.75)", lineHeight: 1.6 }}>
+                        <strong style={{ color: "var(--navy-dark)" }}>지금 필요한 한 줄 조언</strong> - 실용적이고 명확한 메시지
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold-main)", marginTop: 6, flexShrink: 0 }} />
+                      <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.75)", lineHeight: 1.6 }}>
+                        <strong style={{ color: "var(--navy-dark)" }}>오늘 조심할 흐름</strong> - 주의해야 할 부분을 미리 알려드려요
+                      </div>
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  <div className="chipRow">
-                    <span className="chip">오늘의 키워드</span>
-                    <span className="chip">한 줄 조언</span>
-                    <span className="chip">짧고 간결</span>
-                  </div>
-
-                  <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
-                    <button
-                      className="btn btnPrimary btnWide"
-                      onClick={() => setSubscribeEmailModalOpen(true)}
-                    >
-                      무료로 구독 시작하기
-                    </button>
-                    <div className="smallHelp" style={{ textAlign: "center" }}>
-                      * 클릭하면 구독 페이지로 이동합니다.
-                    </div>
-                  </div>
+              {/* 메인 CTA - 하나만 */}
+              <div className="stagger d5" style={{ marginTop: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                <button
+                  className="btn btnPrimary btnWide"
+                  onClick={() => {
+                    // 구독 페이지로 바로 이동
+                    window.open("https://page.stibee.com/subscriptions/467092", "_blank");
+                  }}
+                  style={{
+                    maxWidth: "400px",
+                    fontSize: 15,
+                    fontWeight: 800,
+                    padding: "16px 24px",
+                  }}
+                >
+                  오늘의 흐름 받아보기
+                </button>
+                <div className="smallHelp" style={{ textAlign: "center", fontSize: 12, color: "rgba(26, 35, 50, 0.5)" }}>
+                  구독 페이지에서 이메일을 입력해주세요.
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* START FORM */}
-        <section className="section reveal">
+        {/* START FORM - 오늘의 흐름 시작하기 */}
+        <section className="section reveal" style={{ marginTop: 40 }}>
           <div className="container center">
-            <h2 className="h2 stagger d1">나의 흐름, 무료로 시작하기</h2>
-            <p className="p stagger d2" style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}>
-              사주는 본질을, 타로는 선택을, 별자리는 오늘의 흐름을 알려줍니다.
+            <h2 className="h2 stagger d1">아침에 한 번, 오늘의 흐름을 확인하세요</h2>
+            <p className="p stagger d2" style={{ wordBreak: "keep-all", overflowWrap: "break-word", maxWidth: "500px", margin: "0 auto" }}>
+              하루를 시작하기 전, 당신의 본질과 오늘의 선택을 정리해드려요.
             </p>
 
-            <div className="stagger d3" style={{ marginTop: 20, display: "grid", gap: 10, width: "100%", maxWidth: "300px", marginLeft: "auto", marginRight: "auto" }}>
+            {/* 메인 CTA - 하나만 강하게 */}
+            <div className="stagger d3" style={{ marginTop: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
               <Link
                 href="/saju"
                 className="btn btnPrimary btnWide"
@@ -1028,53 +1042,85 @@ export default function Page() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  maxWidth: "400px",
+                  fontSize: 15,
+                  fontWeight: 800,
+                  padding: "16px 24px",
                 }}
               >
-                사주 확인하기
+                오늘의 흐름 시작하기
               </Link>
-              <Link
-                href="/tarot"
-                className="btn btnGhost btnWide"
-                style={{
-                  textAlign: "center",
-                  textDecoration: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                타로 카드 뽑기
-              </Link>
-              <Link
-                href="/zodiac"
-                className="btn btnGhost btnWide"
-                style={{
-                  textAlign: "center",
-                  textDecoration: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                별자리 확인하기
-              </Link>
+
+              {/* 서브 액션 - 링크 톤으로 다운 */}
+              <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 13, color: "rgba(26, 35, 50, 0.6)" }}>
+                <Link
+                  href="/tarot"
+                  style={{
+                    color: "rgba(26, 35, 50, 0.6)",
+                    textDecoration: "none",
+                    transition: "color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "rgba(26, 35, 50, 0.9)"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "rgba(26, 35, 50, 0.6)"}
+                >
+                  타로 카드
+                </Link>
+                <span style={{ color: "rgba(26, 35, 50, 0.3)" }}>·</span>
+                <Link
+                  href="/zodiac"
+                  style={{
+                    color: "rgba(26, 35, 50, 0.6)",
+                    textDecoration: "none",
+                    transition: "color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "rgba(26, 35, 50, 0.9)"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "rgba(26, 35, 50, 0.6)"}
+                >
+                  별자리
+                </Link>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* HISTORY */}
+        {/* HISTORY - 행동을 유도하는 영역 */}
         <section className="sectionTight reveal" ref={historyRef as any}>
           <div className="container center">
-            <h2 className="h2 stagger d1">최근 기록</h2>
-            <p className="p stagger d2">흐름을 쌓아두면, 내 패턴이 보여요.</p>
+            <h2 className="h2 stagger d1" style={{ fontSize: 16, fontWeight: 700 }}>최근 기록</h2>
+            <p className="p stagger d2" style={{ fontSize: 12, marginTop: 6 }}>흐름을 쌓아두면, 내 패턴이 보여요.</p>
 
             <div className="historyWrap stagger d3">
               {history.length === 0 ? (
-                <div className="card cardPad left">
-                  <div style={{ fontWeight: 900 }}>
-                    아직 저장된 기록이 없어요.
+                <div className="card cardPad left" style={{ 
+                  textAlign: "center", 
+                  padding: "32px 24px",
+                  background: "rgba(26, 35, 50, 0.02)",
+                  border: "1px solid rgba(26, 35, 50, 0.08)",
+                  borderRadius: "16px"
+                }}>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: "var(--navy-dark)", marginBottom: 8 }}>
+                    오늘의 흐름을 한 번 남겨보세요
                   </div>
-                  <div className="p">사주/별자리/타로 결과에서 "저장"을 눌러봐.</div>
+                  <div className="p" style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.65)", lineHeight: 1.6 }}>
+                    사주, 타로, 별자리 결과를 저장하면<br />
+                    시간이 지나도 다시 볼 수 있어요.
+                  </div>
+                  <div style={{ marginTop: 20 }}>
+                    <Link
+                      href="/saju"
+                      className="btn btnPrimary"
+                      style={{
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 13,
+                        padding: "10px 20px",
+                      }}
+                    >
+                      지금 시작하기
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 history.map((h) => (
@@ -1133,20 +1179,40 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Reassure */}
+        {/* 브랜드 철학 - 부드럽고 사람 말처럼 */}
         <section className="reveal">
-          <div className="reassureBox">
-            <div className="reassureTitle">안심하고 볼 수 있도록</div>
-            <ul className="reassureList">
-              <li>
-                LUMEN은 공포·불안 조장을 하지 않아요. (과장된 문장 사용 X)
-              </li>
-              <li>의료·법률·투자 조언을 대체하지 않아요.</li>
-              <li>
-                오늘의 선택을 "정리"하는 서비스로, 스스로의 판단을 돕는 데
-                집중해요.
-              </li>
-            </ul>
+          <div className="reassureBox" style={{ 
+            padding: "32px 24px",
+            background: "rgba(26, 35, 50, 0.02)",
+            border: "1px solid rgba(26, 35, 50, 0.08)",
+            borderRadius: "16px",
+            maxWidth: "600px",
+            margin: "0 auto",
+            textAlign: "center"
+          }}>
+            <div className="reassureTitle" style={{ 
+              fontSize: 15, 
+              fontWeight: 800, 
+              color: "var(--navy-dark)",
+              marginBottom: 12
+            }}>
+              안심하고 볼 수 있도록
+            </div>
+            <div style={{ 
+              fontSize: 13, 
+              color: "rgba(26, 35, 50, 0.7)", 
+              lineHeight: 1.8,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8
+            }}>
+              <p style={{ margin: 0 }}>
+                공포나 불안을 조장하지 않아요. 과장된 말은 쓰지 않아요.
+              </p>
+              <p style={{ margin: 0 }}>
+                오늘의 선택을 정리해드릴 뿐, 스스로 판단하시면 돼요.
+              </p>
+            </div>
           </div>
         </section>
 

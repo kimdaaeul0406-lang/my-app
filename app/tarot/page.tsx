@@ -1323,7 +1323,7 @@ export default function TarotPage() {
                         </div>
 
                         {currentInterpretation.tags.length > 0 && (
-                          <div className="chipRow" style={{ marginTop: 8 }}>
+                          <div className="chipRow">
                             {currentInterpretation.tags.map((t) => (
                               <span className="chip" key={t}>
                                 {t}
