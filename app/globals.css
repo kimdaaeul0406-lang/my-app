@@ -3109,6 +3109,24 @@ button {
     font-size: 10px;
   }
 
+  /* taroSection PC 버전 폰트 사이즈 */
+  .taroSection .h2 {
+    font-size: 25px;
+  }
+
+  .taroSection .p {
+    font-size: 12px;
+  }
+
+  /* sectionTight PC 버전 폰트 사이즈 */
+  .sectionTight .h2 {
+    font-size: 25px;
+  }
+
+  .sectionTight .p {
+    font-size: 15px;
+  }
+
   /* 폼 영역 PC 최적화 - 간격 축소 */
   .form {
     max-width: 600px;

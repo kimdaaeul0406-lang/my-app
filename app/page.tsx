@@ -730,48 +730,90 @@ export default function Page() {
               </div>
               <div className="flowDesc stagger d5">{todayFlow.desc}</div>
 
-              <div className="chipRow" style={{ justifyContent: "center" }}>
-                {todayFlow.tags.map((t) => (
-                  <span className="chip" key={t}>
-                    {t}
-                  </span>
-                ))}
+              {/* 키워드에 의미 부여 - 오늘의 힌트 */}
+              <div className="stagger d4" style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12, width: "100%", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
+                {todayFlow.tags.map((t, index) => {
+                  const descriptions: Record<string, string> = {
+                    "용기": "작은 도전이 큰 변화를 만듭니다",
+                    "시작": "완벽하지 않아도 지금 시작하세요",
+                    "집중": "한 가지에 집중하면 흐름이 열립니다",
+                    "성취": "오늘의 작은 성취가 내일의 자신감입니다",
+                    "기쁨": "작은 순간에도 기쁨을 찾아보세요",
+                    "직감": "내면의 목소리를 들어보세요",
+                    "흐름": "자연스러운 흐름을 따르세요",
+                    "균형": "균형을 찾으면 방향이 보입니다",
+                  };
+                  return (
+                    <div key={t} style={{ 
+                      padding: "12px 16px", 
+                      background: "rgba(26, 35, 50, 0.03)", 
+                      borderRadius: "12px",
+                      border: "1px solid rgba(26, 35, 50, 0.08)",
+                      textAlign: "center"
+                    }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: "var(--navy-dark)", marginBottom: 4 }}>
+                        {t}
+                      </div>
+                      <div style={{ fontSize: 12, color: "rgba(26, 35, 50, 0.65)", lineHeight: 1.5 }}>
+                        {descriptions[t] || "오늘의 흐름을 이끄는 힌트입니다"}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="flowCtas">
-                <button
-                  className="btn btnPrimary btnWide"
-                  onClick={() => scrollTo(historyRef)}
-                >
-                  최근 기록 보기
-                </button>
-              </div>
-
-              <div className="btnTinyGroup">
+              {/* 메인 CTA - 오늘 바로 행동하게 만드는 버튼 */}
+              <div className="flowCtas stagger d5" style={{ marginTop: 32 }}>
                 <Link
                   href="/saju"
-                  className="btnTiny"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  className="btn btnPrimary btnWide"
+                  style={{
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  <SajuIcon size={14} />
-                  사주 확인하기
+                  오늘의 흐름 시작하기
                 </Link>
-                <Link
-                  href="/zodiac"
-                  className="btnTiny"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  <ZodiacIconSmall size={14} />
-                  별자리 확인하기
-                </Link>
-                <Link
-                  href="/tarot"
-                  className="btnTiny"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  <TarotIcon size={14} />
-                  타로 뽑기
-                </Link>
+              </div>
+
+              {/* 오늘의 흐름을 더 깊게 보는 방법 */}
+              <div className="stagger d6" style={{ marginTop: 24 }}>
+                <div style={{ 
+                  fontSize: 12, 
+                  color: "rgba(26, 35, 50, 0.6)", 
+                  textAlign: "center", 
+                  marginBottom: 12 
+                }}>
+                  오늘의 흐름을 더 깊게 보고 싶다면
+                </div>
+                <div className="btnTinyGroup">
+                  <Link
+                    href="/saju"
+                    className="btnTiny"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <SajuIcon size={14} />
+                    사주 확인하기
+                  </Link>
+                  <Link
+                    href="/zodiac"
+                    className="btnTiny"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <ZodiacIconSmall size={14} />
+                    별자리 확인하기
+                  </Link>
+                  <Link
+                    href="/tarot"
+                    className="btnTiny"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <TarotIcon size={14} />
+                    타로 뽑기
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -783,48 +825,90 @@ export default function Page() {
               </div>
               <div className="flowDesc stagger d5">{todayFlow.desc}</div>
 
-              <div className="chipRow" style={{ justifyContent: "center" }}>
-                {todayFlow.tags.map((t) => (
-                  <span className="chip" key={t}>
-                    {t}
-                  </span>
-                ))}
+              {/* 키워드에 의미 부여 - 오늘의 힌트 */}
+              <div className="stagger d4" style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12, width: "100%", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
+                {todayFlow.tags.map((t, index) => {
+                  const descriptions: Record<string, string> = {
+                    "용기": "작은 도전이 큰 변화를 만듭니다",
+                    "시작": "완벽하지 않아도 지금 시작하세요",
+                    "집중": "한 가지에 집중하면 흐름이 열립니다",
+                    "성취": "오늘의 작은 성취가 내일의 자신감입니다",
+                    "기쁨": "작은 순간에도 기쁨을 찾아보세요",
+                    "직감": "내면의 목소리를 들어보세요",
+                    "흐름": "자연스러운 흐름을 따르세요",
+                    "균형": "균형을 찾으면 방향이 보입니다",
+                  };
+                  return (
+                    <div key={t} style={{ 
+                      padding: "12px 16px", 
+                      background: "rgba(26, 35, 50, 0.03)", 
+                      borderRadius: "12px",
+                      border: "1px solid rgba(26, 35, 50, 0.08)",
+                      textAlign: "center"
+                    }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: "var(--navy-dark)", marginBottom: 4 }}>
+                        {t}
+                      </div>
+                      <div style={{ fontSize: 12, color: "rgba(26, 35, 50, 0.65)", lineHeight: 1.5 }}>
+                        {descriptions[t] || "오늘의 흐름을 이끄는 힌트입니다"}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="flowCtas">
-                <button
-                  className="btn btnPrimary btnWide"
-                  onClick={() => scrollTo(historyRef)}
-                >
-                  최근 기록 보기
-                </button>
-              </div>
-
-              <div className="btnTinyGroup">
+              {/* 메인 CTA - 오늘 바로 행동하게 만드는 버튼 */}
+              <div className="flowCtas stagger d5" style={{ marginTop: 32 }}>
                 <Link
                   href="/saju"
-                  className="btnTiny"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  className="btn btnPrimary btnWide"
+                  style={{
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  <SajuIcon size={14} />
-                  사주 확인하기
+                  오늘의 흐름 시작하기
                 </Link>
-                <Link
-                  href="/zodiac"
-                  className="btnTiny"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  <ZodiacIconSmall size={14} />
-                  별자리 확인하기
-                </Link>
-                <Link
-                  href="/tarot"
-                  className="btnTiny"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  <TarotIcon size={14} />
-                  타로 뽑기
-                </Link>
+              </div>
+
+              {/* 오늘의 흐름을 더 깊게 보는 방법 */}
+              <div className="stagger d6" style={{ marginTop: 24 }}>
+                <div style={{ 
+                  fontSize: 12, 
+                  color: "rgba(26, 35, 50, 0.6)", 
+                  textAlign: "center", 
+                  marginBottom: 12 
+                }}>
+                  오늘의 흐름을 더 깊게 보고 싶다면
+                </div>
+                <div className="btnTinyGroup">
+                  <Link
+                    href="/saju"
+                    className="btnTiny"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <SajuIcon size={14} />
+                    사주 확인하기
+                  </Link>
+                  <Link
+                    href="/zodiac"
+                    className="btnTiny"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <ZodiacIconSmall size={14} />
+                    별자리 확인하기
+                  </Link>
+                  <Link
+                    href="/tarot"
+                    className="btnTiny"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <TarotIcon size={14} />
+                    타로 뽑기
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -859,7 +943,7 @@ export default function Page() {
                   <div className="principleTitle">공포·불안 조장 없음</div>
                 </div>
                 <div className="principleDesc">
-                  마음을 흔드는 말 대신, 흐름을 정리하는 문장으로만 전해요.
+                  마음을 흔드는 말 대신, 흐름을 정리하는 문장으로만 전해요. 과장된 말은 쓰지 않아요.
                 </div>
               </div>
 
@@ -877,7 +961,7 @@ export default function Page() {
                   <div className="principleTitle">짧고 명확한 문장</div>
                 </div>
                 <div className="principleDesc">
-                  필요한 만큼만. 읽고 나면 마음이 가벼워지게 구성해요.
+                  필요한 만큼만. 읽고 나면 마음이 가벼워지게 구성해요. 오늘의 선택을 정리해드릴 뿐, 스스로 판단하시면 돼요.
                 </div>
               </div>
             </div>
@@ -921,7 +1005,7 @@ export default function Page() {
           </div>
         </section>
 
-        {/* SUBSCRIBE (리디자인: 신뢰감 있고 감성적인 톤) */}
+        {/* SUBSCRIBE - 구독 기능만 (메시지 중복 제거) */}
         <section className="reveal" ref={subscribeRef as any}>
           <div className="subscribeFocus">
             <div className="subscribeOrb" />
@@ -929,51 +1013,16 @@ export default function Page() {
               className="container center"
               style={{ padding: "0 var(--pad)" }}
             >
-              <h2 className="h2 stagger d1">아침에 한 번, 오늘의 흐름</h2>
+              <h2 className="h2 stagger d1">매일 아침 이메일로 받기</h2>
               <p className="p stagger d2" style={{ maxWidth: "600px", margin: "0 auto" }}>
-                매일 아침 이메일로 받는 오늘의 흐름. 불필요한 걱정 없이, 필요한 만큼만 정리해서 보내드려요.
+                오늘의 키워드, 한 줄 조언, 주의할 흐름을 매일 아침 정리해서 보내드려요.
               </p>
 
-              {/* 서비스 설명 (사주/타로/별자리 위계) */}
-              <div className="stagger d3" style={{ marginTop: 32, maxWidth: "700px", marginLeft: "auto", marginRight: "auto" }}>
-                <div style={{ display: "grid", gap: 20, textAlign: "left" }}>
-                  <div style={{ padding: "20px", background: "rgba(26, 35, 50, 0.03)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.08)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                      <SajuIcon size={20} />
-                      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--navy-dark)" }}>사주</div>
-                    </div>
-                    <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.7)", lineHeight: 1.6, marginLeft: 32 }}>
-                      본질을 정리해요. 당신의 근본적인 흐름과 성향을 바탕으로 오늘의 방향을 제시합니다.
-                    </div>
-                  </div>
-
-                  <div style={{ padding: "20px", background: "rgba(26, 35, 50, 0.03)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.08)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                      <TarotIcon size={20} />
-                      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--navy-dark)" }}>타로</div>
-                    </div>
-                    <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.7)", lineHeight: 1.6, marginLeft: 32 }}>
-                      지금의 선택을 도와요. 현재 상황에서 필요한 메시지와 조언을 전달합니다.
-                    </div>
-                  </div>
-
-                  <div style={{ padding: "20px", background: "rgba(26, 35, 50, 0.03)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.08)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                      <ZodiacIconSmall size={20} />
-                      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--navy-dark)" }}>별자리</div>
-                    </div>
-                    <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.7)", lineHeight: 1.6, marginLeft: 32 }}>
-                      오늘의 흐름을 보여요. 하루의 전반적인 기운과 주의할 점을 간결하게 정리합니다.
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* 구체적인 혜택 */}
-              <div className="stagger d4" style={{ marginTop: 40, maxWidth: "500px", marginLeft: "auto", marginRight: "auto" }}>
+              <div className="stagger d3" style={{ marginTop: 32, maxWidth: "500px", marginLeft: "auto", marginRight: "auto" }}>
                 <div style={{ padding: "24px", background: "rgba(26, 35, 50, 0.04)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.1)" }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "var(--navy-dark)", marginBottom: 16, textAlign: "center" }}>
-                    오늘부터 받아보는 것
+                    매일 받아보는 것
                   </div>
                   <div style={{ display: "grid", gap: 12 }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -998,12 +1047,11 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* 메인 CTA - 하나만 */}
-              <div className="stagger d5" style={{ marginTop: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              {/* 보조 CTA - 구독 */}
+              <div className="stagger d4" style={{ marginTop: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
                 <button
                   className="btn btnPrimary btnWide"
                   onClick={() => {
-                    // 구독 페이지로 바로 이동
                     window.open("https://page.stibee.com/subscriptions/467092", "_blank");
                   }}
                   style={{
@@ -1013,71 +1061,11 @@ export default function Page() {
                     padding: "16px 24px",
                   }}
                 >
-                  오늘의 흐름 받아보기
+                  구독하기
                 </button>
                 <div className="smallHelp" style={{ textAlign: "center", fontSize: 12, color: "rgba(26, 35, 50, 0.5)" }}>
                   구독 페이지에서 이메일을 입력해주세요.
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* START FORM - 오늘의 흐름 시작하기 */}
-        <section className="section reveal" style={{ marginTop: 40 }}>
-          <div className="container center">
-            <h2 className="h2 stagger d1">아침에 한 번, 오늘의 흐름을 확인하세요</h2>
-            <p className="p stagger d2" style={{ wordBreak: "keep-all", overflowWrap: "break-word", maxWidth: "500px", margin: "0 auto" }}>
-              하루를 시작하기 전, 당신의 본질과 오늘의 선택을 정리해드려요.
-            </p>
-
-            {/* 메인 CTA - 하나만 강하게 */}
-            <div className="stagger d3" style={{ marginTop: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-              <Link
-                href="/saju"
-                className="btn btnPrimary btnWide"
-                style={{
-                  textAlign: "center",
-                  textDecoration: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  maxWidth: "400px",
-                  fontSize: 15,
-                  fontWeight: 800,
-                  padding: "16px 24px",
-                }}
-              >
-                오늘의 흐름 시작하기
-              </Link>
-
-              {/* 서브 액션 - 링크 톤으로 다운 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 13, color: "rgba(26, 35, 50, 0.6)" }}>
-                <Link
-                  href="/tarot"
-                  style={{
-                    color: "rgba(26, 35, 50, 0.6)",
-                    textDecoration: "none",
-                    transition: "color 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = "rgba(26, 35, 50, 0.9)"}
-                  onMouseLeave={(e) => e.currentTarget.style.color = "rgba(26, 35, 50, 0.6)"}
-                >
-                  타로 카드
-                </Link>
-                <span style={{ color: "rgba(26, 35, 50, 0.3)" }}>·</span>
-                <Link
-                  href="/zodiac"
-                  style={{
-                    color: "rgba(26, 35, 50, 0.6)",
-                    textDecoration: "none",
-                    transition: "color 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = "rgba(26, 35, 50, 0.9)"}
-                  onMouseLeave={(e) => e.currentTarget.style.color = "rgba(26, 35, 50, 0.6)"}
-                >
-                  별자리
-                </Link>
               </div>
             </div>
           </div>
@@ -1175,43 +1163,6 @@ export default function Page() {
                   </div>
                 ))
               )}
-            </div>
-          </div>
-        </section>
-
-        {/* 브랜드 철학 - 부드럽고 사람 말처럼 */}
-        <section className="reveal">
-          <div className="reassureBox" style={{ 
-            padding: "32px 24px",
-            background: "rgba(26, 35, 50, 0.02)",
-            border: "1px solid rgba(26, 35, 50, 0.08)",
-            borderRadius: "16px",
-            maxWidth: "600px",
-            margin: "0 auto",
-            textAlign: "center"
-          }}>
-            <div className="reassureTitle" style={{ 
-              fontSize: 15, 
-              fontWeight: 800, 
-              color: "var(--navy-dark)",
-              marginBottom: 12
-            }}>
-              안심하고 볼 수 있도록
-            </div>
-            <div style={{ 
-              fontSize: 13, 
-              color: "rgba(26, 35, 50, 0.7)", 
-              lineHeight: 1.8,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8
-            }}>
-              <p style={{ margin: 0 }}>
-                공포나 불안을 조장하지 않아요. 과장된 말은 쓰지 않아요.
-              </p>
-              <p style={{ margin: 0 }}>
-                오늘의 선택을 정리해드릴 뿐, 스스로 판단하시면 돼요.
-              </p>
             </div>
           </div>
         </section>
