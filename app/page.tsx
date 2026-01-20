@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import PWAInstallBanner from "./components/PWAInstallBanner";
 
 type ModalType = "tarot" | null;
 
@@ -393,27 +394,26 @@ export default function Page() {
                 </button>
               </div>
 
-              <Link
-                href="/saju"
-                className="btnTiny"
-                style={{ textDecoration: "none" }}
-              >
-                사주 확인하기
-              </Link>
-              <Link
-                href="/zodiac"
-                className="btnTiny"
-                style={{ marginLeft: 8, textDecoration: "none" }}
-              >
-                별자리 확인하기
-              </Link>
-              <Link
-                href="/tarot"
-                className="btnTiny"
-                style={{ marginLeft: 8, textDecoration: "none" }}
-              >
-                타로 뽑기
-              </Link>
+              <div className="btnTinyGroup">
+                <Link
+                  href="/saju"
+                  className="btnTiny"
+                >
+                  🔮 사주 확인하기
+                </Link>
+                <Link
+                  href="/zodiac"
+                  className="btnTiny"
+                >
+                  ⭐ 별자리 확인하기
+                </Link>
+                <Link
+                  href="/tarot"
+                  className="btnTiny"
+                >
+                  🃏 타로 뽑기
+                </Link>
+              </div>
             </div>
 
             {/* PC: 모바일과 동일한 세로 스택 구조 */}
@@ -441,27 +441,26 @@ export default function Page() {
                 </button>
               </div>
 
-              <Link
-                href="/saju"
-                className="btnTiny"
-                style={{ textDecoration: "none" }}
-              >
-                사주 확인하기
-              </Link>
-              <Link
-                href="/zodiac"
-                className="btnTiny"
-                style={{ marginLeft: 8, textDecoration: "none" }}
-              >
-                별자리 확인하기
-              </Link>
-              <Link
-                href="/tarot"
-                className="btnTiny"
-                style={{ marginLeft: 8, textDecoration: "none" }}
-              >
-                타로 뽑기
-              </Link>
+              <div className="btnTinyGroup">
+                <Link
+                  href="/saju"
+                  className="btnTiny"
+                >
+                  🔮 사주 확인하기
+                </Link>
+                <Link
+                  href="/zodiac"
+                  className="btnTiny"
+                >
+                  ⭐ 별자리 확인하기
+                </Link>
+                <Link
+                  href="/tarot"
+                  className="btnTiny"
+                >
+                  🃏 타로 뽑기
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -605,7 +604,9 @@ export default function Page() {
               </div>
 
               {/* PC: 무료 구독 */}
-              <div className="pricingDesktop stagger d3">
+              <div
+                className="pricingDesktop stagger d3"
+              >
                 {/* FREE 섹션 */}
                 <div className="pricingSection" style={{ maxWidth: "500px", margin: "0 auto" }}>
                   <div className="pricingSectionHeader">
@@ -833,6 +834,9 @@ export default function Page() {
             ↑
           </button>
         )}
+
+        {/* PWA 설치 유도 배너 */}
+        <PWAInstallBanner />
       </div>
     </main>
   );

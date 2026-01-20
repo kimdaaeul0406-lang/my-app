@@ -2,8 +2,19 @@ import "./globals.css";
 import { Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
 
 export const metadata = {
-  title: "LUMEN",
-  description: "사주 & 타로 & 별자리 랜딩",
+  title: "LUMEN - 오늘의 운세",
+  description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리",
+  manifest: "/manifest.json",
+  themeColor: "#1a2332",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "LUMEN",
+  },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
 };
 
 const sans = Noto_Sans_KR({
@@ -25,6 +36,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" className={`${sans.variable} ${serif.variable}`}>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body>{children}</body>
     </html>
   );

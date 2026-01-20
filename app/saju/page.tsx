@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getCachedData, setCachedData, getSajuCacheKey } from "../utils/cache";
+import { shareResult, formatSajuShare } from "../utils/share";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -43,6 +44,13 @@ export default function SajuPage() {
   const [result, setResult] = useState<SajuResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 토스트 메시지
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
 
   // 생년월일 입력 핸들러
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,23 +161,54 @@ export default function SajuPage() {
     <main className="mainWrap">
       <div className="bgFX" />
       <div className="content">
-        <section className="section reveal on">
+        {/* 밤하늘 헤더 */}
+        <section className="subPageHeader reveal on">
+          <div className="subPageStars">
+            {[
+              { left: 12, top: 18, delay: 0.2 },
+              { left: 25, top: 32, delay: 0.7 },
+              { left: 40, top: 14, delay: 1.2 },
+              { left: 52, top: 42, delay: 1.7 },
+              { left: 65, top: 22, delay: 0.5 },
+              { left: 80, top: 38, delay: 1.0 },
+              { left: 18, top: 52, delay: 1.4 },
+              { left: 33, top: 58, delay: 0.8 },
+              { left: 48, top: 28, delay: 2.0 },
+              { left: 72, top: 48, delay: 0.4 },
+              { left: 86, top: 16, delay: 1.6 },
+              { left: 8, top: 40, delay: 1.1 },
+            ].map((star, i) => (
+              <div
+                key={i}
+                className="star"
+                style={{
+                  left: `${star.left}%`,
+                  top: `${star.top}%`,
+                  animationDelay: `${star.delay}s`,
+                }}
+              />
+            ))}
+          </div>
           <div className="container center">
             <div style={{ marginBottom: 16 }}>
               <Link
                 href="/"
-                className="btnTiny"
-                style={{ textDecoration: "none" }}
+                className="btnBack"
               >
-                ← 돌아가기
+                ← 홈으로 돌아가기
               </Link>
             </div>
 
-            <h1 className="h2 stagger d1">사주 운세</h1>
+            <h1 className="h2 stagger d1">🔮 사주 운세</h1>
             <p className="p stagger d2">
               생년월일을 입력하면 오늘의 사주 흐름을 알려드려요.
             </p>
+          </div>
+        </section>
 
+        {/* 콘텐츠 섹션 */}
+        <section className="section reveal on">
+          <div className="container center">
             <div className="stagger d3" style={{ marginTop: 20 }}>
               <div className="zodiacSection">
                 <div className="zodiacSectionHeader">
@@ -197,26 +236,72 @@ export default function SajuPage() {
                     </div>
                   </div>
 
-                  {/* 출생 시간 (선택사항) */}
+                  {/* 출생 시간 (선택사항) - 전통 시간대 선택 */}
                   <div className="zodiacInputRow" style={{ marginTop: 16 }}>
                     <div className="zodiacInputField">
                       <label className="zodiacInputLabel">
                         출생 시간 (선택사항)
                       </label>
-                      <input
-                        type="time"
-                        className="input"
-                        value={birthTime}
-                        onChange={(e) => {
-                          setBirthTime(e.target.value);
-                          setResult(null);
-                          setError(null);
-                        }}
-                        placeholder="모르면 비워두세요"
-                        style={{ width: "100%" }}
-                      />
-                      <div className="smallHelp" style={{ marginTop: 4 }}>
-                        모르면 비워두세요
+                      <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(4, 1fr)",
+                        gap: 8,
+                        marginTop: 8,
+                      }}>
+                        {[
+                          { value: "", label: "모름", time: "" },
+                          { value: "23:00", label: "자시", time: "23~01시" },
+                          { value: "01:00", label: "축시", time: "01~03시" },
+                          { value: "03:00", label: "인시", time: "03~05시" },
+                          { value: "05:00", label: "묘시", time: "05~07시" },
+                          { value: "07:00", label: "진시", time: "07~09시" },
+                          { value: "09:00", label: "사시", time: "09~11시" },
+                          { value: "11:00", label: "오시", time: "11~13시" },
+                          { value: "13:00", label: "미시", time: "13~15시" },
+                          { value: "15:00", label: "신시", time: "15~17시" },
+                          { value: "17:00", label: "유시", time: "17~19시" },
+                          { value: "19:00", label: "술시", time: "19~21시" },
+                          { value: "21:00", label: "해시", time: "21~23시" },
+                        ].map((item) => (
+                          <button
+                            key={item.label}
+                            type="button"
+                            onClick={() => {
+                              setBirthTime(item.value);
+                              setResult(null);
+                              setError(null);
+                            }}
+                            style={{
+                              padding: "10px 6px",
+                              fontSize: 13,
+                              fontWeight: birthTime === item.value ? 700 : 500,
+                              backgroundColor: birthTime === item.value
+                                ? "var(--navy-dark)"
+                                : "rgba(26, 35, 50, 0.06)",
+                              color: birthTime === item.value
+                                ? "var(--cream)"
+                                : "var(--navy-dark)",
+                              border: "none",
+                              borderRadius: 10,
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              gap: 2,
+                            }}
+                          >
+                            <span>{item.label}</span>
+                            {item.time && (
+                              <span style={{
+                                fontSize: 9,
+                                opacity: birthTime === item.value ? 0.8 : 0.6,
+                              }}>
+                                {item.time}
+                              </span>
+                            )}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -464,6 +549,31 @@ export default function SajuPage() {
                         기록에 저장하기
                       </button>
 
+                      <button
+                        className="btn btnGhost btnWide"
+                        onClick={async () => {
+                          if (!result || !birthDate) return;
+
+                          const shareData = formatSajuShare(
+                            birthDate,
+                            result.overview,
+                            result.advice,
+                            result.keywords
+                          );
+
+                          const shareResult_ = await shareResult(shareData);
+                          if (shareResult_.success) {
+                            if (shareResult_.method === "clipboard") {
+                              showToast("결과가 복사되었어요! 📋");
+                            }
+                          } else {
+                            showToast("공유에 실패했어요 😢");
+                          }
+                        }}
+                      >
+                        결과 공유하기 📤
+                      </button>
+
                       <Link
                         href="/"
                         className="btn btnGhost btnWide"
@@ -478,7 +588,47 @@ export default function SajuPage() {
             </div>
           </div>
         </section>
-      </div>
-    </main>
+      </div >
+
+      {/* 로딩 중 터치 방지 오버레이 */}
+      {
+        loading && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.3)",
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                border: "4px solid rgba(255,255,255,0.3)",
+                borderTop: "4px solid var(--gold-main)",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+              }}
+            />
+            <div style={{ color: "var(--cream)", fontSize: 14, fontWeight: 600 }}>
+              사주를 해석하고 있어요...
+            </div>
+          </div>
+        )
+      }
+
+      {/* 토스트 메시지 */}
+      {
+        toast && (
+          <div className="toast">{toast}</div>
+        )
+      }
+    </main >
   );
 }

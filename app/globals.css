@@ -179,6 +179,74 @@ button {
   padding: 52px var(--pad);
 }
 
+/* ===== 서브 페이지 헤더 (밤하늘 그라데이션) ===== */
+.subPageHeader {
+  position: relative;
+  background: linear-gradient(180deg,
+      var(--navy-dark) 0%,
+      var(--navy-mid) 35%,
+      rgba(61, 74, 110, 0.7) 55%,
+      rgba(100, 108, 130, 0.4) 70%,
+      rgba(170, 165, 158, 0.25) 82%,
+      rgba(220, 215, 208, 0.15) 92%,
+      transparent 100%);
+  padding: 40px var(--pad) 120px;
+  margin-bottom: -80px;
+  overflow: hidden;
+}
+
+.subPageHeader::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(400px 200px at 50% 0%,
+      rgba(232, 181, 99, 0.06),
+      transparent 70%);
+  pointer-events: none;
+}
+
+.subPageHeader .h2 {
+  color: var(--cream);
+  position: relative;
+  z-index: 1;
+}
+
+.subPageHeader .p {
+  color: rgba(245, 241, 232, 0.75);
+  position: relative;
+  z-index: 1;
+}
+
+.subPageHeader .btnBack {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--cream);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.subPageHeader .btnBack:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* 밤하늘 장식 (작은 별) */
+.subPageStars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.subPageStars .star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--gold-bright);
+  border-radius: 50%;
+  box-shadow: 0 0 4px var(--gold-bright);
+  animation: twinkle 3s ease-in-out infinite;
+}
+
 .container {
   width: 100%;
   max-width: var(--container);
@@ -247,7 +315,117 @@ button {
       var(--navy-mid) 50%,
       var(--navy-light) 100%);
   overflow: hidden;
-  padding: 60px 0;
+  padding: 60px 0 80px;
+}
+
+/* 히어로 → 다음 섹션 자연스러운 그라데이션 전환 */
+.nightSky::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 220px;
+  background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(61, 74, 110, 0.05) 15%,
+      rgba(61, 74, 110, 0.1) 30%,
+      rgba(142, 148, 164, 0.2) 45%,
+      rgba(200, 195, 188, 0.4) 60%,
+      rgba(230, 225, 218, 0.7) 75%,
+      rgba(244, 239, 233, 0.9) 90%,
+      var(--paper) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 모바일 하단 여백 개선 */
+.nightSky .miniRow {
+  margin-bottom: 20px;
+}
+
+
+/* Hero Identity Line (모바일 가로 정렬 개선) */
+.identityLine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  white-space: nowrap;
+  font-size: 14px;
+  color: rgba(255, 235, 205, 0.9);
+}
+
+.identityBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.heroDot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  margin: 0 4px;
+}
+
+@media (max-width: 380px) {
+  .identityLine {
+    gap: 1px;
+    /* 간격 최소화 */
+    font-size: 11px;
+    width: 100%;
+    margin-top: 24px;
+    justify-content: center;
+    /* transform 제거 (애니메이션 충돌 방지) */
+    white-space: nowrap;
+  }
+
+  .identityBadge {
+    width: 32px;
+    height: 32px;
+    font-size: 10px;
+    margin-right: 2px;
+    border-width: 1px;
+  }
+
+  .heroDot {
+    margin: 0 1px;
+  }
+}
+
+/* ===== PC/Mobile Visibility Control ===== */
+@media (min-width: 768px) {
+  .pricingMobile {
+    display: none !important;
+  }
+
+  .pricingDesktop {
+    display: flex !important;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 767px) {
+  .pricingMobile {
+    display: block !important;
+  }
+
+  .pricingDesktop {
+    display: none !important;
+  }
 }
 
 /* 별 파티클 */
@@ -576,17 +754,75 @@ button {
 .btnTiny {
   border: none;
   cursor: pointer;
-  background: transparent;
-  color: var(--navy-light);
-  font-size: 12px;
+  background: rgba(26, 35, 50, 0.06);
+  color: var(--navy-dark);
+  font-size: 13px;
   font-weight: 700;
-  padding: 6px 8px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btnTiny:hover {
+  background: rgba(26, 35, 50, 0.12);
   color: var(--navy-dark);
+}
+
+.btnTiny:active {
+  transform: scale(0.98);
+}
+
+/* 뒤로가기 버튼 전용 */
+.btnBack {
+  border: none;
+  cursor: pointer;
+  background: rgba(26, 35, 50, 0.08);
+  color: var(--navy-dark);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.btnBack:hover {
+  background: rgba(26, 35, 50, 0.14);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.btnBack:active {
+  transform: scale(0.97);
+}
+
+/* 링크 그룹 (세로 배치용) */
+.btnTinyGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* 모바일에서 링크 그룹 세로 배치 */
+@media (max-width: 480px) {
+  .btnTinyGroup {
+    flex-direction: column;
+  }
+
+  .btnTinyGroup .btnTiny {
+    width: 100%;
+  }
 }
 
 /* ===== Cards ===== */
@@ -640,6 +876,7 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: center;
 }
 
 .chip {
@@ -661,6 +898,92 @@ button {
 .chipRose {
   background: rgba(232, 199, 204, 0.28);
   border-color: rgba(232, 199, 204, 0.22);
+}
+
+/* ===== 섹션 전환 그라데이션 ===== */
+.sectionTransition {
+  position: relative;
+}
+
+.sectionTransition::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(180deg,
+      var(--navy-light) 0%,
+      transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== 성별/선택 버튼 피드백 강화 (사주 페이지) ===== */
+.genderBtn {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  border-radius: 16px;
+  padding: 16px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: all 0.25s ease;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.genderBtn.unselected {
+  background: rgba(26, 35, 50, 0.06);
+  color: var(--navy-dark);
+  border: 2px solid transparent;
+}
+
+.genderBtn.unselected:hover {
+  background: rgba(26, 35, 50, 0.1);
+}
+
+.genderBtn.selected {
+  background: linear-gradient(135deg, var(--navy-mid), var(--navy-dark));
+  color: var(--cream);
+  border: 2px solid var(--navy-dark);
+  box-shadow: 0 4px 16px rgba(26, 35, 50, 0.25);
+  transform: scale(1.02);
+}
+
+.genderBtn.selected::after {
+  content: "✓";
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+.genderBtn:active {
+  transform: scale(0.98);
+}
+
+/* ===== 입력 필드 스타일 개선 ===== */
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 15px;
+  border: 2px solid rgba(26, 35, 50, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--navy-dark);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--navy-mid);
+  box-shadow: 0 0 0 3px rgba(45, 53, 97, 0.1);
+}
+
+.input::placeholder {
+  color: var(--muted);
 }
 
 /* ===== FLOW ===== */
@@ -925,6 +1248,9 @@ button {
 /* ===== 통합 가격 카드 (떠있는 효과 강화) ===== */
 .pricingCard {
   margin-top: 18px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 400px;
   border-radius: var(--rXL);
   background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -964,8 +1290,10 @@ button {
 /* 섹션 */
 .pricingSection {
   padding: 26px 22px;
-  text-align: left;
+  text-align: center;
   background: rgba(255, 255, 255, 0.3);
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .pricingSection.premium {
@@ -977,10 +1305,11 @@ button {
 }
 
 .pricingSectionHeader {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 14px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
 }
 
 .pricingBadge {
@@ -1946,35 +2275,38 @@ button {
 
 /* ===== Reassure ===== */
 .reassureBox {
-  margin: 0 var(--pad);
+  margin: 48px auto 0;
+  width: calc(100% - 48px);
+  max-width: 500px;
   border-radius: 26px;
-  padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(43, 38, 42, 0.06);
+  padding: 22px 24px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(43, 38, 42, 0.08);
   box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .reassureTitle {
   font-weight: 900;
+  font-size: 15px;
   letter-spacing: -0.01em;
+  text-align: center;
+  margin-bottom: 12px;
+  color: var(--navy-dark);
 }
 
 .reassureList {
   margin: 10px 0 0;
   padding-left: 18px;
-  line-height: 1.85;
-  font-size: 12px;
-  color: rgba(43, 38, 42, 0.66);
+  line-height: 1.9;
+  font-size: 13px;
+  color: rgba(43, 38, 42, 0.72);
 }
 
 .footer {
-  padding: 18px var(--pad) 28px;
-  color: rgba(43, 38, 42, 0.55);
-  font-size: 11px;
+  padding: 40px var(--pad) 60px;
+  color: rgba(43, 38, 42, 0.6);
+  font-size: 12px;
   text-align: center;
 }
 
@@ -2797,12 +3129,12 @@ button {
 /* ===== Skeleton Loading UI ===== */
 .skeleton {
   background: linear-gradient(90deg,
-      rgba(43, 38, 42, 0.08) 0%,
-      rgba(43, 38, 42, 0.12) 50%,
-      rgba(43, 38, 42, 0.08) 100%);
+      rgba(232, 228, 220, 0.6) 0%,
+      rgba(216, 210, 200, 0.8) 50%,
+      rgba(232, 228, 220, 0.6) 100%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.5s ease-in-out infinite;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 @keyframes skeletonShimmer {

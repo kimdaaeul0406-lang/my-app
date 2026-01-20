@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import tarotCardsData from "../data/tarot-cards.json";
 import { MAJOR_ARCANA } from "../utils/constants";
+import { shareResult, formatTarotShare } from "../utils/share";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -563,6 +564,13 @@ export default function TarotPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [isReversed, setIsReversed] = useState(false);
 
+  // 토스트 메시지
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
+
   // 단계별 상태 관리 (새로운 셔플 방식) - 인트로 제거, stacked에서 시작
   // 초기에는 카드가 보이지 않도록 "waiting" 단계 추가
   const [stage, setStage] = useState<ShuffleStage>("waiting");
@@ -969,19 +977,45 @@ export default function TarotPage() {
     <main className="mainWrap">
       <div className="bgFX" />
       <div className="content">
-        <section className="section reveal on">
+        {/* 밤하늘 헤더 */}
+        <section className="subPageHeader reveal on">
+          <div className="subPageStars">
+            {[
+              { left: 15, top: 20, delay: 0 },
+              { left: 28, top: 35, delay: 0.5 },
+              { left: 42, top: 15, delay: 1 },
+              { left: 55, top: 45, delay: 1.5 },
+              { left: 68, top: 25, delay: 0.3 },
+              { left: 82, top: 40, delay: 0.8 },
+              { left: 20, top: 55, delay: 1.2 },
+              { left: 35, top: 60, delay: 0.6 },
+              { left: 50, top: 30, delay: 1.8 },
+              { left: 75, top: 50, delay: 0.2 },
+              { left: 88, top: 18, delay: 1.4 },
+              { left: 12, top: 42, delay: 0.9 },
+            ].map((star, i) => (
+              <div
+                key={i}
+                className="star"
+                style={{
+                  left: `${star.left}%`,
+                  top: `${star.top}%`,
+                  animationDelay: `${star.delay}s`,
+                }}
+              />
+            ))}
+          </div>
           <div className="container center">
             <div style={{ marginBottom: 16 }}>
               <Link
                 href="/"
-                className="btnTiny"
-                style={{ textDecoration: "none" }}
+                className="btnBack"
               >
-                ← 돌아가기
+                ← 홈으로 돌아가기
               </Link>
             </div>
 
-            <h1 className="h2 stagger d1">타로 카드</h1>
+            <h1 className="h2 stagger d1">🃏 타로 카드</h1>
             <p className="p stagger d2">
               {stage === "waiting" && "타로 카드를 뽑아보세요"}
               {stage === "stacked" && "덱을 탭하여 셔플하세요"}
@@ -1003,6 +1037,12 @@ export default function TarotPage() {
               )}
               {stage === "result" && "오늘의 메시지입니다"}
             </p>
+          </div>
+        </section>
+
+        {/* 콘텐츠 섹션 */}
+        <section className="section reveal on">
+          <div className="container center">
 
             {/* 타로 뽑기 버튼 (waiting 단계에서만 표시) */}
             {stage === "waiting" && (
@@ -1166,6 +1206,36 @@ export default function TarotPage() {
                       onClick={saveTarot}
                     >
                       기록에 저장하기
+                    </button>
+
+                    <button
+                      className="btn btnGhost btnWide"
+                      onClick={async () => {
+                        if (!tarotResult || !apiResult) return;
+                        const cardNameKo = MAJOR_ARCANA.find(
+                          (c) => c.name === tarotResult.name
+                        )?.nameKo || tarotResult.name;
+
+                        const shareData = formatTarotShare(
+                          tarotResult.name,
+                          cardNameKo,
+                          isReversed,
+                          apiResult.message,
+                          apiResult.advice,
+                          apiResult.keywords
+                        );
+
+                        const result = await shareResult(shareData);
+                        if (result.success) {
+                          if (result.method === "clipboard") {
+                            showToast("결과가 복사되었어요! 📋");
+                          }
+                        } else {
+                          showToast("공유에 실패했어요 😢");
+                        }
+                      }}
+                    >
+                      결과 공유하기 📤
                     </button>
 
                     <button
@@ -1376,6 +1446,11 @@ export default function TarotPage() {
             타로를 해석하고 있어요...
           </div>
         </div>
+      )}
+
+      {/* 토스트 메시지 */}
+      {toast && (
+        <div className="toast">{toast}</div>
       )}
     </main>
   );

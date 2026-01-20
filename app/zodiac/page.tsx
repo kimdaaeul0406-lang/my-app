@@ -9,6 +9,7 @@ import {
   setCachedData,
   getHoroscopeCacheKey,
 } from "../utils/cache";
+import { shareResult, formatZodiacShare } from "../utils/share";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -73,6 +74,13 @@ export default function ZodiacPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+
+  // 토스트 메시지
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
 
   // 별자리 선택 시 zodiacInfo 설정 및 모달 열기
   useEffect(() => {
@@ -191,22 +199,54 @@ export default function ZodiacPage() {
     <main className="mainWrap">
       <div className="bgFX" />
       <div className="content">
-        <section className="section reveal on">
+        {/* 밤하늘 헤더 */}
+        <section className="subPageHeader reveal on">
+          <div className="subPageStars">
+            {[
+              { left: 18, top: 22, delay: 0.1 },
+              { left: 32, top: 38, delay: 0.6 },
+              { left: 45, top: 12, delay: 1.1 },
+              { left: 58, top: 48, delay: 1.6 },
+              { left: 72, top: 28, delay: 0.4 },
+              { left: 85, top: 42, delay: 0.9 },
+              { left: 22, top: 58, delay: 1.3 },
+              { left: 38, top: 62, delay: 0.7 },
+              { left: 52, top: 32, delay: 1.9 },
+              { left: 78, top: 52, delay: 0.3 },
+              { left: 90, top: 15, delay: 1.5 },
+              { left: 10, top: 45, delay: 1.0 },
+            ].map((star, i) => (
+              <div
+                key={i}
+                className="star"
+                style={{
+                  left: `${star.left}%`,
+                  top: `${star.top}%`,
+                  animationDelay: `${star.delay}s`,
+                }}
+              />
+            ))}
+          </div>
           <div className="container center">
             <div style={{ marginBottom: 16 }}>
               <Link
                 href="/"
-                className="btnTiny"
-                style={{ textDecoration: "none" }}
+                className="btnBack"
               >
-                ← 돌아가기
+                ← 홈으로 돌아가기
               </Link>
             </div>
 
-            <h1 className="h2 stagger d1">별자리 운세</h1>
+            <h1 className="h2 stagger d1">⭐ 별자리 운세</h1>
             <p className="p stagger d2">
               별자리를 선택하면 오늘의 별자리 흐름을 알려드려요.
             </p>
+          </div>
+        </section>
+
+        {/* 콘텐츠 섹션 */}
+        <section className="section reveal on">
+          <div className="container center">
 
             <div className="stagger d3" style={{ marginTop: 20 }}>
               <div className="zodiacSection">
@@ -586,6 +626,33 @@ export default function ZodiacPage() {
 
                     <button
                       className="btn btnGhost btnWide"
+                      onClick={async () => {
+                        if (!zodiacInfo || !horoscopeData) return;
+
+                        const shareData = formatZodiacShare(
+                          zodiacInfo.name,
+                          horoscopeData.message,
+                          horoscopeData.advice,
+                          horoscopeData.luckyNumber,
+                          horoscopeData.luckyColor,
+                          horoscopeData.keywords
+                        );
+
+                        const result = await shareResult(shareData);
+                        if (result.success) {
+                          if (result.method === "clipboard") {
+                            showToast("결과가 복사되었어요! 📋");
+                          }
+                        } else {
+                          showToast("공유에 실패했어요 😢");
+                        }
+                      }}
+                    >
+                      결과 공유하기 📤
+                    </button>
+
+                    <button
+                      className="btn btnGhost btnWide"
                       onClick={() => setShowModal(false)}
                     >
                       닫기
@@ -596,6 +663,42 @@ export default function ZodiacPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 로딩 중 터치 방지 오버레이 */}
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.3)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              border: "4px solid rgba(255,255,255,0.3)",
+              borderTop: "4px solid var(--gold-main)",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }}
+          />
+          <div style={{ color: "var(--cream)", fontSize: 14, fontWeight: 600 }}>
+            운세를 불러오고 있어요...
+          </div>
+        </div>
+      )}
+
+      {/* 토스트 메시지 */}
+      {toast && (
+        <div className="toast">{toast}</div>
       )}
     </main>
   );
