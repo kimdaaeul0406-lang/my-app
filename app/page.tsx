@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PWAInstallBanner from "./components/PWAInstallBanner";
+import EmailInputModal from "./components/EmailInputModal";
 
 // 사주 아이콘 SVG 컴포넌트
 function SajuIcon({ size = 16 }: { size?: number }) {
@@ -78,6 +79,10 @@ export default function Page() {
 
   const [modal, setModal] = useState<ModalType>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [pendingSaveItem, setPendingSaveItem] = useState<HistoryItem | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   // Toast
   const [toast, setToast] = useState<string | null>(null);
@@ -86,10 +91,56 @@ export default function Page() {
     window.setTimeout(() => setToast(null), 2200);
   };
 
+  // 타자기 효과를 위한 상태
+  const [typedText, setTypedText] = useState("");
+  const heroTitleText = "오늘,\n당신의 흐름은\n어디로 가고 있나요?";
+  const [typingStarted, setTypingStarted] = useState(false);
+  const [typingComplete, setTypingComplete] = useState(false);
+
+  // 별 위치와 애니메이션을 고정 (리렌더링 시 재생성 방지)
+  const starsData = useMemo(() => {
+    return Array.from({ length: 35 }, () => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 3,
+      duration: 2 + Math.random() * 2,
+    }));
+  }, []);
+
   // 클라이언트 마운트 확인 (Hydration 오류 방지)
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // 타자기 효과 애니메이션
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    // 바로 타이핑 시작
+    const startDelay = setTimeout(() => {
+      setTypingStarted(true);
+      setTypedText("");
+    }, 100);
+
+    return () => clearTimeout(startDelay);
+  }, [isMounted]);
+
+  useEffect(() => {
+    if (!typingStarted) return;
+
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (currentIndex < heroTitleText.length) {
+        setTypedText(heroTitleText.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+        setTypingComplete(true);
+      }
+    }, 80); // 각 글자마다 80ms 간격
+
+    return () => clearInterval(typingInterval);
+  }, [typingStarted, heroTitleText]);
 
   // 맨 위로 가기 버튼 표시 상태
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -181,25 +232,138 @@ export default function Page() {
   ];
 
   // 구독
-  const submitFree = () => {
-    // Stibee 구독 페이지로 이동
-    window.open("https://page.stibee.com/subscriptions/467092", "_blank");
+  const [subscribeEmailModalOpen, setSubscribeEmailModalOpen] = useState(false);
+  
+  const handleSubscribeEmail = async (email: string, saveEmail: boolean) => {
+    if (!sessionId) return;
+
+    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+    if (saveEmail) {
+      try {
+        const saveResponse = await fetch("/api/user-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            email: email,
+            saveEmail: true,
+          }),
+        });
+        if (!saveResponse.ok) {
+          console.warn("Failed to save email to DB (non-critical):", await saveResponse.json().catch(() => ({})));
+        }
+      } catch (error) {
+        console.warn("Failed to save email to DB (non-critical):", error);
+      }
+      setUserEmail(email);
+    }
+
+    // subscribers 테이블에 저장
+    try {
+      const subscriberResponse = await fetch("/api/subscribers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+        }),
+      });
+      
+      if (!subscriberResponse.ok) {
+        const errorData = await subscriberResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || "구독 저장에 실패했어요");
+      }
+
+      showToast("구독이 완료되었어요!");
+      setSubscribeEmailModalOpen(false);
+      
+      // Stibee 구독 페이지로 이동 (선택사항)
+      // window.open("https://page.stibee.com/subscriptions/467092", "_blank");
+    } catch (error) {
+      console.error("Subscribe error:", error);
+      showToast(error instanceof Error ? error.message : "구독에 실패했어요");
+    }
   };
 
   // 기록
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  // localStorage에서 히스토리 로드
+  // 세션 ID 생성/로드
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as HistoryItem[];
-      setHistory(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      /* ignore */
+    let session = localStorage.getItem("lumen_session_id");
+    if (!session) {
+      session = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem("lumen_session_id", session);
+    }
+    setSessionId(session);
+    
+    // DB에서 세션별 이메일 로드
+    if (session) {
+      loadUserEmailFromDB(session);
     }
   }, []);
+
+  // DB에서 세션별 이메일 로드
+  const loadUserEmailFromDB = async (session: string) => {
+    try {
+      const response = await fetch(`/api/user-email?sessionId=${encodeURIComponent(session)}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.warn("Failed to load user email from DB:", errorData.error || "Unknown error");
+        // 이메일 로드 실패는 이메일 전송을 막지 않음 (단순히 저장된 이메일이 없는 것)
+        // localStorage에서 로드 (하위 호환성)
+        try {
+          const raw = localStorage.getItem(HISTORY_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw) as HistoryItem[];
+          setHistory(Array.isArray(parsed) ? parsed : []);
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+      const data = await response.json();
+      if (data.success && data.email && data.saveEmail) {
+        // 이메일이 저장되어 있으면 사용
+        setUserEmail(data.email);
+        // DB에서 히스토리 로드
+        loadHistoryFromDB(data.email);
+      } else {
+        // 이메일이 저장되지 않았으면 localStorage에서 로드 (하위 호환성)
+        try {
+          const raw = localStorage.getItem(HISTORY_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw) as HistoryItem[];
+          setHistory(Array.isArray(parsed) ? parsed : []);
+        } catch {
+          /* ignore */
+        }
+      }
+    } catch (error) {
+      console.warn("Error loading user email from DB (non-critical):", error);
+      // 에러가 발생해도 이메일 전송은 계속 가능하도록 함
+    }
+  };
+
+  // DB에서 히스토리 로드
+  const loadHistoryFromDB = async (email: string) => {
+    try {
+      const response = await fetch(`/api/readings?email=${encodeURIComponent(email)}`);
+      if (!response.ok) {
+        console.error("Failed to load history from DB");
+        return;
+      }
+      const data = await response.json();
+      if (data.success && data.readings) {
+        setHistory(data.readings);
+      }
+    } catch (error) {
+      console.error("Error loading history from DB:", error);
+    }
+  };
 
   // 저장 후 히스토리 섹션으로 스크롤
   useEffect(() => {
@@ -221,15 +385,165 @@ export default function Page() {
     }
   }, [searchParams, router]);
 
-  const saveHistory = (item: HistoryItem) => {
-    const next = [item, ...history].slice(0, 12);
-    setHistory(next);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  // 이메일 전송 (기록 저장은 선택적)
+  const handleSendEmail = async (email: string, saveToHistory: boolean, saveEmail: boolean, item?: HistoryItem) => {
+    const itemToSend = item || pendingSaveItem;
+    if (!itemToSend || !sessionId) return;
+
+    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+    // 실패해도 이메일 전송은 계속 진행
+    if (saveEmail) {
+      try {
+        const saveResponse = await fetch("/api/user-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            email: email,
+            saveEmail: true,
+          }),
+        });
+        if (!saveResponse.ok) {
+          console.warn("Failed to save email to DB (non-critical):", await saveResponse.json().catch(() => ({})));
+        }
+      } catch (error) {
+        console.warn("Failed to save email to DB (non-critical):", error);
+        // 에러가 발생해도 이메일 전송은 계속 진행
+      }
+      setUserEmail(email);
+    }
+
+    try {
+      // 이메일 전송 (전체 결과 포함)
+      const fullData = (itemToSend as any).fullData;
+      let emailText = "";
+      let emailTitle = itemToSend.title;
+
+      if (fullData) {
+        // 전체 결과 포맷팅
+        if (itemToSend.type === "TAROT") {
+          emailTitle = `[타로] ${fullData.cardName}${fullData.isReversed ? " (역방향)" : ""}`;
+          emailText = `오늘의 메시지\n${fullData.message}\n\n`;
+          emailText += `연애\n${fullData.love}\n\n`;
+          emailText += `금전\n${fullData.money}\n\n`;
+          emailText += `직장\n${fullData.career}\n\n`;
+          emailText += `조언\n${fullData.advice}`;
+        } else if (itemToSend.type === "SAJU") {
+          emailText = `오늘의 흐름\n${fullData.overview}\n\n`;
+          emailText += `성격\n${fullData.personality}\n\n`;
+          emailText += `연애\n${fullData.love}\n\n`;
+          emailText += `직장\n${fullData.career}\n\n`;
+          emailText += `금전\n${fullData.money}\n\n`;
+          emailText += `올해의 흐름\n${fullData.thisYear}\n\n`;
+          emailText += `조언\n${fullData.advice}\n\n`;
+          emailText += `행운의 요소: ${fullData.luckyElement}\n`;
+          emailText += `행운의 색상: ${fullData.luckyColor}`;
+        } else if (itemToSend.type === "ZODIAC") {
+          emailText = `오늘의 메시지\n${fullData.message}\n\n`;
+          if (fullData.love) {
+            emailText += `연애\n${fullData.love}\n\n`;
+          }
+          if (fullData.career) {
+            emailText += `직장\n${fullData.career}\n\n`;
+          }
+          if (fullData.money) {
+            emailText += `금전\n${fullData.money}\n\n`;
+          }
+          if (fullData.advice) {
+            emailText += `조언\n${fullData.advice}\n\n`;
+          }
+          if (fullData.luckyNumber) {
+            emailText += `행운의 숫자: ${fullData.luckyNumber}\n`;
+          }
+          if (fullData.luckyColor) {
+            emailText += `행운의 색상: ${fullData.luckyColor}`;
+          }
+        }
+      } else {
+        // fullData가 없으면 기존 text 사용
+        emailText = itemToSend.text;
+      }
+
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          type: itemToSend.type,
+          title: emailTitle,
+          text: emailText,
+          tags: itemToSend.tags,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json().catch(() => ({}));
+        const errorMessage = errorData.error || errorData.message || "이메일 전송에 실패했어요";
+        console.error("Email send failed:", errorMessage, errorData);
+        throw new Error(errorMessage);
+      }
+
+      // 기록에도 저장하기를 선택한 경우에만 DB에 저장
+      if (saveToHistory) {
+        const typeMap: Record<string, string> = {
+          SAJU: "saju",
+          TAROT: "tarot",
+          ZODIAC: "zodiac",
+        };
+
+        const saveResponse = await fetch("/api/readings/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            type: typeMap[itemToSend.type] || "saju",
+            result_json: {
+              title: itemToSend.title,
+              text: itemToSend.text,
+              tags: itemToSend.tags,
+              isPremium: itemToSend.isPremium || false,
+            },
+          }),
+        });
+
+        if (!saveResponse.ok) {
+          console.error("Failed to save to history, but email sent");
+        } else {
+          // DB에서 최신 히스토리 다시 로드
+          await loadHistoryFromDB(email);
+        }
+      }
+
+      showToast(saveToHistory ? "이메일을 보냈고 기록에 저장했어요" : "이메일을 보냈어요");
+      if (saveToHistory) {
+        scrollTo(historyRef);
+      }
+      setPendingSaveItem(null);
+    } catch (error) {
+      console.error("Send email error:", error);
+      throw error;
+    }
   };
 
-  const removeHistory = (id: string) => {
+  const sendEmail = async (item: HistoryItem) => {
+    // 항상 모달 표시 (이메일 저장 여부를 선택할 수 있도록)
+    setPendingSaveItem(item);
+    setEmailModalOpen(true);
+  };
+
+  const removeHistory = async (id: string) => {
+    // DB에서 삭제하는 API가 없으므로 일단 로컬에서만 삭제
+    // TODO: DB 삭제 API 추가 필요
     const next = history.filter((h) => h.id !== id);
     setHistory(next);
+    
+    // localStorage에도 저장 (하위 호환성)
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
     showToast("기록 삭제 완료");
   };
@@ -277,7 +591,7 @@ export default function Page() {
     return tarotDeck[picked];
   }, [picked, tarotDeck]);
 
-  const saveTarot = () => {
+  const saveTarot = async () => {
     if (!tarotResult) return;
     const item: HistoryItem = {
       id: uid(),
@@ -287,9 +601,7 @@ export default function Page() {
       tags: tarotResult.tags,
       createdAt: Date.now(),
     };
-    saveHistory(item);
-    showToast("타로 결과를 기록에 저장했어");
-    scrollTo(historyRef);
+    await sendEmail(item);
   };
 
   useEffect(() => {
@@ -305,16 +617,16 @@ export default function Page() {
           {/* 별 파티클 - 클라이언트에서만 렌더링 (Hydration 오류 방지) */}
           {isMounted && (
             <div className="starField">
-              {[...Array(35)].map((_, i) => (
+              {starsData.map((star, i) => (
                 <div
                   key={i}
                   className="star"
                   style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 3}s`,
-                    animationDuration: `${2 + Math.random() * 2}s`,
-                  }}
+                    left: `${star.left}%`,
+                    top: `${star.top}%`,
+                    animationDelay: `${star.delay}s`,
+                    '--star-duration': `${star.duration}s`,
+                  } as React.CSSProperties}
                 />
               ))}
             </div>
@@ -334,12 +646,13 @@ export default function Page() {
               <span>별자리</span>
             </div>
 
-            <div className="heroTitle stagger d4">
-              오늘,
-              <br />
-              당신의 흐름은
-              <br />
-              어디로 가고 있나요?
+            <div className={`heroTitle stagger d4 ${typingStarted && !typingComplete ? 'typing' : ''} ${typingComplete ? 'typing-complete' : ''}`}>
+              {typedText.split('\n').map((line, index, array) => (
+                <React.Fragment key={index}>
+                  {line}
+                  {index < array.length - 1 && <br />}
+                </React.Fragment>
+              ))}
             </div>
 
             <div className="heroSub stagger d5">
@@ -633,15 +946,20 @@ export default function Page() {
                     <span className="chip">짧고 간결</span>
                   </div>
 
-                  <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                  <div style={{ marginTop: 12, display: "grid", gap: 10, width: "100%", maxWidth: "300px", marginLeft: "auto", marginRight: "auto" }}>
                     <button
                       className="btn btnPrimary btnWide"
-                      onClick={submitFree}
+                      onClick={() => setSubscribeEmailModalOpen(true)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
                     >
                       무료로 구독 시작하기
                     </button>
-                    <div className="smallHelp">
-                      * 클릭하면 구독 페이지로 이동합니다.
+                    <div className="smallHelp" style={{ textAlign: "center" }}>
+                      * 이메일을 입력하면 구독이 완료됩니다.
                     </div>
                   </div>
                 </div>
@@ -678,7 +996,7 @@ export default function Page() {
                   <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
                     <button
                       className="btn btnPrimary btnWide"
-                      onClick={submitFree}
+                      onClick={() => setSubscribeEmailModalOpen(true)}
                     >
                       무료로 구독 시작하기
                     </button>
@@ -696,18 +1014,20 @@ export default function Page() {
         <section className="section reveal">
           <div className="container center">
             <h2 className="h2 stagger d1">나의 흐름, 무료로 시작하기</h2>
-            <p className="p stagger d2">
+            <p className="p stagger d2" style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}>
               사주는 본질을, 타로는 선택을, 별자리는 오늘의 흐름을 알려줍니다.
             </p>
 
-            <div className="stagger d3" style={{ marginTop: 20, display: "grid", gap: 10 }}>
+            <div className="stagger d3" style={{ marginTop: 20, display: "grid", gap: 10, width: "100%", maxWidth: "300px", marginLeft: "auto", marginRight: "auto" }}>
               <Link
                 href="/saju"
                 className="btn btnPrimary btnWide"
                 style={{
                   textAlign: "center",
                   textDecoration: "none",
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 사주 확인하기
@@ -718,7 +1038,9 @@ export default function Page() {
                 style={{
                   textAlign: "center",
                   textDecoration: "none",
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 타로 카드 뽑기
@@ -729,7 +1051,9 @@ export default function Page() {
                 style={{
                   textAlign: "center",
                   textDecoration: "none",
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 별자리 확인하기
@@ -881,6 +1205,32 @@ export default function Page() {
 
         {/* PWA 설치 유도 배너 */}
         <PWAInstallBanner />
+
+        {/* 이메일 입력 모달 */}
+        <EmailInputModal
+          isOpen={emailModalOpen}
+          onClose={() => {
+            setEmailModalOpen(false);
+            setPendingSaveItem(null);
+          }}
+          onConfirm={(email, saveToHistory, saveEmail) => handleSendEmail(email, saveToHistory, saveEmail)}
+          title="이메일을 입력해주세요"
+          description="결과를 이메일로 받아보실 수 있어요."
+        />
+
+        {/* 구독 이메일 입력 모달 */}
+        <EmailInputModal
+          isOpen={subscribeEmailModalOpen}
+          onClose={() => {
+            setSubscribeEmailModalOpen(false);
+          }}
+          onConfirm={async (email, saveToHistory, saveEmail) => {
+            // 구독에서는 saveToHistory는 사용하지 않음
+            await handleSubscribeEmail(email, saveEmail);
+          }}
+          title="구독하기"
+          description="매일 아침 오늘의 흐름을 이메일로 받아보세요."
+        />
       </div>
     </main>
   );

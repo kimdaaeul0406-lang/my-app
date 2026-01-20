@@ -136,15 +136,16 @@ export default function ZodiacSection({
         // API 응답 형식에 맞게 변환
         const data = result.data;
         setHoroscopeData({
-          message: data.message || "",
-          love: data.love || "",
-          career: data.career || "",
-          money: data.money || "",
-          advice: data.advice || "",
-          luckyNumber: data.luckyNumber || 0,
-          luckyColor: data.luckyColor || "",
-          keywords: data.keywords || [],
-          horoscope: data.message || "", // 호환성을 위해
+          date: data.date || null,
+          sign: data.sign || zodiacInfo?.nameEn || "",
+          horoscope: data.message || data.horoscope || "",
+          description: data.message || data.description || "",
+          mood: data.mood || null,
+          color: data.luckyColor || data.color || null,
+          lucky_number: data.luckyNumber || data.lucky_number || null,
+          lucky_time: data.lucky_time || null,
+          source: data.source || "aztro",
+          type: data.type || "today",
         });
       } catch (err) {
         console.error(`❌ [Client] Error:`, err);

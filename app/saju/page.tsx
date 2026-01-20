@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getCachedData, setCachedData, getSajuCacheKey } from "../utils/cache";
 import { shareResult, formatSajuShare } from "../utils/share";
+import EmailInputModal from "../components/EmailInputModal";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -57,6 +58,42 @@ export default function SajuPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
+
+  // 이메일 전송 모달
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [pendingSaveItem, setPendingSaveItem] = useState<HistoryItem | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // 세션 ID 생성/로드
+  useEffect(() => {
+    let session = localStorage.getItem("lumen_session_id");
+    if (!session) {
+      session = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem("lumen_session_id", session);
+    }
+    setSessionId(session);
+    
+    // DB에서 세션별 이메일 로드
+    if (session) {
+      loadUserEmailFromDB(session);
+    }
+  }, []);
+
+  // DB에서 세션별 이메일 로드
+  const loadUserEmailFromDB = async (session: string) => {
+    try {
+      const response = await fetch(`/api/user-email?sessionId=${encodeURIComponent(session)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.email) {
+          setUserEmail(data.email);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user email from DB:", error);
+    }
+  };
 
   // 토스트 메시지
   const [toast, setToast] = useState<string | null>(null);
@@ -163,6 +200,112 @@ export default function SajuPage() {
     }
   };
 
+  // 이메일 전송 (기록 저장은 선택적)
+  const handleSendEmail = async (email: string, saveToHistory: boolean, saveEmail: boolean) => {
+    if (!pendingSaveItem || !sessionId) return;
+
+    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+    if (saveEmail) {
+      try {
+        await fetch("/api/user-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            email: email,
+            saveEmail: true,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save email to DB:", error);
+      }
+      setUserEmail(email);
+    }
+
+    try {
+      // 이메일 전송 (전체 결과 포함)
+      const fullData = (pendingSaveItem as any).fullData;
+      let emailText = "";
+      let emailTitle = pendingSaveItem.title;
+
+      if (fullData) {
+        // 전체 결과 포맷팅
+        emailTitle = `[사주] ${fullData.birthDate} - 오늘의 흐름`;
+        emailText = `오늘의 흐름\n${fullData.overview}\n\n`;
+        emailText += `성격\n${fullData.personality}\n\n`;
+        emailText += `연애\n${fullData.love}\n\n`;
+        emailText += `직장\n${fullData.career}\n\n`;
+        emailText += `금전\n${fullData.money}\n\n`;
+        emailText += `올해의 흐름\n${fullData.thisYear}\n\n`;
+        emailText += `조언\n${fullData.advice}\n\n`;
+        emailText += `행운의 요소: ${fullData.luckyElement}\n`;
+        emailText += `행운의 색상: ${fullData.luckyColor}`;
+      } else {
+        emailText = pendingSaveItem.text;
+      }
+
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          type: pendingSaveItem.type,
+          title: emailTitle,
+          text: emailText,
+          tags: pendingSaveItem.tags,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json().catch(() => ({}));
+        const errorMessage = errorData.error || errorData.message || "이메일 전송에 실패했어요";
+        console.error("Email send failed:", errorMessage, errorData);
+        throw new Error(errorMessage);
+      }
+
+      // 기록에도 저장하기를 선택한 경우에만 DB에 저장
+      if (saveToHistory) {
+        const typeMap: Record<string, string> = {
+          SAJU: "saju",
+          TAROT: "tarot",
+          ZODIAC: "zodiac",
+        };
+
+        const saveResponse = await fetch("/api/readings/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            type: typeMap[pendingSaveItem.type] || "saju",
+            result_json: {
+              title: pendingSaveItem.title,
+              text: pendingSaveItem.text,
+              tags: pendingSaveItem.tags,
+              isPremium: false,
+            },
+          }),
+        });
+
+        if (!saveResponse.ok) {
+          console.error("Failed to save to history, but email sent");
+        }
+      }
+
+      // 토스트 메시지 표시
+      showToast(saveToHistory ? "이메일을 보냈고 기록에 저장했어요" : "이메일을 보냈어요");
+      setPendingSaveItem(null);
+    } catch (error) {
+      console.error("Send email error:", error);
+      throw error;
+    }
+  };
+
   const saveSaju = () => {
     if (!result || !birthDate || !gender) return;
 
@@ -175,16 +318,26 @@ export default function SajuPage() {
       createdAt: Date.now(),
     };
 
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      const existing = raw ? (JSON.parse(raw) as HistoryItem[]) : [];
-      const next = [item, ...existing].slice(0, 12);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-    } catch {
-      // ignore
-    }
-
-    router.push("/?saved=saju");
+    // 이메일 모달 표시 (전체 결과 데이터도 함께 저장)
+    setPendingSaveItem({
+      ...item,
+      // 전체 결과 데이터를 포함
+      fullData: {
+        birthDate: birthDate,
+        gender: gender,
+        overview: result.overview,
+        personality: result.personality,
+        love: result.love,
+        career: result.career,
+        money: result.money,
+        thisYear: result.thisYear,
+        advice: result.advice,
+        luckyElement: result.luckyElement,
+        luckyColor: result.luckyColor,
+        keywords: result.keywords,
+      },
+    } as any);
+    setEmailModalOpen(true);
   };
 
   return (
@@ -502,28 +655,7 @@ export default function SajuPage() {
                   </div>
                 )}
 
-                {/* 로딩 */}
-                {loading && (
-                  <div className="card cardPad lift" style={{ marginTop: 16 }}>
-                    <div style={{ padding: "40px 0", textAlign: "center" }}>
-                      <div style={{
-                        width: 40,
-                        height: 40,
-                        border: "3px solid var(--muted)",
-                        borderTop: "3px solid var(--gold-main)",
-                        borderRadius: "50%",
-                        margin: "0 auto 16px",
-                        animation: "spin 1s linear infinite"
-                      }} />
-                      <div className="p" style={{ color: "var(--muted)", fontWeight: 600 }}>
-                        사주를 해석하고 있어요...
-                      </div>
-                      <div className="smallHelp" style={{ marginTop: 8 }}>
-                        잠시만 기다려주세요
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* 로딩은 전체 화면 오버레이로 표시됨 */}
 
                 {/* 에러 */}
                 {error && !loading && (
@@ -657,7 +789,7 @@ export default function SajuPage() {
                         className="btn btnPrimary btnWide"
                         onClick={saveSaju}
                       >
-                        기록에 저장하기
+                        이메일로 보내기
                       </button>
 
                       <button
@@ -740,6 +872,18 @@ export default function SajuPage() {
           <div className="toast">{toast}</div>
         )
       }
+
+      {/* 이메일 입력 모달 */}
+      <EmailInputModal
+        isOpen={emailModalOpen}
+        onClose={() => {
+          setEmailModalOpen(false);
+          setPendingSaveItem(null);
+        }}
+        onConfirm={(email, saveToHistory, saveEmail) => handleSendEmail(email, saveToHistory, saveEmail)}
+        title="이메일을 입력해주세요"
+        description="결과를 이메일로 받아보실 수 있어요."
+      />
     </main >
   );
 }

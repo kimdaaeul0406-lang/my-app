@@ -15,9 +15,9 @@ export async function POST(request: NextRequest) {
     }
 
     // type 검증
-    if (type !== 'tarot' && type !== 'saju') {
+    if (type !== 'tarot' && type !== 'saju' && type !== 'zodiac') {
       return NextResponse.json(
-        { error: 'Invalid type. Must be "tarot" or "saju"' },
+        { error: 'Invalid type. Must be "tarot", "saju", or "zodiac"' },
         { status: 400 }
       )
     }

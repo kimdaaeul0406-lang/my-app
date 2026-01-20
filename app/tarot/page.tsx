@@ -17,6 +17,7 @@ import Link from "next/link";
 import tarotCardsData from "../data/tarot-cards.json";
 import { MAJOR_ARCANA } from "../utils/constants";
 import { shareResult, formatTarotShare } from "../utils/share";
+import EmailInputModal from "../components/EmailInputModal";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -582,6 +583,50 @@ export default function TarotPage() {
     setTimeout(() => setToast(null), 2500);
   };
 
+  // 이메일 전송 모달
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [pendingSaveItem, setPendingSaveItem] = useState<HistoryItem | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // 세션 ID 생성/로드
+  useEffect(() => {
+    let session = localStorage.getItem("lumen_session_id");
+    if (!session) {
+      session = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem("lumen_session_id", session);
+    }
+    setSessionId(session);
+    
+    // DB에서 세션별 이메일 로드
+    if (session) {
+      loadUserEmailFromDB(session);
+    }
+  }, []);
+
+  // DB에서 세션별 이메일 로드
+  const loadUserEmailFromDB = async (session: string) => {
+    try {
+      const response = await fetch(`/api/user-email?sessionId=${encodeURIComponent(session)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.email) {
+          setUserEmail(data.email);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user email from DB:", error);
+    }
+  };
+
+  // 이메일 로드 (localStorage에서)
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("lumen_user_email");
+    if (savedEmail) {
+      setUserEmail(savedEmail);
+    }
+  }, []);
+
   // 단계별 상태 관리 (새로운 셔플 방식) - 인트로 제거, stacked에서 시작
   // 초기에는 카드가 보이지 않도록 "waiting" 단계 추가
   const [stage, setStage] = useState<ShuffleStage>("waiting");
@@ -941,8 +986,109 @@ export default function TarotPage() {
     setSwipeOffset(0);
   };
 
+  // 이메일 전송 (기록 저장은 선택적)
+  const handleSendEmail = async (email: string, saveToHistory: boolean, saveEmail: boolean) => {
+    if (!pendingSaveItem || !sessionId) return;
+
+    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+    if (saveEmail) {
+      try {
+        await fetch("/api/user-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            email: email,
+            saveEmail: true,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save email to DB:", error);
+      }
+      setUserEmail(email);
+    }
+
+    try {
+      // 이메일 전송 (전체 결과 포함)
+      const fullData = (pendingSaveItem as any).fullData;
+      let emailText = "";
+      let emailTitle = pendingSaveItem.title;
+
+      if (fullData) {
+        // 전체 결과 포맷팅
+        emailTitle = `[타로] ${fullData.cardName}${fullData.isReversed ? " (역방향)" : ""}`;
+        emailText = `오늘의 메시지\n${fullData.message}\n\n`;
+        emailText += `연애\n${fullData.love}\n\n`;
+        emailText += `금전\n${fullData.money}\n\n`;
+        emailText += `직장\n${fullData.career}\n\n`;
+        emailText += `조언\n${fullData.advice}`;
+      } else {
+        emailText = pendingSaveItem.text;
+      }
+
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          type: pendingSaveItem.type,
+          title: emailTitle,
+          text: emailText,
+          tags: pendingSaveItem.tags,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json().catch(() => ({}));
+        const errorMessage = errorData.error || errorData.message || "이메일 전송에 실패했어요";
+        console.error("Email send failed:", errorMessage, errorData);
+        throw new Error(errorMessage);
+      }
+
+      // 기록에도 저장하기를 선택한 경우에만 DB에 저장
+      if (saveToHistory) {
+        const typeMap: Record<string, string> = {
+          SAJU: "saju",
+          TAROT: "tarot",
+          ZODIAC: "zodiac",
+        };
+
+        const saveResponse = await fetch("/api/readings/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            type: typeMap[pendingSaveItem.type] || "tarot",
+            result_json: {
+              title: pendingSaveItem.title,
+              text: pendingSaveItem.text,
+              tags: pendingSaveItem.tags,
+              isPremium: false,
+            },
+          }),
+        });
+
+        if (!saveResponse.ok) {
+          console.error("Failed to save to history, but email sent");
+        }
+      }
+
+      showToast(saveToHistory ? "이메일을 보냈고 기록에 저장했어요" : "이메일을 보냈어요");
+      setPendingSaveItem(null);
+    } catch (error) {
+      console.error("Send email error:", error);
+      throw error;
+    }
+  };
+
   const saveTarot = () => {
-    if (!tarotResult || !currentInterpretation || !apiResult) return;
+    if (!tarotResult || !apiResult) return;
 
     const categoryLabels: Record<TarotCategory, string> = {
       love: "연애",
@@ -951,28 +1097,32 @@ export default function TarotPage() {
       advice: "조언",
     };
 
+    // 전체 결과를 포함한 아이템 생성
     const item: HistoryItem = {
       id: uid(),
       type: "TAROT",
-      title: `[타로·${categoryLabels[selectedCategory]}] ${currentInterpretation.title}`,
-      text: currentInterpretation.text,
-      tags:
-        currentInterpretation.tags.length > 0
-          ? currentInterpretation.tags
-          : apiResult.keywords,
+      title: `[타로] ${tarotResult.name}${isReversed ? " (역방향)" : ""}`,
+      text: currentInterpretation?.text || "",
+      tags: apiResult.keywords,
       createdAt: Date.now(),
     };
 
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      const existing = raw ? (JSON.parse(raw) as HistoryItem[]) : [];
-      const next = [item, ...existing].slice(0, 12);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-    } catch {
-      // ignore
-    }
-
-    router.push("/?saved=tarot");
+    // 이메일 모달 표시 (전체 결과 데이터도 함께 저장)
+    setPendingSaveItem({
+      ...item,
+      // 전체 결과 데이터를 포함
+      fullData: {
+        cardName: tarotResult.name,
+        isReversed: isReversed,
+        message: apiResult.message,
+        love: apiResult.love,
+        money: apiResult.money,
+        career: apiResult.career,
+        advice: apiResult.advice,
+        keywords: apiResult.keywords,
+      },
+    } as any);
+    setEmailModalOpen(true);
   };
 
   const onEmptyTapReset = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -1036,16 +1186,7 @@ export default function TarotPage() {
               {stage === "spread" && "직감으로 한 장을 선택하세요"}
               {stage === "shuffling" && "카드를 섞고 있어요..."}
               {(stage === "selecting" || stage === "flipping") && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                  <span style={{
-                    width: 16,
-                    height: 16,
-                    border: "2px solid var(--muted)",
-                    borderTop: "2px solid var(--gold-main)",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                    display: "inline-block"
-                  }} />
+                <span>
                   타로를 해석하고 있어요...
                 </span>
               )}
@@ -1102,25 +1243,7 @@ export default function TarotPage() {
                 className="card cardPad lift stagger d4 tarotResultCard"
                 style={{ marginTop: 100 }}
               >
-                {loadingApi && (
-                  <div style={{ padding: "40px 0", textAlign: "center" }}>
-                    <div style={{
-                      width: 40,
-                      height: 40,
-                      border: "3px solid var(--muted)",
-                      borderTop: "3px solid var(--gold-main)",
-                      borderRadius: "50%",
-                      margin: "0 auto 16px",
-                      animation: "spin 1s linear infinite"
-                    }} />
-                    <div className="p" style={{ color: "var(--muted)", fontWeight: 600 }}>
-                      타로를 해석하고 있어요...
-                    </div>
-                    <div className="smallHelp" style={{ marginTop: 8 }}>
-                      잠시만 기다려주세요
-                    </div>
-                  </div>
-                )}
+                {/* 로딩은 전체 화면 오버레이로 표시됨 */}
 
                 {apiError && !loadingApi && (
                   <div style={{ padding: "20px 0", textAlign: "center" }}>
@@ -1219,7 +1342,7 @@ export default function TarotPage() {
                       className="btn btnPrimary btnWide"
                       onClick={saveTarot}
                     >
-                      기록에 저장하기
+                      이메일로 보내기
                     </button>
 
                     <button
@@ -1466,6 +1589,18 @@ export default function TarotPage() {
       {toast && (
         <div className="toast">{toast}</div>
       )}
+
+      {/* 이메일 입력 모달 */}
+      <EmailInputModal
+        isOpen={emailModalOpen}
+        onClose={() => {
+          setEmailModalOpen(false);
+          setPendingSaveItem(null);
+        }}
+        onConfirm={(email, saveToHistory, saveEmail) => handleSendEmail(email, saveToHistory, saveEmail)}
+        title="이메일을 입력해주세요"
+        description="결과를 이메일로 받아보실 수 있어요."
+      />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { type ZodiacInfo } from "../utils/zodiac";
@@ -10,6 +10,7 @@ import {
   getHoroscopeCacheKey,
 } from "../utils/cache";
 import { shareResult, formatZodiacShare } from "../utils/share";
+import EmailInputModal from "../components/EmailInputModal";
 
 const HISTORY_KEY = "lumen_history_v2";
 
@@ -18,8 +19,8 @@ function uid() {
 }
 
 // 별자리 아이콘 SVG 컴포넌트
-function ZodiacIcon({ nameEn }: { nameEn: string }) {
-  const iconMap: Record<string, JSX.Element> = {
+function ZodiacIcon({ nameEn, color }: { nameEn: string; color?: string }) {
+  const iconMap: Record<string, React.ReactElement> = {
     aries: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 2L8 6H16L12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
@@ -120,9 +121,40 @@ function ZodiacIcon({ nameEn }: { nameEn: string }) {
     ),
   };
 
+  if (!iconMap[nameEn]) return null;
+  
+  const icon = iconMap[nameEn];
+  
+  // color가 제공되면 모든 path의 stroke를 직접 변경
+  const coloredIcon = color 
+    ? (() => {
+        const iconElement = icon as React.ReactElement<any>;
+        const children = React.Children.toArray(iconElement.props.children);
+        return React.cloneElement(iconElement, {
+          style: { color },
+          children: children.map((child: React.ReactNode) => {
+            if (React.isValidElement(child)) {
+              const childElement = child as React.ReactElement<any>;
+              const childProps = childElement.props as any;
+              return React.cloneElement(childElement, {
+                stroke: color,
+                fill: childProps.fill === "none" ? "none" : (childProps.fill || color)
+              });
+            }
+            return child;
+          })
+        });
+      })()
+    : icon;
+  
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: "currentColor" }}>
-      {iconMap[nameEn] || null}
+    <span style={{ 
+      display: "inline-flex", 
+      alignItems: "center", 
+      justifyContent: "center", 
+      color: color || "currentColor"
+    }}>
+      {coloredIcon}
     </span>
   );
 }
@@ -184,12 +216,50 @@ export default function ZodiacPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [viewedZodiacs, setViewedZodiacs] = useState<Set<string>>(new Set());
+  // 이미 확인한 별자리 추적
 
   // 토스트 메시지
   const [toast, setToast] = useState<string | null>(null);
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  };
+
+  // 이메일 전송 모달
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [pendingSaveItem, setPendingSaveItem] = useState<HistoryItem | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // 세션 ID 생성/로드
+  useEffect(() => {
+    let session = localStorage.getItem("lumen_session_id");
+    if (!session) {
+      session = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem("lumen_session_id", session);
+    }
+    setSessionId(session);
+    
+    // DB에서 세션별 이메일 로드
+    if (session) {
+      loadUserEmailFromDB(session);
+    }
+  }, []);
+
+  // DB에서 세션별 이메일 로드
+  const loadUserEmailFromDB = async (session: string) => {
+    try {
+      const response = await fetch(`/api/user-email?sessionId=${encodeURIComponent(session)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.email) {
+          setUserEmail(data.email);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user email from DB:", error);
+    }
   };
 
   // 별자리 선택 시 zodiacInfo 설정 및 모달 열기
@@ -263,6 +333,11 @@ export default function ZodiacPage() {
       // 캐시 저장
       setCachedData(cacheKey, horoscopeData);
       setHoroscopeData(horoscopeData);
+      
+      // 확인한 별자리 목록에 추가
+      if (zodiacInfo) {
+        setViewedZodiacs(prev => new Set([...prev, zodiacInfo.nameEn]));
+      }
     } catch (err) {
       console.error(`❌ [Client] Error:`, err);
       setError(
@@ -273,6 +348,121 @@ export default function ZodiacPage() {
       setHoroscopeData(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 이메일 전송 (기록 저장은 선택적)
+  const handleSendEmail = async (email: string, saveToHistory: boolean, saveEmail: boolean) => {
+    if (!pendingSaveItem || !sessionId) return;
+
+    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+    if (saveEmail) {
+      try {
+        await fetch("/api/user-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            email: email,
+            saveEmail: true,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save email to DB:", error);
+      }
+      setUserEmail(email);
+    }
+
+    try {
+      // 이메일 전송 (전체 결과 포함)
+      const fullData = (pendingSaveItem as any).fullData;
+      let emailText = "";
+      let emailTitle = pendingSaveItem.title;
+
+      if (fullData) {
+        // 전체 결과 포맷팅
+        emailTitle = `[별자리] ${fullData.zodiacName} - 오늘의 흐름`;
+        emailText = `오늘의 메시지\n${fullData.message}\n\n`;
+        if (fullData.love) {
+          emailText += `연애\n${fullData.love}\n\n`;
+        }
+        if (fullData.career) {
+          emailText += `직장\n${fullData.career}\n\n`;
+        }
+        if (fullData.money) {
+          emailText += `금전\n${fullData.money}\n\n`;
+        }
+        if (fullData.advice) {
+          emailText += `조언\n${fullData.advice}\n\n`;
+        }
+        if (fullData.luckyNumber) {
+          emailText += `행운의 숫자: ${fullData.luckyNumber}\n`;
+        }
+        if (fullData.luckyColor) {
+          emailText += `행운의 색상: ${fullData.luckyColor}`;
+        }
+      } else {
+        emailText = pendingSaveItem.text;
+      }
+
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          type: pendingSaveItem.type,
+          title: emailTitle,
+          text: emailText,
+          tags: pendingSaveItem.tags,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json().catch(() => ({}));
+        const errorMessage = errorData.error || errorData.message || "이메일 전송에 실패했어요";
+        console.error("Email send failed:", errorMessage, errorData);
+        throw new Error(errorMessage);
+      }
+
+      // 기록에도 저장하기를 선택한 경우에만 DB에 저장
+      if (saveToHistory) {
+        const typeMap: Record<string, string> = {
+          SAJU: "saju",
+          TAROT: "tarot",
+          ZODIAC: "zodiac",
+        };
+
+        const saveResponse = await fetch("/api/readings/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            type: typeMap[pendingSaveItem.type] || "zodiac",
+            result_json: {
+              title: pendingSaveItem.title,
+              text: pendingSaveItem.text,
+              tags: pendingSaveItem.tags,
+              isPremium: false,
+            },
+          }),
+        });
+
+        if (!saveResponse.ok) {
+          console.error("Failed to save to history, but email sent");
+        }
+      }
+
+      showToast(saveToHistory ? "이메일을 보냈고 기록에 저장했어요" : "이메일을 보냈어요");
+      setPendingSaveItem(null);
+    } catch (error) {
+      console.error("Send email error:", error);
+      throw error;
     }
   };
 
@@ -293,16 +483,23 @@ export default function ZodiacPage() {
       createdAt: Date.now(),
     };
 
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      const existing = raw ? (JSON.parse(raw) as HistoryItem[]) : [];
-      const next = [item, ...existing].slice(0, 12);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-    } catch {
-      // ignore
-    }
-
-    router.push("/?saved=zodiac");
+    // 이메일 모달 표시 (전체 결과 데이터도 함께 저장)
+    setPendingSaveItem({
+      ...item,
+      // 전체 결과 데이터를 포함
+      fullData: {
+        zodiacName: zodiacInfo.name,
+        message: horoscopeData.message || "",
+        love: horoscopeData.love || "",
+        career: horoscopeData.career || "",
+        money: horoscopeData.money || "",
+        advice: horoscopeData.advice || "",
+        luckyNumber: horoscopeData.luckyNumber || "",
+        luckyColor: horoscopeData.luckyColor || "",
+        keywords: horoscopeData.keywords || [],
+      },
+    } as any);
+    setEmailModalOpen(true);
   };
 
   return (
@@ -394,25 +591,31 @@ export default function ZodiacPage() {
                         {allZodiacs.map((zodiac) => {
                           const isSelected =
                             selectedZodiac?.nameEn === zodiac.nameEn;
+                          const isViewed = viewedZodiacs.has(zodiac.nameEn);
                           return (
                             <button
                               key={zodiac.nameEn}
                               onClick={() => setSelectedZodiac(zodiac)}
+                              className={isSelected ? "zodiacSelected" : ""}
                               style={{
                                 padding: "20px 12px",
                                 fontSize: 14,
                                 backgroundColor: isSelected
                                   ? "var(--navy)"
+                                  : isViewed
+                                  ? "rgba(180, 140, 100, 0.65)"
                                   : "var(--cream)",
                                 color: isSelected
                                   ? "var(--cream)"
                                   : "var(--navy-dark)",
                                 border: `2px solid ${isSelected
                                   ? "var(--navy)"
+                                  : isViewed
+                                  ? "rgba(180, 140, 100, 0.9)"
                                   : "rgba(43, 38, 42, 0.1)"
                                   }`,
                                 borderRadius: 12,
-                                fontWeight: isSelected ? 700 : 500,
+                                fontWeight: isSelected ? 700 : isViewed ? 600 : 500,
                                 cursor: "pointer",
                                 transition: "all 0.2s ease",
                                 display: "flex",
@@ -420,37 +623,82 @@ export default function ZodiacPage() {
                                 alignItems: "center",
                                 justifyContent: "center",
                                 gap: 4,
+                                position: "relative",
                                 transform: isSelected
                                   ? "scale(1.05)"
                                   : "scale(1)",
                                 boxShadow: isSelected
                                   ? "0 4px 12px rgba(43, 38, 42, 0.15)"
+                                  : isViewed
+                                  ? "0 3px 10px rgba(180, 140, 100, 0.5)"
                                   : "0 2px 4px rgba(43, 38, 42, 0.05)",
                               }}
                               onMouseEnter={(e) => {
                                 if (!isSelected) {
                                   e.currentTarget.style.backgroundColor =
-                                    "rgba(43, 38, 42, 0.05)";
+                                    isViewed
+                                      ? "rgba(180, 140, 100, 0.75)"
+                                      : "rgba(43, 38, 42, 0.05)";
                                   e.currentTarget.style.transform =
                                     "scale(1.02)";
                                   e.currentTarget.style.borderColor =
-                                    "rgba(43, 38, 42, 0.2)";
+                                    isViewed
+                                      ? "rgba(180, 140, 100, 1)"
+                                      : "rgba(43, 38, 42, 0.2)";
                                 }
                               }}
                               onMouseLeave={(e) => {
                                 if (!isSelected) {
                                   e.currentTarget.style.backgroundColor =
-                                    "var(--cream)";
+                                    isViewed
+                                      ? "rgba(180, 140, 100, 0.65)"
+                                      : "var(--cream)";
                                   e.currentTarget.style.transform = "scale(1)";
                                   e.currentTarget.style.borderColor =
-                                    "rgba(43, 38, 42, 0.1)";
+                                    isViewed
+                                      ? "rgba(180, 140, 100, 0.9)"
+                                      : "rgba(43, 38, 42, 0.1)";
                                 }
                               }}
                             >
-                              <span style={{ fontSize: 20, marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <ZodiacIcon nameEn={zodiac.nameEn} />
+                              {isViewed && !isSelected && (
+                                <span
+                                  style={{
+                                    position: "absolute",
+                                    top: 4,
+                                    right: 4,
+                                    width: 20,
+                                    height: 20,
+                                    borderRadius: "50%",
+                                    background: "rgba(180, 140, 100, 1)",
+                                    border: "2px solid rgba(255, 255, 255, 0.9)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 12,
+                                    color: "white",
+                                    fontWeight: 700,
+                                    boxShadow: "0 2px 6px rgba(180, 140, 100, 0.5)",
+                                  }}
+                                >
+                                  ✓
+                                </span>
+                              )}
+                              <span style={{ 
+                                fontSize: 20, 
+                                marginBottom: 4, 
+                                display: "flex", 
+                                alignItems: "center", 
+                                justifyContent: "center",
+                                color: isSelected ? "var(--cream)" : "inherit"
+                              }}>
+                                <ZodiacIcon nameEn={zodiac.nameEn} color={isSelected ? "var(--cream)" : undefined} />
                               </span>
-                              <span style={{ fontSize: 13, fontWeight: 600 }}>
+                              <span style={{ 
+                                fontSize: 13, 
+                                fontWeight: 600,
+                                color: isSelected ? "var(--cream)" : "inherit"
+                              }}>
                                 {zodiac.name}
                               </span>
                             </button>
@@ -658,7 +906,7 @@ export default function ZodiacPage() {
                         setShowModal(false);
                       }}
                     >
-                      기록에 저장하기
+                      이메일로 보내기
                     </button>
 
                     <button
@@ -737,6 +985,18 @@ export default function ZodiacPage() {
       {toast && (
         <div className="toast">{toast}</div>
       )}
+
+      {/* 이메일 입력 모달 */}
+      <EmailInputModal
+        isOpen={emailModalOpen}
+        onClose={() => {
+          setEmailModalOpen(false);
+          setPendingSaveItem(null);
+        }}
+        onConfirm={(email, saveToHistory, saveEmail) => handleSendEmail(email, saveToHistory, saveEmail)}
+        title="이메일을 입력해주세요"
+        description="결과를 이메일로 받아보실 수 있어요."
+      />
     </main>
   );
 }
