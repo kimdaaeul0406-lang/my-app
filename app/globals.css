@@ -328,13 +328,21 @@ button {
   height: 220px;
   background: linear-gradient(180deg,
       transparent 0%,
-      rgba(61, 74, 110, 0.05) 15%,
-      rgba(61, 74, 110, 0.1) 30%,
-      rgba(142, 148, 164, 0.2) 45%,
-      rgba(200, 195, 188, 0.4) 60%,
-      rgba(230, 225, 218, 0.7) 75%,
-      rgba(244, 239, 233, 0.9) 90%,
-      var(--paper) 100%);
+      rgba(61, 74, 110, 0.03) 10%,
+      rgba(61, 74, 110, 0.06) 18%,
+      rgba(61, 74, 110, 0.09) 25%,
+      rgba(85, 95, 120, 0.12) 32%,
+      rgba(110, 120, 140, 0.16) 40%,
+      rgba(135, 142, 160, 0.22) 48%,
+      rgba(165, 172, 180, 0.32) 56%,
+      rgba(185, 190, 195, 0.42) 64%,
+      rgba(205, 208, 210, 0.52) 72%,
+      rgba(218, 220, 218, 0.62) 80%,
+      rgba(230, 230, 225, 0.72) 86%,
+      rgba(238, 237, 233, 0.82) 92%,
+      rgba(244, 239, 233, 0.92) 96%,
+      var(--bg) 100%);
+  /* 색상 스톱을 세밀하게 추가하여 부드럽고 연속적인 그라데이션 생성 */
   pointer-events: none;
   z-index: 0;
 }
@@ -381,16 +389,44 @@ button {
   margin: 0 4px;
 }
 
+/* 모바일 전용: identityLine 중앙 정렬 및 크기 조정 (PC 1024px 이상에서는 적용 안 됨) */
+@media (max-width: 767px) {
+  .identityLine,
+  .nightSky .identityLine {
+    width: fit-content !important;
+    max-width: calc(100vw - 40px) !important;
+    /* 화면을 초과하지 않도록 최대 너비 제한 */
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 6px;
+    padding: 6px 8px !important;
+    /* 패딩도 줄여서 외부 크기 감소 */
+    font-size: 11px !important;
+    /* 폰트 크기 줄여서 내용이 화면에 맞도록 */
+  }
+}
+
 @media (max-width: 380px) {
-  .identityLine {
-    gap: 1px;
-    /* 간격 최소화 */
-    font-size: 11px;
-    width: 100%;
+  .identityLine,
+  .nightSky .identityLine {
+    gap: 3px !important;
+    /* 간격 더 줄여서 작은 화면에 맞춤 */
+    font-size: 10px !important;
+    /* 폰트 크기 더 줄임 */
+    width: fit-content !important;
+    max-width: calc(100vw - 32px) !important;
+    /* 작은 화면에서는 여백도 더 줄임 */
     margin-top: 24px;
-    justify-content: center;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    align-items: center !important;
     /* transform 제거 (애니메이션 충돌 방지) */
     white-space: nowrap;
+    padding: 5px 6px !important;
+    /* 패딩 더 줄여서 외부 크기 최소화 */
   }
 
   .identityBadge {
@@ -566,6 +602,12 @@ button {
   color: var(--gold-main);
   position: relative;
   z-index: 1;
+  transition: color 0.2s ease;
+}
+
+.nightSky .heroLink:hover {
+  color: var(--gold-bright);
+  /* 호버 시 더 밝은 골드 색상으로 변경 */
 }
 
 .nightSky .miniRow {
@@ -647,10 +689,11 @@ button {
 
 .identityLine {
   margin-top: 14px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.68);
   border: 1px solid var(--cardLine);
@@ -658,6 +701,9 @@ button {
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.045);
   font-size: 12px;
   color: rgba(43, 38, 42, 0.84);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .identityBadge {
@@ -701,7 +747,8 @@ button {
 }
 
 .heroLink:hover {
-  color: rgba(36, 58, 72, 0.9);
+  color: rgba(43, 38, 42, 0.9);
+  /* 호버 시 더 밝은 색상으로 변경 */
 }
 
 .miniRow {
@@ -2488,11 +2535,13 @@ button {
   }
 
   .nightSky .heroTitle {
-    font-size: 1.25em;
+    font-size: 1.65em;
+    /* PC에서 heroTitle 글씨 크기 더 증가 */
   }
 
   .nightSky .heroSub {
-    font-size: 1.25em;
+    font-size: 0.85em;
+    /* PC에서 heroSub 글씨 크기 감소 */
   }
 
   .nightSky .heroEyebrow {
@@ -2505,6 +2554,15 @@ button {
 
   .nightSky .miniRow {
     font-size: 1.25em;
+  }
+
+  /* PC에서 identityLine은 기본 스타일 유지 (모바일 스타일 무시) */
+  .identityLine {
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 14px;
+    /* PC에서 identityLine 내부 텍스트 크기 증가 */
   }
 
   /* Hero CTA 버튼: 높이 +8px, 글자 +2px */

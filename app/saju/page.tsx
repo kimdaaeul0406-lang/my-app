@@ -12,6 +12,18 @@ function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+// 사주 아이콘 SVG 컴포넌트
+function SajuIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <path d="M12 2V6M12 18V22M2 12H6M18 12H22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M6.34 6.34L8.93 8.93M15.07 15.07L17.66 17.66M17.66 6.34L15.07 8.93M8.93 15.07L6.34 17.66" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 type HistoryItem = {
   id: string;
   type: "SAJU" | "TAROT" | "ZODIAC";
@@ -44,6 +56,7 @@ export default function SajuPage() {
   const [result, setResult] = useState<SajuResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
 
   // 토스트 메시지
   const [toast, setToast] = useState<string | null>(null);
@@ -51,6 +64,23 @@ export default function SajuPage() {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
   };
+
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isTimeDropdownOpen && !target.closest('[data-time-dropdown]')) {
+        setIsTimeDropdownOpen(false);
+      }
+    };
+
+    if (isTimeDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isTimeDropdownOpen]);
 
   // 생년월일 입력 핸들러
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,7 +123,7 @@ export default function SajuPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ success: false, error: "API 오류" }));
-        throw new Error(errorData.error || "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
+        throw new Error(errorData.error || "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요");
       }
 
       const result = await response.json();
@@ -126,7 +156,7 @@ export default function SajuPage() {
       setResult(sajuData);
     } catch (err) {
       console.error(`❌ [Saju] Error:`, err);
-      setError(err instanceof Error ? err.message : "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙");
+      setError(err instanceof Error ? err.message : "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요");
       setResult(null);
     } finally {
       setLoading(false);
@@ -199,7 +229,10 @@ export default function SajuPage() {
               </Link>
             </div>
 
-            <h1 className="h2 stagger d1">🔮 사주 운세</h1>
+            <h1 className="h2 stagger d1" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <SajuIcon size={20} />
+              사주 운세
+            </h1>
             <p className="p stagger d2">
               생년월일을 입력하면 오늘의 사주 흐름을 알려드려요.
             </p>
@@ -236,73 +269,151 @@ export default function SajuPage() {
                     </div>
                   </div>
 
-                  {/* 출생 시간 (선택사항) - 전통 시간대 선택 */}
+                  {/* 출생 시간 (선택사항) - 드롭다운 선택 */}
                   <div className="zodiacInputRow" style={{ marginTop: 16 }}>
-                    <div className="zodiacInputField">
+                    <div className="zodiacInputField" style={{ position: "relative" }} data-time-dropdown>
                       <label className="zodiacInputLabel">
                         출생 시간 (선택사항)
                       </label>
-                      <div style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(4, 1fr)",
-                        gap: 8,
-                        marginTop: 8,
-                      }}>
-                        {[
-                          { value: "", label: "모름", time: "" },
-                          { value: "23:00", label: "자시", time: "23~01시" },
-                          { value: "01:00", label: "축시", time: "01~03시" },
-                          { value: "03:00", label: "인시", time: "03~05시" },
-                          { value: "05:00", label: "묘시", time: "05~07시" },
-                          { value: "07:00", label: "진시", time: "07~09시" },
-                          { value: "09:00", label: "사시", time: "09~11시" },
-                          { value: "11:00", label: "오시", time: "11~13시" },
-                          { value: "13:00", label: "미시", time: "13~15시" },
-                          { value: "15:00", label: "신시", time: "15~17시" },
-                          { value: "17:00", label: "유시", time: "17~19시" },
-                          { value: "19:00", label: "술시", time: "19~21시" },
-                          { value: "21:00", label: "해시", time: "21~23시" },
-                        ].map((item) => (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={() => {
-                              setBirthTime(item.value);
-                              setResult(null);
-                              setError(null);
-                            }}
-                            style={{
-                              padding: "10px 6px",
-                              fontSize: 13,
-                              fontWeight: birthTime === item.value ? 700 : 500,
-                              backgroundColor: birthTime === item.value
-                                ? "var(--navy-dark)"
-                                : "rgba(26, 35, 50, 0.06)",
-                              color: birthTime === item.value
-                                ? "var(--cream)"
-                                : "var(--navy-dark)",
-                              border: "none",
-                              borderRadius: 10,
-                              cursor: "pointer",
-                              transition: "all 0.2s ease",
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              gap: 2,
-                            }}
-                          >
-                            <span>{item.label}</span>
-                            {item.time && (
-                              <span style={{
-                                fontSize: 9,
-                                opacity: birthTime === item.value ? 0.8 : 0.6,
-                              }}>
-                                {item.time}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsTimeDropdownOpen(!isTimeDropdownOpen)}
+                        data-time-dropdown
+                        style={{
+                          width: "100%",
+                          padding: "14px 16px",
+                          fontSize: 15,
+                          fontWeight: 500,
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
+                          color: birthTime ? "var(--navy-dark)" : "var(--muted)",
+                          border: "2px solid rgba(26, 35, 50, 0.12)",
+                          borderRadius: 12,
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          textAlign: "left",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 8,
+                        }}
+                      >
+                        <span>
+                          {birthTime
+                            ? [
+                              { value: "", label: "모름", time: "" },
+                              { value: "23:00", label: "자시", time: "23~01시" },
+                              { value: "01:00", label: "축시", time: "01~03시" },
+                              { value: "03:00", label: "인시", time: "03~05시" },
+                              { value: "05:00", label: "묘시", time: "05~07시" },
+                              { value: "07:00", label: "진시", time: "07~09시" },
+                              { value: "09:00", label: "사시", time: "09~11시" },
+                              { value: "11:00", label: "오시", time: "11~13시" },
+                              { value: "13:00", label: "미시", time: "13~15시" },
+                              { value: "15:00", label: "신시", time: "15~17시" },
+                              { value: "17:00", label: "유시", time: "17~19시" },
+                              { value: "19:00", label: "술시", time: "19~21시" },
+                              { value: "21:00", label: "해시", time: "21~23시" },
+                            ].find((item) => item.value === birthTime)?.label || "선택하세요"
+                            : "선택하세요"}
+                        </span>
+                        <span style={{
+                          fontSize: 12,
+                          transform: isTimeDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s ease",
+                        }}>
+                          ▼
+                        </span>
+                      </button>
+
+                      {/* 드롭다운 메뉴 */}
+                      {isTimeDropdownOpen && (
+                        <div
+                          data-time-dropdown
+                          style={{
+                            position: "absolute",
+                            top: "100%",
+                            left: 0,
+                            right: 0,
+                            marginTop: 4,
+                            backgroundColor: "rgba(255, 255, 255, 0.98)",
+                            border: "2px solid rgba(26, 35, 50, 0.12)",
+                            borderRadius: 12,
+                            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
+                            zIndex: 1000,
+                            maxHeight: "300px",
+                            overflowY: "auto",
+                            backdropFilter: "blur(12px)",
+                          }}
+                        >
+                          {[
+                            { value: "", label: "모름", time: "" },
+                            { value: "23:00", label: "자시", time: "23~01시" },
+                            { value: "01:00", label: "축시", time: "01~03시" },
+                            { value: "03:00", label: "인시", time: "03~05시" },
+                            { value: "05:00", label: "묘시", time: "05~07시" },
+                            { value: "07:00", label: "진시", time: "07~09시" },
+                            { value: "09:00", label: "사시", time: "09~11시" },
+                            { value: "11:00", label: "오시", time: "11~13시" },
+                            { value: "13:00", label: "미시", time: "13~15시" },
+                            { value: "15:00", label: "신시", time: "15~17시" },
+                            { value: "17:00", label: "유시", time: "17~19시" },
+                            { value: "19:00", label: "술시", time: "19~21시" },
+                            { value: "21:00", label: "해시", time: "21~23시" },
+                          ].map((item) => (
+                            <button
+                              key={item.label}
+                              type="button"
+                              onClick={() => {
+                                setBirthTime(item.value);
+                                setIsTimeDropdownOpen(false);
+                                setResult(null);
+                                setError(null);
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "12px 16px",
+                                fontSize: 14,
+                                fontWeight: birthTime === item.value ? 700 : 500,
+                                backgroundColor: birthTime === item.value
+                                  ? "rgba(26, 35, 50, 0.08)"
+                                  : "transparent",
+                                color: birthTime === item.value
+                                  ? "var(--navy-dark)"
+                                  : "var(--navy-dark)",
+                                border: "none",
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                                textAlign: "left",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                borderBottom: "1px solid rgba(26, 35, 50, 0.06)",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (birthTime !== item.value) {
+                                  e.currentTarget.style.backgroundColor = "rgba(26, 35, 50, 0.04)";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (birthTime !== item.value) {
+                                  e.currentTarget.style.backgroundColor = "transparent";
+                                }
+                              }}
+                            >
+                              <span>{item.label}</span>
+                              {item.time && (
+                                <span style={{
+                                  fontSize: 12,
+                                  color: "var(--muted)",
+                                  fontWeight: 400,
+                                }}>
+                                  {item.time}
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -408,7 +519,7 @@ export default function SajuPage() {
                         사주를 해석하고 있어요...
                       </div>
                       <div className="smallHelp" style={{ marginTop: 8 }}>
-                        잠시만 기다려주세요 🌙
+                        잠시만 기다려주세요
                       </div>
                     </div>
                   </div>
@@ -564,14 +675,14 @@ export default function SajuPage() {
                           const shareResult_ = await shareResult(shareData);
                           if (shareResult_.success) {
                             if (shareResult_.method === "clipboard") {
-                              showToast("결과가 복사되었어요! 📋");
+                              showToast("결과가 복사되었어요!");
                             }
                           } else {
-                            showToast("공유에 실패했어요 😢");
+                            showToast("공유에 실패했어요");
                           }
                         }}
                       >
-                        결과 공유하기 📤
+                        결과 공유하기
                       </button>
 
                       <Link

@@ -18,7 +18,7 @@ export async function shareResult(data: ShareData): Promise<{
     success: boolean;
     method: "native" | "clipboard" | "failed";
 }> {
-    const shareText = `${data.title}\n\n${data.text}\n\n🌙 LUMEN에서 확인하기`;
+    const shareText = `${data.title}\n\n${data.text}\n\nLUMEN에서 확인하기`;
 
     // Web Share API 지원 체크 (주로 모바일)
     if (navigator.share) {
@@ -62,8 +62,8 @@ export function formatTarotShare(
     const keywordText = keywords.length > 0 ? `\n\n#${keywords.join(" #")}` : "";
 
     return {
-        title: `🎴 오늘의 타로: ${cardNameKo}${direction}`,
-        text: `${message}\n\n💡 조언: ${advice}${keywordText}`,
+        title: `오늘의 타로: ${cardNameKo}${direction}`,
+        text: `${message}\n\n조언: ${advice}${keywordText}`,
     };
 }
 
@@ -79,8 +79,8 @@ export function formatSajuShare(
     const keywordText = keywords.length > 0 ? `\n\n#${keywords.join(" #")}` : "";
 
     return {
-        title: `🔮 나의 사주 운세 (${birthDate})`,
-        text: `${overview}\n\n💡 조언: ${advice}${keywordText}`,
+        title: `나의 사주 운세 (${birthDate})`,
+        text: `${overview}\n\n조언: ${advice}${keywordText}`,
     };
 }
 
@@ -96,10 +96,10 @@ export function formatZodiacShare(
     keywords: string[]
 ): ShareData {
     const keywordText = keywords.length > 0 ? `\n\n#${keywords.join(" #")}` : "";
-    const luckyText = `\n\n🍀 행운의 숫자: ${luckyNumber} | 행운의 색상: ${luckyColor}`;
+    const luckyText = `\n\n행운의 숫자: ${luckyNumber} | 행운의 색상: ${luckyColor}`;
 
     return {
-        title: `⭐ ${zodiacName} 오늘의 운세`,
-        text: `${message}\n\n💡 조언: ${advice}${luckyText}${keywordText}`,
+        title: `${zodiacName} 오늘의 운세`,
+        text: `${message}\n\n조언: ${advice}${luckyText}${keywordText}`,
     };
 }

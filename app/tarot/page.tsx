@@ -1,5 +1,16 @@
 "use client";
 
+// 타로 카드 아이콘 SVG 컴포넌트
+function TarotIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <rect x="4" y="6" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <path d="M8 10H16M8 14H16M8 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="12" cy="4" r="1.5" fill="currentColor"/>
+    </svg>
+  );
+}
+
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -714,7 +725,7 @@ export default function TarotPage() {
       } catch (fetchError) {
         // 네트워크 오류 (모바일에서 자주 발생)
         console.error("Network fetch error:", fetchError);
-        throw new Error("네트워크 연결을 확인해주세요. 잠시 후 다시 시도해주세요 🌙");
+        throw new Error("네트워크 연결을 확인해주세요. 잠시 후 다시 시도해주세요");
       }
 
       if (!response.ok) {
@@ -723,7 +734,7 @@ export default function TarotPage() {
           .catch(() => ({ success: false, error: "API 오류" }));
         throw new Error(
           errorData.error ||
-          "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요 🌙"
+          "별들이 잠시 쉬고 있어요. 조금 후 다시 시도해주세요"
         );
       }
 
@@ -1015,7 +1026,10 @@ export default function TarotPage() {
               </Link>
             </div>
 
-            <h1 className="h2 stagger d1">🃏 타로 카드</h1>
+            <h1 className="h2 stagger d1" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <TarotIcon size={20} />
+              타로 카드
+            </h1>
             <p className="p stagger d2">
               {stage === "waiting" && "타로 카드를 뽑아보세요"}
               {stage === "stacked" && "덱을 탭하여 셔플하세요"}
@@ -1103,7 +1117,7 @@ export default function TarotPage() {
                       타로를 해석하고 있어요...
                     </div>
                     <div className="smallHelp" style={{ marginTop: 8 }}>
-                      잠시만 기다려주세요 🌙
+                      잠시만 기다려주세요
                     </div>
                   </div>
                 )}
@@ -1228,14 +1242,14 @@ export default function TarotPage() {
                         const result = await shareResult(shareData);
                         if (result.success) {
                           if (result.method === "clipboard") {
-                            showToast("결과가 복사되었어요! 📋");
+                            showToast("결과가 복사되었어요!");
                           }
                         } else {
-                          showToast("공유에 실패했어요 😢");
+                          showToast("공유에 실패했어요");
                         }
                       }}
                     >
-                      결과 공유하기 📤
+                      결과 공유하기
                     </button>
 
                     <button

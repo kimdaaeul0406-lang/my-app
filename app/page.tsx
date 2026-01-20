@@ -5,6 +5,41 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
+// 사주 아이콘 SVG 컴포넌트
+function SajuIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <path d="M12 2V6M12 18V22M2 12H6M18 12H22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M6.34 6.34L8.93 8.93M15.07 15.07L17.66 17.66M17.66 6.34L15.07 8.93M8.93 15.07L6.34 17.66" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+// 타로 아이콘 SVG 컴포넌트
+function TarotIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
+      <rect x="4" y="6" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <path d="M8 10H16M8 14H16M8 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="12" cy="4" r="1.5" fill="currentColor"/>
+    </svg>
+  );
+}
+
+// 별자리 아이콘 SVG 컴포넌트 (간단한 버전)
+function ZodiacIconSmall({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <path d="M12 4V12M12 12V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M4 12H12M12 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="12" cy="12" r="2" fill="currentColor"/>
+    </svg>
+  );
+}
+
 type ModalType = "tarot" | null;
 
 type Review = { name: string; text: string };
@@ -313,10 +348,7 @@ export default function Page() {
               하루의 방향을 조용히 정리해요.
             </div>
 
-            <div
-              className="identityLine stagger d5"
-              style={{ justifyContent: "center" }}
-            >
+            <div className="identityLine stagger d5">
               <span className="identityBadge">사주</span>
               <span>본질·정리</span>
               <span className="heroDot" />
@@ -398,20 +430,26 @@ export default function Page() {
                 <Link
                   href="/saju"
                   className="btnTiny"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  🔮 사주 확인하기
+                  <SajuIcon size={14} />
+                  사주 확인하기
                 </Link>
                 <Link
                   href="/zodiac"
                   className="btnTiny"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  ⭐ 별자리 확인하기
+                  <ZodiacIconSmall size={14} />
+                  별자리 확인하기
                 </Link>
                 <Link
                   href="/tarot"
                   className="btnTiny"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  🃏 타로 뽑기
+                  <TarotIcon size={14} />
+                  타로 뽑기
                 </Link>
               </div>
             </div>
@@ -445,20 +483,26 @@ export default function Page() {
                 <Link
                   href="/saju"
                   className="btnTiny"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  🔮 사주 확인하기
+                  <SajuIcon size={14} />
+                  사주 확인하기
                 </Link>
                 <Link
                   href="/zodiac"
                   className="btnTiny"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  ⭐ 별자리 확인하기
+                  <ZodiacIconSmall size={14} />
+                  별자리 확인하기
                 </Link>
                 <Link
                   href="/tarot"
                   className="btnTiny"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  🃏 타로 뽑기
+                  <TarotIcon size={14} />
+                  타로 뽑기
                 </Link>
               </div>
             </div>

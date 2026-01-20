@@ -119,7 +119,6 @@ export default function PWAInstallBanner() {
                         flexShrink: 0,
                     }}
                 >
-                    🌙
                 </div>
                 <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>

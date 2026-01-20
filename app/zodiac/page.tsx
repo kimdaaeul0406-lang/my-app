@@ -17,6 +17,116 @@ function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+// 별자리 아이콘 SVG 컴포넌트
+function ZodiacIcon({ nameEn }: { nameEn: string }) {
+  const iconMap: Record<string, JSX.Element> = {
+    aries: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L8 6H16L12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    taurus: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M12 4V12M12 12V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M4 12H12M12 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    gemini: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 4C8 5.1 7.1 6 6 6C4.9 6 4 5.1 4 4C4 2.9 4.9 2 6 2C7.1 2 8 2.9 8 4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M20 4C20 5.1 19.1 6 18 6C16.9 6 16 5.1 16 4C16 2.9 16.9 2 18 2C19.1 2 20 2.9 20 4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M8 20C8 21.1 7.1 22 6 22C4.9 22 4 21.1 4 20C4 18.9 4.9 18 6 18C7.1 18 8 18.9 8 20Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M20 20C20 21.1 19.1 22 18 22C16.9 22 16 21.1 16 20C16 18.9 16.9 18 18 18C19.1 18 20 18.9 20 20Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M6 6V18M18 6V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    cancer: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 8C6 10.2 7.8 12 10 12C12.2 12 14 10.2 14 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M10 16C10 13.8 11.8 12 14 12C16.2 12 18 13.8 18 16" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M6 6L4 4M18 6L20 4M6 18L4 20M18 18L20 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    leo: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="10" r="6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M8 16L6 22M16 16L18 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M12 4V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    virgo: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M8 6L12 2L16 6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="12" cy="14" r="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M10 18L12 20L14 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    libra: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 8H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M6 16H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M12 8V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="6" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <circle cx="18" cy="16" r="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      </svg>
+    ),
+    scorpio: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M12 8C12 10.2 10.2 12 8 12C5.8 12 4 10.2 4 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M12 8C12 10.2 13.8 12 16 12C18.2 12 20 10.2 20 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M12 12V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    sagittarius: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L8 6L12 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12 10L16 6L20 2" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    capricorn: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M10 12L14 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M6 8L4 6M18 16L20 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M6 8V4M18 16V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    aquarius: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 8C6 6.9 6.9 6 8 6C9.1 6 10 6.9 10 8C10 9.1 9.1 10 8 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M14 8C14 6.9 14.9 6 16 6C17.1 6 18 6.9 18 8C18 9.1 17.1 10 16 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M6 16C6 14.9 6.9 14 8 14C9.1 14 10 14.9 10 16C10 17.1 9.1 18 8 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M14 16C14 14.9 14.9 14 16 14C17.1 14 18 14.9 18 16C18 17.1 17.1 18 16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M8 10V14M16 10V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    pisces: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M18 8C18 10.2 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M6 16C6 13.8 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M10 12H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  };
+
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: "currentColor" }}>
+      {iconMap[nameEn] || null}
+    </span>
+  );
+}
+
 type HistoryItem = {
   id: string;
   type: "SAJU" | "TAROT" | "ZODIAC";
@@ -40,28 +150,28 @@ interface HoroscopeData {
 
 // 모든 별자리 목록
 const allZodiacs: ZodiacInfo[] = [
-  { name: "양자리", nameEn: "aries", icon: "♈", dateRange: "3/21 - 4/19" },
-  { name: "황소자리", nameEn: "taurus", icon: "♉", dateRange: "4/20 - 5/20" },
-  { name: "쌍둥이자리", nameEn: "gemini", icon: "♊", dateRange: "5/21 - 6/20" },
-  { name: "게자리", nameEn: "cancer", icon: "♋", dateRange: "6/21 - 7/22" },
-  { name: "사자자리", nameEn: "leo", icon: "♌", dateRange: "7/23 - 8/22" },
-  { name: "처녀자리", nameEn: "virgo", icon: "♍", dateRange: "8/23 - 9/22" },
-  { name: "천칭자리", nameEn: "libra", icon: "♎", dateRange: "9/23 - 10/22" },
-  { name: "전갈자리", nameEn: "scorpio", icon: "♏", dateRange: "10/23 - 11/21" },
+  { name: "양자리", nameEn: "aries", icon: "aries", dateRange: "3/21 - 4/19" },
+  { name: "황소자리", nameEn: "taurus", icon: "taurus", dateRange: "4/20 - 5/20" },
+  { name: "쌍둥이자리", nameEn: "gemini", icon: "gemini", dateRange: "5/21 - 6/20" },
+  { name: "게자리", nameEn: "cancer", icon: "cancer", dateRange: "6/21 - 7/22" },
+  { name: "사자자리", nameEn: "leo", icon: "leo", dateRange: "7/23 - 8/22" },
+  { name: "처녀자리", nameEn: "virgo", icon: "virgo", dateRange: "8/23 - 9/22" },
+  { name: "천칭자리", nameEn: "libra", icon: "libra", dateRange: "9/23 - 10/22" },
+  { name: "전갈자리", nameEn: "scorpio", icon: "scorpio", dateRange: "10/23 - 11/21" },
   {
     name: "사수자리",
     nameEn: "sagittarius",
-    icon: "♐",
+    icon: "sagittarius",
     dateRange: "11/22 - 12/21",
   },
   {
     name: "염소자리",
     nameEn: "capricorn",
-    icon: "♑",
+    icon: "capricorn",
     dateRange: "12/22 - 1/19",
   },
-  { name: "물병자리", nameEn: "aquarius", icon: "♒", dateRange: "1/20 - 2/18" },
-  { name: "물고기자리", nameEn: "pisces", icon: "♓", dateRange: "2/19 - 3/20" },
+  { name: "물병자리", nameEn: "aquarius", icon: "aquarius", dateRange: "1/20 - 2/18" },
+  { name: "물고기자리", nameEn: "pisces", icon: "pisces", dateRange: "2/19 - 3/20" },
 ];
 
 export default function ZodiacPage() {
@@ -237,7 +347,10 @@ export default function ZodiacPage() {
               </Link>
             </div>
 
-            <h1 className="h2 stagger d1">⭐ 별자리 운세</h1>
+            <h1 className="h2 stagger d1" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <ZodiacIcon nameEn="libra" />
+              별자리 운세
+            </h1>
             <p className="p stagger d2">
               별자리를 선택하면 오늘의 별자리 흐름을 알려드려요.
             </p>
@@ -334,8 +447,8 @@ export default function ZodiacPage() {
                                 }
                               }}
                             >
-                              <span style={{ fontSize: 20, marginBottom: 4 }}>
-                                {zodiac.icon}
+                              <span style={{ fontSize: 20, marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <ZodiacIcon nameEn={zodiac.nameEn} />
                               </span>
                               <span style={{ fontSize: 13, fontWeight: 600 }}>
                                 {zodiac.name}
@@ -379,96 +492,18 @@ export default function ZodiacPage() {
                     {zodiacInfo?.name}의 오늘의 운세를 확인해보세요.
                   </div>
                   <button
-                    className="btn btnPrimary btnWide"
+                    className="btn btnPrimary"
                     onClick={fetchHoroscope}
                     disabled={loading}
                     style={{
                       opacity: loading ? 0.6 : 1,
                       cursor: loading ? "not-allowed" : "pointer",
+                      maxWidth: "280px",
+                      margin: "0 auto",
                     }}
                   >
-                    {loading ? "운세를 불러오는 중..." : "오늘의 운세 보기"}
+                    오늘의 운세 보기
                   </button>
-                </div>
-              )}
-
-              {loading && (
-                <div style={{ padding: "20px 0" }}>
-                  {/* 로딩 스켈레톤 */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      marginBottom: 20,
-                    }}
-                  >
-                    <div
-                      className="skeleton"
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: "50%",
-                      }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div
-                        className="skeleton"
-                        style={{
-                          width: "60%",
-                          height: 20,
-                          borderRadius: 4,
-                          marginBottom: 8,
-                        }}
-                      />
-                      <div
-                        className="skeleton"
-                        style={{
-                          width: "40%",
-                          height: 14,
-                          borderRadius: 4,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div
-                      className="skeleton"
-                      style={{
-                        width: "50%",
-                        height: 18,
-                        borderRadius: 4,
-                        marginBottom: 12,
-                      }}
-                    />
-                    <div
-                      className="skeleton"
-                      style={{
-                        width: "100%",
-                        height: 14,
-                        borderRadius: 4,
-                        marginBottom: 8,
-                      }}
-                    />
-                    <div
-                      className="skeleton"
-                      style={{
-                        width: "95%",
-                        height: 14,
-                        borderRadius: 4,
-                        marginBottom: 8,
-                      }}
-                    />
-                    <div
-                      className="skeleton"
-                      style={{
-                        width: "85%",
-                        height: 14,
-                        borderRadius: 4,
-                      }}
-                    />
-                  </div>
                 </div>
               )}
 
@@ -505,7 +540,9 @@ export default function ZodiacPage() {
                 <div className="fadeSlideUp">
                   {/* 별자리 정보 */}
                   <div className="zodiacResultHeader">
-                    <div className="zodiacIcon">{zodiacInfo.icon}</div>
+                    <div className="zodiacIcon" style={{ fontSize: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <ZodiacIcon nameEn={zodiacInfo.nameEn} />
+                    </div>
                     <div>
                       <div className="zodiacName">{zodiacInfo.name}</div>
                       <div className="zodiacDateRange">
@@ -641,14 +678,14 @@ export default function ZodiacPage() {
                         const result = await shareResult(shareData);
                         if (result.success) {
                           if (result.method === "clipboard") {
-                            showToast("결과가 복사되었어요! 📋");
+                            showToast("결과가 복사되었어요!");
                           }
                         } else {
-                          showToast("공유에 실패했어요 😢");
+                          showToast("공유에 실패했어요");
                         }
                       }}
                     >
-                      결과 공유하기 📤
+                      결과 공유하기
                     </button>
 
                     <button
