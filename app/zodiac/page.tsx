@@ -956,36 +956,7 @@ export default function ZodiacPage() {
         </div>
       )}
 
-      {/* 로딩 중 터치 방지 오버레이 */}
-      {loading && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.3)",
-            zIndex: 9999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              border: "4px solid rgba(255,255,255,0.3)",
-              borderTop: "4px solid var(--gold-main)",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-            }}
-          />
-          <div style={{ color: "var(--cream)", fontSize: 14, fontWeight: 600 }}>
-            운세를 불러오고 있어요...
-          </div>
-        </div>
-      )}
+
 
       {/* 토스트 메시지 */}
       {toast && (

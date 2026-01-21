@@ -92,6 +92,22 @@ export default function Page() {
     window.setTimeout(() => setToast(null), 2200);
   };
 
+  // 현재 시간 (Flow Card용)
+  const [timeString, setTimeString] = useState("");
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      // 포맷 예시: "1월 21일, 오전 11:30 기준"
+      const datePart = now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+      const timePart = now.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+      setTimeString(`${datePart}, ${timePart} 기준`);
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000); // 1초마다 갱신 (즉각 반영)
+    return () => clearInterval(timer);
+  }, []);
+
   // 타자기 효과를 위한 상태
   const [typedText, setTypedText] = useState("");
   const heroTitleText = "오늘,\n당신의 흐름은\n어디로 가고 있나요?";
@@ -203,6 +219,28 @@ export default function Page() {
     const dayIndex = today.getDate() % items.length;
     return items[dayIndex];
   }, []);
+
+  // Flow Section Scene Management
+  const [flowScene, setFlowScene] = useState<'initial' | 'intro' | 'card'>('initial');
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && flowScene === 'initial') {
+          setFlowScene('intro');
+          // 인트로 2.2초 보여주고 카드로 전환 (Fade cross time 고려)
+          setTimeout(() => {
+            setFlowScene('card');
+          }, 2200);
+        }
+      });
+    }, { threshold: 0.6 });
+
+    if (flowRef.current) {
+      observer.observe(flowRef.current);
+    }
+    return () => observer.disconnect();
+  }, [flowScene]);
 
   // 리뷰(지그재그)
   const reviews: Review[] = [
@@ -688,18 +726,11 @@ export default function Page() {
               >
                 지금 바로 시작하기
               </button>
-              <Link
-                href="/tarot"
-                className="btn btnGhost btnWide"
-                style={{ textAlign: "center", textDecoration: "none" }}
-              >
-                타로 카드 뽑기
-              </Link>
               <button
                 className="heroLink"
                 onClick={() => scrollTo(subscribeRef)}
               >
-                구독 혜택 확인하기
+                매일 아침, 나를 위한 흐름을 받으세요
               </button>
             </div>
 
@@ -715,264 +746,65 @@ export default function Page() {
 
         {/* FLOW (별자리 세계: 밝음) */}
         <section className="sectionTight reveal" ref={flowRef as any}>
-          <div className="container center">
-            <h2 className="h2 stagger d1">오늘의 흐름</h2>
-            <p className="p stagger d2">
-              마음을 흔드는 말 대신, 오늘을 정리하는 문장으로만 전해요.
-            </p>
-
-            {/* 모바일: 기존 레이아웃 */}
-            <div className="flowMobile">
-              <div className="flowKicker stagger d3">{todayFlow.kicker}</div>
-              <div className="flowStatement stagger d4">
-                {todayFlow.statement}
+          <div className="container center" style={{ display: "flex", justifyContent: "center", position: "relative", minHeight: "500px", alignItems: "center" }}>
+            {/* SCENE 1: INTRO */}
+            {flowScene === 'intro' && (
+              <div className="flowIntro cinematicFadeUp">
+                지금 당신의 머릿속에서<br className="pc-only" /> 가장 복잡한 건 무엇인가요?
               </div>
-              <div className="flowDesc stagger d5">{todayFlow.desc}</div>
+            )}
 
-              {/* 키워드에 의미 부여 - 오늘의 힌트 */}
-              <div className="stagger d4" style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 8 }}>
-                {todayFlow.tags.map((t) => (
-                  <span key={t} style={{
-                    padding: "8px 18px",
-                    background: "rgba(255, 255, 255, 0.45)",
-                    border: "1px solid rgba(255, 255, 255, 0.6)",
-                    color: "var(--navy-dark)",
-                    borderRadius: "24px",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    backdropFilter: "blur(4px)",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
-                  }}>
-                    #{t}
-                  </span>
-                ))}
-              </div>
-              <div className="stagger d4" style={{ display: "none", marginTop: 24, flexDirection: "column", gap: 12, width: "100%", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
-                {todayFlow.tags.map((t, index) => {
-                  const descriptions: Record<string, string> = {
-                    // 첫 번째 세트
-                    "정리": "마음의 순서를 정돈해보세요",
-                    "호흡": "잠시 멈추고 깊게 숨을 쉬어보세요",
-                    "선택": "직감을 믿고 결단해보세요",
-                    // 두 번째 세트
-                    "직감": "내면의 목소리를 들어보세요",
-                    "흐름": "자연스러운 흐름을 따르세요",
-                    "균형": "균형을 찾으면 방향이 보입니다",
-                    // 세 번째 세트
-                    "용기": "작은 도전이 큰 변화를 만듭니다",
-                    "시작": "완벽하지 않아도 지금 시작하세요",
-                    "집중": "한 가지에 집중하면 흐름이 열립니다",
-                    // 추가 키워드
-                    "성취": "오늘의 작은 성취가 내일의 자신감입니다",
-                    "기쁨": "작은 순간에도 기쁨을 찾아보세요",
-                  };
-                  return (
-                    <div key={t} style={{
-                      padding: "12px 16px",
-                      background: "rgba(26, 35, 50, 0.03)",
-                      borderRadius: "12px",
-                      border: "1px solid rgba(26, 35, 50, 0.08)",
-                      textAlign: "center"
-                    }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: "var(--navy-dark)", marginBottom: 4 }}>
-                        {t}
-                      </div>
-                      <div style={{ fontSize: 12, color: "rgba(26, 35, 50, 0.65)", lineHeight: 1.5 }}>
-                        {descriptions[t] || "오늘의 흐름을 이끄는 힌트입니다"}
-                      </div>
+            {/* SCENE 2: CARD */}
+            {flowScene === 'card' && (
+              <div className="flowCard cinematicFadeUp">
+                <div className="flowDecoLine" />
+
+                <div className="flowCardContent" style={{ flexDirection: "column", gap: 32, alignItems: "center", width: "100%", padding: "20px 0" }}>
+
+                  {/* 1. Date & Title */}
+                  <div className="flowHeaderGroup" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                    <div className="flowDate stagger d2">
+                      오늘의 흐름 <span className="sep">|</span> {timeString}
                     </div>
-                  );
-                })}
-              </div>
+                    <h2 className="flowTitle stagger d2" style={{ marginBottom: 0 }}>오늘의 흐름</h2>
+                  </div>
 
-              {/* 메인 CTA - 오늘 바로 행동하게 만드는 버튼 */}
-              <div className="flowCtas stagger d5" style={{ marginTop: 32 }}>
-                <Link
-                  href="/saju"
-                  className="btn btnPrimary btnWide"
-                  style={{
-                    textDecoration: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  오늘의 흐름 시작하기
-                </Link>
-              </div>
+                  {/* 2. Tags */}
+                  <div className="flowTags stagger d3" style={{ justifyContent: "center" }}>
+                    {todayFlow.tags.map((t, i) => (
+                      <span key={t} className={`flowTag ${i === 0 ? 'active' : ''}`}>
+                        #{t}
+                      </span>
+                    ))}
+                  </div>
 
-              {/* 서비스 카드 그리드 (버튼 대체) */}
-              <div className="stagger d6" style={{ marginTop: 40 }}>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: 10,
-                  width: "100%",
-                  maxWidth: "360px",
-                  margin: "0 auto"
-                }}>
-                  <Link href="/saju" className="serviceCard" style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
-                  }}>
-                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><SajuIcon size={24} /></div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>사주</div>
-                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>나의 본질</div>
-                  </Link>
-                  <Link href="/zodiac" className="serviceCard" style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
-                  }}>
-                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><ZodiacIconSmall size={24} /></div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>별자리</div>
-                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>오늘의 흐름</div>
-                  </Link>
-                  <Link href="/tarot" className="serviceCard" style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
-                  }}>
-                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><TarotIcon size={24} /></div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>타로</div>
-                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>선택과 조언</div>
-                  </Link>
+                  {/* 3. Services (Centered Grid) */}
+                  <div className="flowServices stagger d4" style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, width: "100%", maxWidth: "340px", margin: "24px auto 0" }}>
+                    <Link href="/saju" className="serviceCardItem serviceItemAppear delay-1">
+                      <div className="icon"><SajuIcon size={20} /></div>
+                      <div className="label">사주</div>
+                      <div className="sub">나의 본질</div>
+                      <div className="arrow">&gt;</div>
+                    </Link>
+                    <Link href="/zodiac" className="serviceCardItem serviceItemAppear delay-2">
+                      <div className="icon"><ZodiacIconSmall size={20} /></div>
+                      <div className="label">별자리</div>
+                      <div className="sub">오늘의 흐름</div>
+                      <div className="arrow">&gt;</div>
+                    </Link>
+                    <Link href="/tarot" className="serviceCardItem serviceItemAppear delay-3">
+                      <div className="icon"><TarotIcon size={20} /></div>
+                      <div className="label">타로</div>
+                      <div className="sub">선택과 조언</div>
+                      <div className="arrow">&gt;</div>
+                    </Link>
+                  </div>
+
                 </div>
               </div>
-            </div>
 
-            {/* PC: 모바일과 동일한 세로 스택 구조 */}
-            <div className="flowDesktop">
-              <div className="flowKicker stagger d3">{todayFlow.kicker}</div>
-              <div className="flowStatement stagger d4">
-                {todayFlow.statement}
-              </div>
-              <div className="flowDesc stagger d5">{todayFlow.desc}</div>
+            )}
 
-              {/* 키워드에 의미 부여 - 오늘의 힌트 */}
-              <div className="stagger d4" style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 8 }}>
-                {todayFlow.tags.map((t) => (
-                  <span key={t} style={{
-                    padding: "8px 18px",
-                    background: "rgba(255, 255, 255, 0.45)",
-                    border: "1px solid rgba(255, 255, 255, 0.6)",
-                    color: "var(--navy-dark)",
-                    borderRadius: "24px",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    backdropFilter: "blur(4px)",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
-                  }}>
-                    #{t}
-                  </span>
-                ))}
-              </div>
-              <div className="stagger d4" style={{ display: "none", marginTop: 24, flexDirection: "column", gap: 12, width: "100%", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
-                {todayFlow.tags.map((t, index) => {
-                  const descriptions: Record<string, string> = {
-                    // 첫 번째 세트
-                    "정리": "마음의 순서를 정돈해보세요",
-                    "호흡": "잠시 멈추고 깊게 숨을 쉬어보세요",
-                    "선택": "직감을 믿고 결단해보세요",
-                    // 두 번째 세트
-                    "직감": "내면의 목소리를 들어보세요",
-                    "흐름": "자연스러운 흐름을 따르세요",
-                    "균형": "균형을 찾으면 방향이 보입니다",
-                    // 세 번째 세트
-                    "용기": "작은 도전이 큰 변화를 만듭니다",
-                    "시작": "완벽하지 않아도 지금 시작하세요",
-                    "집중": "한 가지에 집중하면 흐름이 열립니다",
-                    // 추가 키워드
-                    "성취": "오늘의 작은 성취가 내일의 자신감입니다",
-                    "기쁨": "작은 순간에도 기쁨을 찾아보세요",
-                  };
-                  return (
-                    <div key={t} style={{
-                      padding: "12px 16px",
-                      background: "rgba(26, 35, 50, 0.03)",
-                      borderRadius: "12px",
-                      border: "1px solid rgba(26, 35, 50, 0.08)",
-                      textAlign: "center"
-                    }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: "var(--navy-dark)", marginBottom: 4 }}>
-                        {t}
-                      </div>
-                      <div style={{ fontSize: 12, color: "rgba(26, 35, 50, 0.65)", lineHeight: 1.5 }}>
-                        {descriptions[t] || "오늘의 흐름을 이끄는 힌트입니다"}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* 메인 CTA - 오늘 바로 행동하게 만드는 버튼 */}
-              <div className="flowCtas stagger d5" style={{ marginTop: 32 }}>
-                <Link
-                  href="/saju"
-                  className="btn btnPrimary btnWide"
-                  style={{
-                    textDecoration: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  오늘의 흐름 시작하기
-                </Link>
-              </div>
-
-              {/* 서비스 카드 그리드 (버튼 대체) */}
-              <div className="stagger d6" style={{ marginTop: 40 }}>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: 10,
-                  width: "100%",
-                  maxWidth: "360px",
-                  margin: "0 auto"
-                }}>
-                  <Link href="/saju" className="serviceCard" style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
-                  }}>
-                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><SajuIcon size={24} /></div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>사주</div>
-                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>나의 본질</div>
-                  </Link>
-                  <Link href="/zodiac" className="serviceCard" style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
-                  }}>
-                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><ZodiacIconSmall size={24} /></div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>별자리</div>
-                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>오늘의 흐름</div>
-                  </Link>
-                  <Link href="/tarot" className="serviceCard" style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    padding: "16px 8px", background: "white", borderRadius: "16px",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)", textDecoration: "none",
-                    border: "1px solid rgba(0,0,0,0.05)", transition: "transform 0.2s"
-                  }}>
-                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><TarotIcon size={24} /></div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>타로</div>
-                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>선택과 조언</div>
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 

@@ -25,17 +25,35 @@ export async function POST(request: Request) {
       );
     }
 
+    // 사주 시간 매핑
+    const timeMap: Record<string, string> = {
+      "23:00": "자시(23:00~01:00)",
+      "01:00": "축시(01:00~03:00)",
+      "03:00": "인시(03:00~05:00)",
+      "05:00": "묘시(05:00~07:00)",
+      "07:00": "진시(07:00~09:00)",
+      "09:00": "사시(09:00~11:00)",
+      "11:00": "오시(11:00~13:00)",
+      "13:00": "미시(13:00~15:00)",
+      "15:00": "신시(15:00~17:00)",
+      "17:00": "유시(17:00~19:00)",
+      "19:00": "술시(19:00~21:00)",
+      "21:00": "해시(21:00~23:00)",
+    };
+
+    const timeLabel = birthTime ? (timeMap[birthTime] || birthTime) : "모름";
+
     // 사주 프롬프트 생성
     const calendarText = calendar === 'lunar' ? '음력' : '양력';
     const genderText = gender === 'male' ? '남성' : '여성';
-    const timeText = birthTime ? ` 출생 시간: ${birthTime}` : ' 출생 시간: 모름';
+    const timeText = ` 출생 시간: ${timeLabel}`;
     const [year, month, day] = birthDate.split('-');
 
     const prompt = `당신은 전문 사주명리학자입니다. ${calendarText} ${year}년 ${month}월 ${day}일${timeText} 출생 ${genderText}의 사주팔자를 분석하여 운세를 작성해주세요.
 
 생년월일시 정보:
 - ${calendarText}: ${birthDate}
-${birthTime ? `- 출생 시간: ${birthTime}` : '- 출생 시간: 알 수 없음'}
+- 출생 시간: ${timeLabel}
 - 성별: ${genderText}
 
 다음 JSON 형식으로만 답변해주세요. 반드시 모든 필드를 채워주세요:

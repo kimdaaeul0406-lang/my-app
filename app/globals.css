@@ -3586,3 +3586,483 @@ button {
   border-color: rgba(255, 255, 255, 0.8) !important;
   background: rgba(255, 255, 255, 0.75) !important;
 }
+
+/* ========================================= */
+/* Flow Card (PC Wide Layout) */
+/* ========================================= */
+/* ========================================= */
+/* Flow Card & Intro */
+/* ========================================= */
+.flowIntro {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--navy-dark);
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 0 20px;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.pc-only {
+  display: none;
+}
+
+.flowCard {
+  width: 100%;
+  max-width: 400px;
+  /* Mobile Default */
+  background: rgba(252, 252, 252, 0.95);
+  backdrop-filter: blur(24px);
+  border-radius: 36px;
+  padding: 40px 28px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.flowDecoLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--gold-main), transparent);
+  opacity: 0.3;
+}
+
+.flowCardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+}
+
+.flowDate {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  margin-top: 4px;
+}
+
+.flowDate .sep {
+  margin: 0 6px;
+  opacity: 0.3;
+}
+
+.flowHeader {
+  margin-bottom: 4px;
+}
+
+.flowTitle {
+  font-size: 26px;
+  color: var(--navy-dark);
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+
+.flowSub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.flowQuestion {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy-dark);
+  line-height: 1.45;
+  word-break: keep-all;
+  margin: 4px 0;
+}
+
+.flowDesc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  word-break: keep-all;
+  padding: 0 10px;
+}
+
+.flowTags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.flowTag {
+  padding: 10px 18px;
+  background: #F3F3F3;
+  color: #666;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.flowTag.active {
+  background: #D6C09C;
+  /* Gold Beige */
+  color: white;
+  box-shadow: 0 4px 12px rgba(214, 192, 156, 0.4);
+}
+
+.flowBtn.btnPrimary {
+  width: 100%;
+  height: 54px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 18px;
+  margin-top: 8px;
+  background-color: #222836;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 8px 20px rgba(34, 40, 54, 0.25);
+}
+
+.flowHint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #999;
+  margin-top: 12px;
+}
+
+.flowServices {
+  margin-top: 20px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.serviceCardItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 4px;
+  background: white;
+  border-radius: 16px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s;
+}
+
+.serviceCardItem .icon {
+  margin-bottom: 8px;
+  color: var(--gold-main);
+}
+
+.serviceCardItem .label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy-dark);
+  margin-bottom: 4px;
+}
+
+.serviceCardItem .sub {
+  font-size: 9px;
+  color: #888;
+  letter-spacing: -0.5px;
+}
+
+.serviceCardItem .arrow {
+  font-size: 10px;
+  color: #ccc;
+  margin-top: 4px;
+}
+
+/* PC Responsive */
+@media (min-width: 768px) {
+  .flowIntro {
+    font-size: 40px;
+    margin-bottom: 48px;
+    margin-top: 60px;
+    line-height: 1.3;
+    font-weight: 800;
+  }
+
+  .pc-only {
+    display: block;
+  }
+
+  .flowCard {
+    max-width: 960px;
+    /* Wide Card */
+    padding: 60px 80px;
+    text-align: left;
+    align-items: stretch;
+  }
+
+  .flowCardContent {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 60px;
+  }
+
+  .flowColLeft {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .flowColRight {
+    flex: 0 0 380px;
+    /* Fixed width for functional panel */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .flowDate {
+    margin-top: 0;
+    font-size: 12px;
+  }
+
+  .flowTitle {
+    font-size: 36px;
+    margin-bottom: 16px;
+  }
+
+  .flowSub {
+    font-size: 15px;
+  }
+
+  .mo-only {
+    display: none;
+  }
+
+  .flowQuestion {
+    font-size: 32px;
+    margin: 24px 0;
+    line-height: 1.3;
+  }
+
+  .flowDesc {
+    padding: 0;
+    font-size: 15px;
+    opacity: 0.8;
+  }
+
+  /* Right column adjustments */
+  .flowTags {
+    justify-content: flex-start;
+  }
+
+  .flowHint {
+    justify-content: flex-start;
+    margin-top: 0;
+  }
+
+  .flowServices {
+    margin-top: 12px;
+  }
+}
+
+/* ========================================= */
+/* Intro Sequence Animation */
+/* ========================================= */
+
+.introSequence {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  text-align: center;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cardSequence {
+  opacity: 0;
+}
+
+/* When Section is Active (Scrolled into view) */
+.reveal.active .introSequence {
+  animation: introFadeInOut 4s ease-in-out forwards;
+}
+
+.reveal.active .cardSequence {
+  animation: cardAppear 4s ease-out forwards;
+}
+
+@keyframes introFadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-30%);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateY(-50%);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(-50%);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-70%);
+  }
+}
+
+@keyframes cardAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  65% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ========================================= */
+/* Cinematic Slow Fade Up Animation */
+/* ========================================= */
+@keyframes cinematicUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    filter: blur(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.cinematicFadeUp {
+  animation: cinematicUp 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+
+/* Service Items Sequential Appear */
+.serviceItemAppear {
+  opacity: 0;
+  animation: cinematicUp 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.delay-1 {
+  animation-delay: 0.5s;
+}
+
+.delay-2 {
+  animation-delay: 0.8s;
+}
+
+.delay-3 {
+  animation-delay: 1.1s;
+}
+
+
+/* PC Specific Styles for Today Flow (Balanced Size) */
+@media (min-width: 768px) {
+  .flowCardContent {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .flowTitle {
+    font-size: 36px !important;
+    /* 48px -> 36px */
+    letter-spacing: -0.02em;
+    margin-top: 10px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .flowDate {
+    font-size: 14px !important;
+    letter-spacing: 0.05em;
+  }
+
+  .flowTags {
+    gap: 10px !important;
+    margin-top: 8px !important;
+  }
+
+  .flowTag {
+    font-size: 16px !important;
+    /* 18px -> 16px */
+    padding: 10px 20px !important;
+    border-radius: 99px !important;
+  }
+
+  /* Services Grid Expansion */
+  .flowServices {
+    max-width: 520px !important;
+    /* 680px -> 520px */
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px !important;
+    margin-top: 32px !important;
+  }
+
+  .serviceCardItem {
+    padding: 24px 16px !important;
+    /* 사이즈 축소 */
+    border-radius: 20px !important;
+    min-height: 140px !important;
+    /* 180px -> 140px */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+  }
+
+  .serviceCardItem:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .serviceCardItem .icon {
+    transform: scale(1.3);
+    /* 1.5 -> 1.3 */
+    margin-bottom: 12px;
+  }
+
+  .serviceCardItem .label {
+    font-size: 18px !important;
+    /* 20px -> 18px */
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+
+  .serviceCardItem .sub {
+    font-size: 13px !important;
+    opacity: 0.7;
+  }
+
+  .serviceCardItem .arrow {
+    display: none !important;
+  }
+}

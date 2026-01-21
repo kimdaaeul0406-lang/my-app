@@ -1368,7 +1368,14 @@ export default function TarotPage() {
                         >
                           {currentInterpretation.title}
                         </div>
-                        <div className="p" style={{ marginTop: 6 }}>
+                        <div className="p" style={{
+                          marginTop: 16,
+                          fontSize: "16px",
+                          lineHeight: "1.75",
+                          color: "var(--navy-dark)",
+                          wordBreak: "keep-all",
+                          letterSpacing: "-0.01em"
+                        }}>
                           {currentInterpretation.text}
                         </div>
 
@@ -1387,65 +1394,75 @@ export default function TarotPage() {
                 )}
 
                 {!loadingApi && !apiError && apiResult && (
-                  <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
+                  <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
                     <button
-                      className="btn btnPrimary btnWide"
+                      className="btn btnPrimary"
                       onClick={saveTarot}
+                      style={{ width: "100%", height: "52px", fontSize: "16px", borderRadius: "16px" }}
                     >
-                      이메일로 보내기
+                      이메일로 저장하기
                     </button>
 
-                    <button
-                      className="btn btnGhost btnWide"
-                      onClick={async () => {
-                        if (!tarotResult || !apiResult) return;
-                        const cardNameKo = MAJOR_ARCANA.find(
-                          (c) => c.name === tarotResult.name
-                        )?.nameKo || tarotResult.name;
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <button
+                        className="btn btnGhost"
+                        style={{ height: "48px", fontSize: "14px", borderRadius: "12px", border: "1px solid rgba(0,0,0,0.05)" }}
+                        onClick={async () => {
+                          if (!tarotResult || !apiResult) return;
+                          const cardNameKo = MAJOR_ARCANA.find(
+                            (c) => c.name === tarotResult.name
+                          )?.nameKo || tarotResult.name;
 
-                        const shareData = formatTarotShare(
-                          tarotResult.name,
-                          cardNameKo,
-                          isReversed,
-                          apiResult.message,
-                          apiResult.advice,
-                          apiResult.keywords
-                        );
+                          const shareData = formatTarotShare(
+                            tarotResult.name,
+                            cardNameKo,
+                            isReversed,
+                            apiResult.message,
+                            apiResult.advice,
+                            apiResult.keywords
+                          );
 
-                        const result = await shareResult(shareData);
-                        if (result.success) {
-                          if (result.method === "clipboard") {
-                            showToast("결과가 복사되었어요!");
+                          const result = await shareResult(shareData);
+                          if (result.success) {
+                            if (result.method === "clipboard") {
+                              showToast("결과가 복사되었어요!");
+                            }
+                          } else {
+                            showToast("공유에 실패했어요");
                           }
-                        } else {
-                          showToast("공유에 실패했어요");
-                        }
-                      }}
-                    >
-                      결과 공유하기
-                    </button>
+                        }}
+                      >
+                        결과 공유
+                      </button>
 
-                    <button
-                      className="btn btnGhost btnWide"
-                      onClick={() => setShowDetailModal(true)}
-                    >
-                      자세히보기
-                    </button>
+                      <button
+                        className="btn btnGhost"
+                        style={{ height: "48px", fontSize: "14px", borderRadius: "12px", border: "1px solid rgba(0,0,0,0.05)" }}
+                        onClick={() => setShowDetailModal(true)}
+                      >
+                        자세히보기
+                      </button>
+                    </div>
 
-                    <button
-                      className="btn btnGhost btnWide"
-                      onClick={resetTarot}
-                    >
-                      카드 다시 뽑기
-                    </button>
-
-                    <Link
-                      href="/"
-                      className="btn btnGhost btnWide"
-                      style={{ textAlign: "center", textDecoration: "none" }}
-                    >
-                      돌아가기
-                    </Link>
+                    <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 8 }}>
+                      <button
+                        onClick={resetTarot}
+                        style={{
+                          background: "none", border: "none", cursor: "pointer",
+                          fontSize: "13px", color: "var(--muted)", textDecoration: "underline", padding: 8
+                        }}
+                      >
+                        카드 다시 뽑기
+                      </button>
+                      <Link
+                        href="/"
+                        style={{
+                          fontSize: "13px", color: "var(--muted)", textDecoration: "underline", padding: 8
+                        }}
+                      >
+                        홈으로
+                      </Link>
+                    </div>
                   </div>
                 )}
 
