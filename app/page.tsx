@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState, Suspense, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 import EmailInputModal from "./components/EmailInputModal";
@@ -72,8 +72,14 @@ function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+// 전역 변수로 페이지 리로드(F5) 여부 감지 (Client Side Navigation 시에는 false 유지)
+let isFreshLoad = true;
+
 export default function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnFromParam = searchParams.get("returnFrom");
+
   const flowRef = useRef<HTMLElement | null>(null);
   const subscribeRef = useRef<HTMLElement | null>(null);
   const historyRef = useRef<HTMLElement | null>(null);
@@ -124,40 +130,150 @@ export default function Page() {
     }));
   }, []);
 
+  // 로딩 상태 플래그 (복귀 시 애니메이션 스킵용 - 초기값 즉시 계산)
+  const [isFastMode, setIsFastMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const hasParam = !!params.get("returnFrom");
+
+      // 파라미터가 없어도, 내부 서비스 페이지에서 돌아왔다면(뒤로가기 등) FastMode 적용
+      const referrer = document.referrer || "";
+      const isInternalReturn = referrer.includes("/saju") || referrer.includes("/tarot") || referrer.includes("/zodiac") || referrer.includes("/talk");
+
+      return hasParam || isInternalReturn;
+    }
+    return false;
+  });
+
+  // [Fast Mode 로직 개선]
+  // URL 파라미터가 있거나, 혹은 이미 FastMode로 진입했다면 계속 유지시키는 state
+  const [forcedFastMode, setForcedFastMode] = useState(false);
+
+  // 렌더링 시점에 즉시 계산
+  // (초기값 isFastMode가 true면 계속 true 유지)
+  const isEffectiveFastMode = isFastMode || forcedFastMode;
+
   // 클라이언트 마운트 확인 (Hydration 오류 방지)
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // 타자기 효과 애니메이션
+  // 통합된 진입 로직
   useEffect(() => {
     if (!isMounted) return;
 
-    // 바로 타이핑 시작
-    const startDelay = setTimeout(() => {
-      setTypingStarted(true);
-      setTypedText("");
-    }, 100);
+    // FastMode 여부 판단 (초기 state 혹은 파라미터)
+    // 우리는 이미 초기값에서 referrer까지 체크했으므로 isFastMode 하나면 충분하지만,
+    // useEffect 시점의 로직 일관성을 위해 체크
+    const params = new URLSearchParams(window.location.search);
+    const returnFromParam = params.get("returnFrom");
+    const referrer = document.referrer || "";
+    // referrer 체크는 이미 useState에서 했지만, 여기서도 로직 트리거를 위해 사용
+    const isInternalReturn = referrer.includes("/saju") || referrer.includes("/tarot") || referrer.includes("/zodiac") || referrer.includes("/talk");
 
-    return () => clearTimeout(startDelay);
+    // Reveal elements
+    const els = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) (e.target as HTMLElement).classList.add("on");
+        });
+      },
+      { threshold: 0.12 }
+    );
+    els.forEach((el) => io.observe(el));
+
+    // [로직 1] 서비스 복귀 (홈으로 가기, 뒤로가기 포함)
+    if (returnFromParam || isInternalReturn) {
+      // ★ 상태 고정
+      setForcedFastMode(true);
+
+      // 텍스트 즉시 완성
+      setTypingStarted(true);
+      setTypingComplete(true);
+      setTypedText(heroTitleText);
+
+      // ★ 추가: 복귀 시 "머릿속 복잡한 건?" 질문(intro) 스킵하고 바로 카드(card) 보여주기
+      setFlowScene("card");
+
+      setTimeout(() => {
+        // 즉시 위치 이동
+        flowRef.current?.scrollIntoView({ behavior: "auto", block: "center" });
+
+        // 3. 구독 제안 팝업 표시 (무조건 뜨게 v4로 키 변경)
+        // 단, "오늘 하루 안 보기" 체크
+        const hideDate = localStorage.getItem("lumen_popup_hide_date");
+        const today = new Date().toDateString();
+        const suggestionClosed = sessionStorage.getItem("lumen_suggestion_v4"); // 영구 닫기 체크
+
+        if (!suggestionClosed && hideDate !== today) {
+          setTimeout(() => setShowSubscribeSuggestion(true), 500);
+        }
+      }, 50);
+
+      // URL 파라미터 있으면 청소
+      if (returnFromParam) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      isFreshLoad = false;
+
+    } else {
+      // [로직 2] 일반 진입 (새로고침, 첫주소)
+      // setIsFastMode(false); // 애니메이션 모드 (isFastMode는 이제 파생된 값)
+
+      window.scrollTo(0, 0);
+
+      if (isFreshLoad) {
+        // [F5] 타자기 실행
+        setTimeout(() => {
+          setTypingStarted(true);
+          setTypedText(""); // 초기화
+          // 실제 타이핑은 아래 useEffect가 담당
+        }, 100);
+        isFreshLoad = false;
+      } else {
+        // [단순 이동] 이미 봤으니 스킵
+        setTypingStarted(true);
+        setTypingComplete(true);
+        setTypedText(heroTitleText);
+      }
+    }
+
+    return () => io.disconnect();
   }, [isMounted]);
 
+  // ★ [수정된 타자기 로직] 안정적인 slice 방식 사용
   useEffect(() => {
-    if (!typingStarted) return;
+    if (typingStarted && !typingComplete) {
+      if (isEffectiveFastMode) return; // FastMode면 실행 안 함
 
-    let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex < heroTitleText.length) {
-        setTypedText(heroTitleText.slice(0, currentIndex + 1));
+      let currentIndex = 0;
+      const fullText = heroTitleText;
+
+      const interval = setInterval(() => {
         currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-        setTypingComplete(true);
-      }
-    }, 80); // 각 글자마다 80ms 간격
+        setTypedText(fullText.slice(0, currentIndex));
 
-    return () => clearInterval(typingInterval);
-  }, [typingStarted, heroTitleText]);
+        if (currentIndex >= fullText.length) {
+          clearInterval(interval);
+          setTypingComplete(true);
+        }
+      }, 100); // 속도 100ms (여유롭게)
+
+      return () => clearInterval(interval);
+    }
+  }, [typingStarted, typingComplete, isFastMode]);
+
+  // 구독 제안 모달 상태
+  const [showSubscribeSuggestion, setShowSubscribeSuggestion] = useState(false);
+
+  const closeSubscribeSuggestion = (neverShowAgain = false) => {
+    setShowSubscribeSuggestion(false);
+    if (neverShowAgain) {
+      sessionStorage.setItem("lumen_suggestion_v4", "true");
+    }
+  };
 
   // 맨 위로 가기 버튼 표시 상태
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -171,23 +287,7 @@ export default function Page() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Reveal
-  useEffect(() => {
-    // 페이지 로드 시 최상단으로 스크롤
-    window.scrollTo(0, 0);
 
-    const els = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) (e.target as HTMLElement).classList.add("on");
-        });
-      },
-      { threshold: 0.12 }
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
 
   const scrollTo = (ref: React.RefObject<HTMLElement | null>) =>
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -228,13 +328,13 @@ export default function Page() {
       entries.forEach(entry => {
         if (entry.isIntersecting && flowScene === 'initial') {
           setFlowScene('intro');
-          // 인트로 2.2초 보여주고 카드로 전환 (Fade cross time 고려)
+          // 인트로 2.5초 보여주고 전환 (충분한 시간 제공)
           setTimeout(() => {
             setFlowScene('card');
-          }, 2200);
+          }, 2500);
         }
       });
-    }, { threshold: 0.6 });
+    }, { threshold: 0.8 });
 
     if (flowRef.current) {
       observer.observe(flowRef.current);
@@ -650,7 +750,7 @@ export default function Page() {
   }, [modal]);
 
   return (
-    <main className="mainWrap">
+    <main className={`mainWrap ${isEffectiveFastMode ? 'fast-mode' : ''}`}>
       <div className="bgFX" />
       {/* SearchParams 처리 (Suspense 경계 필수) */}
       <Suspense fallback={null}>
@@ -691,13 +791,8 @@ export default function Page() {
               <span>별자리</span>
             </div>
 
-            <div className={`heroTitle stagger d4 ${typingStarted && !typingComplete ? 'typing' : ''} ${typingComplete ? 'typing-complete' : ''}`}>
-              {typedText.split('\n').map((line, index, array) => (
-                <React.Fragment key={index}>
-                  {line}
-                  {index < array.length - 1 && <br />}
-                </React.Fragment>
-              ))}
+            <div className={`heroTitle stagger d4 ${typingStarted && !typingComplete ? 'typing' : ''} ${typingComplete ? 'typing-complete' : ''}`} style={{ whiteSpace: "pre-line" }}>
+              {typedText}
             </div>
 
             <div className="heroSub stagger d5">
@@ -769,10 +864,16 @@ export default function Page() {
                     <h2 className="flowTitle stagger d2" style={{ marginBottom: 0 }}>오늘의 흐름</h2>
                   </div>
 
-                  {/* 2. Tags */}
-                  <div className="flowTags stagger d3" style={{ justifyContent: "center" }}>
+                  {/* 2. Tags (Simple Text Style) */}
+                  <div className="stagger d3" style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: 12 }}>
                     {todayFlow.tags.map((t, i) => (
-                      <span key={t} className={`flowTag ${i === 0 ? 'active' : ''}`}>
+                      <span key={t} style={{
+                        fontSize: "15px",
+                        color: "#666",
+                        fontWeight: 400,
+                        letterSpacing: "-0.01em",
+                        fontFamily: "inherit" // 부모(기본 고딕) 폰트 상속
+                      }}>
                         #{t}
                       </span>
                     ))}
@@ -799,6 +900,31 @@ export default function Page() {
                       <div className="arrow">&gt;</div>
                     </Link>
                   </div>
+
+                  {/* AI 상담소 진입 버튼 (반응형: 모바일 2줄 / PC 1줄) */}
+                  <Link
+                    href={`/talk?tags=${todayFlow.tags.join(',')}`}
+                    className="serviceItemAppear lumen-insight-link"
+                    style={{
+                      marginTop: 32,
+                      animationDelay: "0.8s",
+                      animationFillMode: "both",
+                      opacity: 1 // 강제로 보이게 설정
+                    }}>
+                    <span style={{ fontSize: "13px", color: "#888", letterSpacing: "0.01em" }}>
+                      더 깊은 해석과 조언이 필요하다면?
+                    </span>
+                    <span style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#444",
+                      letterSpacing: "0.03em",
+                      borderBottom: "1px solid #bbb",
+                      paddingBottom: "2px"
+                    }}>
+                      LUMEN 인사이트
+                    </span>
+                  </Link>
 
                 </div>
               </div>
@@ -1111,8 +1237,8 @@ export default function Page() {
           </button>
         )}
 
-        {/* PWA 설치 유도 배너 */}
-        <PWAInstallBanner />
+        {/* PWA 설치 유도 배너 (복귀 시에는 뜨지 않음) */}
+        {!isEffectiveFastMode && <PWAInstallBanner />}
 
         {/* 이메일 입력 모달 */}
         <EmailInputModal
@@ -1140,6 +1266,65 @@ export default function Page() {
           description="매일 아침 오늘의 흐름을 이메일로 받아보세요."
         />
       </div>
+      {/* 구독 제안 모달 */}
+      {showSubscribeSuggestion && (
+        <div className="modalOverlay" style={{ zIndex: 9999 }} onClick={() => closeSubscribeSuggestion()}>
+          <div className="modalSheet" style={{ maxWidth: "340px", textAlign: "center", padding: "32px 24px" }} onClick={(e) => e.stopPropagation()}>
+            {/* 이모지 삭제됨 */}
+            <h3 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "8px", color: "#2c3e50" }}>
+              LUMEN이 마음에 드셨나요?
+            </h3>
+            <p style={{ fontSize: "14px", color: "#666", lineHeight: "1.6", marginBottom: "24px" }}>
+              매일 아침, 당신을 위한 오늘의 흐름을<br />
+              이메일로 무료로 받아보세요.
+            </p>
+
+            <button
+              className="btn btnPrimary btnWide"
+              onClick={() => {
+                closeSubscribeSuggestion(true);
+                scrollTo(subscribeRef);
+              }}
+              style={{ marginBottom: "12px", height: "48px", borderRadius: "12px" }}
+            >
+              매일 아침 받아보기
+            </button>
+
+            <div style={{ display: "flex", justifyContent: "center", gap: "16px", marginTop: "8px" }}>
+              <button
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#999",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  padding: "8px"
+                }}
+                onClick={() => {
+                  localStorage.setItem("lumen_popup_hide_date", new Date().toDateString());
+                  setShowSubscribeSuggestion(false);
+                }}
+              >
+                오늘 하루 안 보기
+              </button>
+              <button
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#999",
+                  fontSize: "13px",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  padding: "8px"
+                }}
+                onClick={() => closeSubscribeSuggestion(false)}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

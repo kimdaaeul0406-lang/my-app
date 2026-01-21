@@ -320,7 +320,13 @@ button {
       var(--navy-mid) 50%,
       var(--navy-light) 100%);
   overflow: hidden;
-  padding: 60px 0 80px;
+  /* 화면 전체 높이 차지 (아래 섹션 미리 보임 방지) */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0;
+  /* 패딩은 flex 정렬에 맡김 */
 }
 
 /* 히어로 → 다음 섹션 자연스러운 그라데이션 전환 */
@@ -878,6 +884,7 @@ button {
   line-height: 1.12;
   font-weight: 900;
   letter-spacing: -0.03em;
+  /* color: #fff; */
   background: linear-gradient(180deg,
       rgba(27, 42, 52, 1) 0%,
       rgba(36, 58, 72, 0.98) 40%,
@@ -886,6 +893,9 @@ button {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  /* 글자 잘림 방지 (안전 장치) */
+  line-height: 1.25;
+  padding-bottom: 4px;
 }
 
 .heroSub {
@@ -3961,7 +3971,7 @@ button {
 }
 
 .cinematicFadeUp {
-  animation: cinematicUp 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: cinematicUp 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 
@@ -4065,4 +4075,55 @@ button {
   .serviceCardItem .arrow {
     display: none !important;
   }
+}
+
+/* LUMEN Insight Link Responsive Style */
+.lumen-insight-link {
+  display: flex;
+  flex-direction: column;
+  /* Mobile first: two lines */
+  align-items: center;
+  gap: 6px;
+  margin-top: 32px;
+  text-decoration: none;
+}
+
+@media (min-width: 768px) {
+  .lumen-insight-link {
+    flex-direction: row;
+    /* Desktop: one line */
+    gap: 8px;
+    justify-content: center;
+  }
+
+  /* PC: Reduce heroLink size */
+  .heroLink {
+    font-size: 14px !important;
+    padding: 12px 20px !important;
+    /* 버튼 크기도 약간 슬림하게 */
+  }
+}
+
+/* 애니메이션 스킵 모드 (복귀 시: 인트로 섹션 숨기고 바로 본론으로) */
+.fast-mode .reveal,
+.fast-mode .stagger,
+.fast-mode .serviceItemAppear {
+  animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* 복귀 시 인트로 섹션: 숨기지 말고(display: block), 애니메이션만 끄고 즉시 보여주기 */
+.fast-mode .nightSky {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+/* Fast Mode일 때 모든 자식 요소 강제로 보이기 (버튼만 남고 글자 사라지는 버그 방지) */
+.fast-mode .nightSky * {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
 }

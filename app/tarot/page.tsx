@@ -1169,7 +1169,7 @@ export default function TarotPage() {
           <div className="container center">
             <div style={{ marginBottom: 16 }}>
               <Link
-                href="/"
+                href="/?returnFrom=tarot"
                 className="btnBack"
               >
                 ← 홈으로 돌아가기
@@ -1210,13 +1210,6 @@ export default function TarotPage() {
                   border: "1px solid rgba(26, 35, 50, 0.08)",
                   marginBottom: 24,
                 }}>
-                  <div style={{
-                    fontSize: 24,
-                    marginBottom: 16,
-                    textAlign: "center",
-                  }}>
-                    ✨
-                  </div>
                   <div style={{
                     fontSize: 15,
                     fontWeight: 600,
@@ -1395,6 +1388,33 @@ export default function TarotPage() {
 
                 {!loadingApi && !apiError && apiResult && (
                   <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
+                    {/* 상세 해석 텍스트 제거 -> 심플하게 카드만 보여주고 상담소로 유도 */}
+                    {/* LUMEN 인사이트 연결 버튼 (신규 추가) */}
+                    {/* LUMEN 인사이트 연결 (심플 텍스트 스타일) */}
+                    <Link
+                      href={`/talk?tarotName=${encodeURIComponent(MAJOR_ARCANA.find(c => c.name === tarotResult.name)?.nameKo || tarotResult.name)}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        marginTop: 24,
+                        marginBottom: 16,
+                        width: "100%",
+                        padding: "12px 0",
+                        fontSize: "14px",
+                        color: "#888",
+                        textDecoration: "none",
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "color 0.2s"
+                      }}
+                    >
+                      <span style={{ fontWeight: 400 }}>이 카드의 의미가 궁금하신가요?</span>
+                      <span style={{ color: "#555", fontWeight: 600, borderBottom: "1px solid #aaa", paddingBottom: "1px" }}>LUMEN에게 물어보기 →</span>
+                    </Link>
+
                     <button
                       className="btn btnPrimary"
                       onClick={saveTarot}
@@ -1455,7 +1475,7 @@ export default function TarotPage() {
                         카드 다시 뽑기
                       </button>
                       <Link
-                        href="/"
+                        href="/?returnFrom=tarot"
                         style={{
                           fontSize: "13px", color: "var(--muted)", textDecoration: "underline", padding: 8
                         }}

@@ -546,7 +546,7 @@ export default function ZodiacPage() {
           <div className="container center">
             <div style={{ marginBottom: 16 }}>
               <Link
-                href="/"
+                href="/?returnFrom=zodiac"
                 className="btnBack"
               >
                 ← 홈으로 돌아가기
@@ -905,6 +905,31 @@ export default function ZodiacPage() {
 
                   {/* 저장 버튼 */}
                   <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
+                    {/* LUMEN 인사이트 연결 (심플 텍스트 스타일) */}
+                    <Link
+                      href={`/talk?horoscope=${encodeURIComponent(zodiacInfo.name)}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        marginTop: 8,
+                        marginBottom: 12,
+                        width: "100%",
+                        padding: "12px 0",
+                        fontSize: "14px",
+                        color: "#888",
+                        textDecoration: "none",
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "color 0.2s"
+                      }}
+                    >
+                      <span style={{ fontWeight: 400 }}>별들의 조언을 더 듣고 싶다면?</span>
+                      <span style={{ color: "#555", fontWeight: 600, borderBottom: "1px solid #aaa", paddingBottom: "1px" }}>LUMEN에게 물어보기 →</span>
+                    </Link>
+
                     <button
                       className="btn btnPrimary btnWide"
                       onClick={() => {
