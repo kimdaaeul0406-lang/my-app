@@ -2,10 +2,9 @@ import "./globals.css";
 import { Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
 
 export const metadata = {
-  title: "LUMEN - 오늘의 운세",
+  title: "LUMEN - 오늘의 흐름",
   description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리",
   manifest: "/manifest.json",
-  themeColor: "#1a2332",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -15,6 +14,10 @@ export const metadata = {
     icon: "/icon-192.png",
     apple: "/icon-192.png",
   },
+};
+
+export const viewport = {
+  themeColor: "#1a2332",
 };
 
 const sans = Noto_Sans_KR({
