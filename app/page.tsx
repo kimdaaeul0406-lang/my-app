@@ -75,7 +75,8 @@ function uid() {
 // 전역 변수로 페이지 리로드(F5) 여부 감지 (Client Side Navigation 시에는 false 유지)
 let isFreshLoad = true;
 
-export default function Page() {
+// 메인 컴포넌트 로직 (useSearchParams 사용)
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnFromParam = searchParams.get("returnFrom");
@@ -1326,6 +1327,15 @@ export default function Page() {
         </div>
       )}
     </main>
+  );
+}
+
+// Suspense Boundary로 감싼 진짜 Page 컴포넌트
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }
 
