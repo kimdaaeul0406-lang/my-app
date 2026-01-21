@@ -4,9 +4,9 @@
 function TarotIcon({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle" }}>
-      <rect x="4" y="6" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <path d="M8 10H16M8 14H16M8 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="12" cy="4" r="1.5" fill="currentColor"/>
+      <rect x="4" y="6" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M8 10H16M8 14H16M8 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="12" cy="4" r="1.5" fill="currentColor" />
     </svg>
   );
 }
@@ -597,7 +597,7 @@ export default function TarotPage() {
       localStorage.setItem("lumen_session_id", session);
     }
     setSessionId(session);
-    
+
     // DB에서 세션별 이메일 로드
     if (session) {
       loadUserEmailFromDB(session);
@@ -1201,13 +1201,63 @@ export default function TarotPage() {
 
             {/* 타로 뽑기 버튼 (waiting 단계에서만 표시) */}
             {stage === "waiting" && (
-              <div className="stagger d3" style={{ marginTop: 20 }}>
+              <div className="stagger d3" style={{ marginTop: 24 }}>
+                {/* 분위기 조성 인트로 */}
+                <div style={{
+                  padding: "32px 24px",
+                  background: "rgba(26, 35, 50, 0.03)",
+                  borderRadius: "20px",
+                  border: "1px solid rgba(26, 35, 50, 0.08)",
+                  marginBottom: 24,
+                }}>
+                  <div style={{
+                    fontSize: 24,
+                    marginBottom: 16,
+                    textAlign: "center",
+                  }}>
+                    ✨
+                  </div>
+                  <div style={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: "var(--navy-dark)",
+                    textAlign: "center",
+                    marginBottom: 8,
+                    lineHeight: 1.6,
+                  }}>
+                    잠시 마음을 가라앉히고,<br />
+                    오늘 가장 끌리는 질문을 떠올려보세요.
+                  </div>
+                  <div style={{
+                    fontSize: 13,
+                    color: "rgba(26, 35, 50, 0.6)",
+                    textAlign: "center",
+                    lineHeight: 1.6,
+                  }}>
+                    타로는 답을 주는 것이 아니라,<br />
+                    당신의 내면을 비춰줍니다.
+                  </div>
+                </div>
+
                 <button
                   className="btn btnPrimary btnWide"
                   onClick={startShuffle}
+                  style={{
+                    fontSize: 16,
+                    padding: "16px 24px",
+                  }}
                 >
-                  타로 뽑기
+                  카드 섞기 시작
                 </button>
+
+                <div style={{
+                  fontSize: 12,
+                  color: "rgba(26, 35, 50, 0.5)",
+                  textAlign: "center",
+                  marginTop: 12,
+                }}>
+                  카드가 섞이면 직감으로 한 장을 선택하세요
+                </div>
               </div>
             )}
 

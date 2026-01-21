@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: 'LUMEN <noreply@lumen.app>', // 실제 도메인으로 변경 필요
+        from: process.env.RESEND_FROM_EMAIL || 'LUMEN <onboarding@resend.dev>',
         to: email,
         subject: emailSubject,
         html: emailHtml,

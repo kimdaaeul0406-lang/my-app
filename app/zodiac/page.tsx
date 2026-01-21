@@ -23,135 +23,135 @@ function ZodiacIcon({ nameEn, color }: { nameEn: string; color?: string }) {
   const iconMap: Record<string, React.ReactElement> = {
     aries: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L8 6H16L12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12 2L8 6H16L12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
     taurus: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-        <path d="M12 4V12M12 12V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M4 12H12M12 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M12 4V12M12 12V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M4 12H12M12 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
     gemini: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8 4C8 5.1 7.1 6 6 6C4.9 6 4 5.1 4 4C4 2.9 4.9 2 6 2C7.1 2 8 2.9 8 4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-        <path d="M20 4C20 5.1 19.1 6 18 6C16.9 6 16 5.1 16 4C16 2.9 16.9 2 18 2C19.1 2 20 2.9 20 4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-        <path d="M8 20C8 21.1 7.1 22 6 22C4.9 22 4 21.1 4 20C4 18.9 4.9 18 6 18C7.1 18 8 18.9 8 20Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-        <path d="M20 20C20 21.1 19.1 22 18 22C16.9 22 16 21.1 16 20C16 18.9 16.9 18 18 18C19.1 18 20 18.9 20 20Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-        <path d="M6 6V18M18 6V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M8 4C8 5.1 7.1 6 6 6C4.9 6 4 5.1 4 4C4 2.9 4.9 2 6 2C7.1 2 8 2.9 8 4Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M20 4C20 5.1 19.1 6 18 6C16.9 6 16 5.1 16 4C16 2.9 16.9 2 18 2C19.1 2 20 2.9 20 4Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M8 20C8 21.1 7.1 22 6 22C4.9 22 4 21.1 4 20C4 18.9 4.9 18 6 18C7.1 18 8 18.9 8 20Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M20 20C20 21.1 19.1 22 18 22C16.9 22 16 21.1 16 20C16 18.9 16.9 18 18 18C19.1 18 20 18.9 20 20Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M6 6V18M18 6V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
     cancer: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8C6 10.2 7.8 12 10 12C12.2 12 14 10.2 14 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M10 16C10 13.8 11.8 12 14 12C16.2 12 18 13.8 18 16" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M6 6L4 4M18 6L20 4M6 18L4 20M18 18L20 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M6 8C6 10.2 7.8 12 10 12C12.2 12 14 10.2 14 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M10 16C10 13.8 11.8 12 14 12C16.2 12 18 13.8 18 16" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M6 6L4 4M18 6L20 4M6 18L4 20M18 18L20 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
     leo: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="10" r="6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-        <path d="M8 16L6 22M16 16L18 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M12 4V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="12" cy="10" r="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M8 16L6 22M16 16L18 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M12 4V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
     virgo: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M8 6L12 2L16 6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="12" cy="14" r="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-        <path d="M10 18L12 20L14 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12 2V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 6L12 2L16 6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="14" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M10 18L12 20L14 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
     libra: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M6 16H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M12 8V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="6" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-        <circle cx="18" cy="16" r="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M6 8H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M6 16H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M12 8V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="6" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <circle cx="18" cy="16" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
       </svg>
     ),
     scorpio: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M12 8C12 10.2 10.2 12 8 12C5.8 12 4 10.2 4 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M12 8C12 10.2 13.8 12 16 12C18.2 12 20 10.2 20 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M12 12V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12 2V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M12 8C12 10.2 10.2 12 8 12C5.8 12 4 10.2 4 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M12 8C12 10.2 13.8 12 16 12C18.2 12 20 10.2 20 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M12 12V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
     sagittarius: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L8 6L12 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M12 10L16 6L20 2" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M12 2L8 6L12 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 10L16 6L20 2" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
     capricorn: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M10 12L14 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M6 8L4 6M18 16L20 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M6 8V4M18 16V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M10 12L14 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M6 8L4 6M18 16L20 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M6 8V4M18 16V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
     aquarius: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8C6 6.9 6.9 6 8 6C9.1 6 10 6.9 10 8C10 9.1 9.1 10 8 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M14 8C14 6.9 14.9 6 16 6C17.1 6 18 6.9 18 8C18 9.1 17.1 10 16 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M6 16C6 14.9 6.9 14 8 14C9.1 14 10 14.9 10 16C10 17.1 9.1 18 8 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M14 16C14 14.9 14.9 14 16 14C17.1 14 18 14.9 18 16C18 17.1 17.1 18 16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M8 10V14M16 10V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M6 8C6 6.9 6.9 6 8 6C9.1 6 10 6.9 10 8C10 9.1 9.1 10 8 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M14 8C14 6.9 14.9 6 16 6C17.1 6 18 6.9 18 8C18 9.1 17.1 10 16 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M6 16C6 14.9 6.9 14 8 14C9.1 14 10 14.9 10 16C10 17.1 9.1 18 8 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M14 16C14 14.9 14.9 14 16 14C17.1 14 18 14.9 18 16C18 17.1 17.1 18 16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M8 10V14M16 10V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
     pisces: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M18 8C18 10.2 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M6 16C6 13.8 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M10 12H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M18 8C18 10.2 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M6 16C6 13.8 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M10 12H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
   };
 
   if (!iconMap[nameEn]) return null;
-  
+
   const icon = iconMap[nameEn];
-  
+
   // color가 제공되면 모든 path의 stroke를 직접 변경
-  const coloredIcon = color 
+  const coloredIcon = color
     ? (() => {
-        const iconElement = icon as React.ReactElement<any>;
-        const children = React.Children.toArray(iconElement.props.children);
-        return React.cloneElement(iconElement, {
-          style: { color },
-          children: children.map((child: React.ReactNode) => {
-            if (React.isValidElement(child)) {
-              const childElement = child as React.ReactElement<any>;
-              const childProps = childElement.props as any;
-              return React.cloneElement(childElement, {
-                stroke: color,
-                fill: childProps.fill === "none" ? "none" : (childProps.fill || color)
-              });
-            }
-            return child;
-          })
-        });
-      })()
+      const iconElement = icon as React.ReactElement<any>;
+      const children = React.Children.toArray(iconElement.props.children);
+      return React.cloneElement(iconElement, {
+        style: { color },
+        children: children.map((child: React.ReactNode) => {
+          if (React.isValidElement(child)) {
+            const childElement = child as React.ReactElement<any>;
+            const childProps = childElement.props as any;
+            return React.cloneElement(childElement, {
+              stroke: color,
+              fill: childProps.fill === "none" ? "none" : (childProps.fill || color)
+            });
+          }
+          return child;
+        })
+      });
+    })()
     : icon;
-  
+
   return (
-    <span style={{ 
-      display: "inline-flex", 
-      alignItems: "center", 
-      justifyContent: "center", 
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
       color: color || "currentColor"
     }}>
       {coloredIcon}
@@ -240,7 +240,7 @@ export default function ZodiacPage() {
       localStorage.setItem("lumen_session_id", session);
     }
     setSessionId(session);
-    
+
     // DB에서 세션별 이메일 로드
     if (session) {
       loadUserEmailFromDB(session);
@@ -262,31 +262,36 @@ export default function ZodiacPage() {
     }
   };
 
-  // 별자리 선택 시 zodiacInfo 설정 및 모달 열기
+  // 별자리 선택 시 zodiacInfo 설정 및 바로 운세 가져오기
   useEffect(() => {
     if (selectedZodiac) {
       setZodiacInfo(selectedZodiac);
       setHoroscopeData(null);
       setError(null);
       setShowModal(true);
+      // 바로 운세 가져오기 시작
+      fetchHoroscopeForSign(selectedZodiac);
     } else {
       setZodiacInfo(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedZodiac]);
 
-  // 운세 가져오기 함수 (버튼 클릭 시 호출)
-  const fetchHoroscope = async () => {
-    if (!zodiacInfo || loading) return; // 이미 로딩 중이면 중복 호출 방지
+  // 특정 별자리에 대해 운세 가져오기 (별자리 선택 시 바로 호출)
+  const fetchHoroscopeForSign = async (zodiac: ZodiacInfo) => {
+    if (!zodiac || loading) return;
 
     setLoading(true);
     setError(null);
 
     // 캐시 확인
-    const cacheKey = getHoroscopeCacheKey(zodiacInfo.nameEn);
+    const cacheKey = getHoroscopeCacheKey(zodiac.nameEn);
     const cached = getCachedData<HoroscopeData>(cacheKey);
     if (cached) {
       setHoroscopeData(cached);
       setLoading(false);
+      // 확인한 별자리 목록에 추가
+      setViewedZodiacs(prev => new Set([...prev, zodiac.nameEn]));
       return;
     }
 
@@ -295,8 +300,8 @@ export default function ZodiacPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sign: zodiacInfo.nameEn,
-          signName: zodiacInfo.name,
+          sign: zodiac.nameEn,
+          signName: zodiac.name,
           date: new Date().toISOString().split("T")[0],
         }),
       });
@@ -319,7 +324,7 @@ export default function ZodiacPage() {
 
       // 응답 데이터 정리
       const data = result.data;
-      const horoscopeData: HoroscopeData = {
+      const horoscopeResult: HoroscopeData = {
         message: data.message || "",
         love: data.love || "",
         career: data.career || "",
@@ -331,13 +336,11 @@ export default function ZodiacPage() {
       };
 
       // 캐시 저장
-      setCachedData(cacheKey, horoscopeData);
-      setHoroscopeData(horoscopeData);
-      
+      setCachedData(cacheKey, horoscopeResult);
+      setHoroscopeData(horoscopeResult);
+
       // 확인한 별자리 목록에 추가
-      if (zodiacInfo) {
-        setViewedZodiacs(prev => new Set([...prev, zodiacInfo.nameEn]));
-      }
+      setViewedZodiacs(prev => new Set([...prev, zodiac.nameEn]));
     } catch (err) {
       console.error(`❌ [Client] Error:`, err);
       setError(
@@ -349,6 +352,12 @@ export default function ZodiacPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 운세 가져오기 함수 (다시 시도 버튼용)
+  const fetchHoroscope = async () => {
+    if (!zodiacInfo || loading) return;
+    fetchHoroscopeForSign(zodiacInfo);
   };
 
   // 이메일 전송 (기록 저장은 선택적)
@@ -603,16 +612,16 @@ export default function ZodiacPage() {
                                 backgroundColor: isSelected
                                   ? "var(--navy)"
                                   : isViewed
-                                  ? "rgba(180, 140, 100, 0.65)"
-                                  : "var(--cream)",
+                                    ? "rgba(180, 140, 100, 0.65)"
+                                    : "var(--cream)",
                                 color: isSelected
                                   ? "var(--cream)"
                                   : "var(--navy-dark)",
                                 border: `2px solid ${isSelected
                                   ? "var(--navy)"
                                   : isViewed
-                                  ? "rgba(180, 140, 100, 0.9)"
-                                  : "rgba(43, 38, 42, 0.1)"
+                                    ? "rgba(180, 140, 100, 0.9)"
+                                    : "rgba(43, 38, 42, 0.1)"
                                   }`,
                                 borderRadius: 12,
                                 fontWeight: isSelected ? 700 : isViewed ? 600 : 500,
@@ -630,8 +639,8 @@ export default function ZodiacPage() {
                                 boxShadow: isSelected
                                   ? "0 4px 12px rgba(43, 38, 42, 0.15)"
                                   : isViewed
-                                  ? "0 3px 10px rgba(180, 140, 100, 0.5)"
-                                  : "0 2px 4px rgba(43, 38, 42, 0.05)",
+                                    ? "0 3px 10px rgba(180, 140, 100, 0.5)"
+                                    : "0 2px 4px rgba(43, 38, 42, 0.05)",
                               }}
                               onMouseEnter={(e) => {
                                 if (!isSelected) {
@@ -684,18 +693,18 @@ export default function ZodiacPage() {
                                   ✓
                                 </span>
                               )}
-                              <span style={{ 
-                                fontSize: 20, 
-                                marginBottom: 4, 
-                                display: "flex", 
-                                alignItems: "center", 
+                              <span style={{
+                                fontSize: 20,
+                                marginBottom: 4,
+                                display: "flex",
+                                alignItems: "center",
                                 justifyContent: "center",
                                 color: isSelected ? "var(--cream)" : "inherit"
                               }}>
                                 <ZodiacIcon nameEn={zodiac.nameEn} color={isSelected ? "var(--cream)" : undefined} />
                               </span>
-                              <span style={{ 
-                                fontSize: 13, 
+                              <span style={{
+                                fontSize: 13,
                                 fontWeight: 600,
                                 color: isSelected ? "var(--cream)" : "inherit"
                               }}>
@@ -731,27 +740,24 @@ export default function ZodiacPage() {
               </button>
             </div>
             <div className="modalBody">
-              {!horoscopeData && !loading && !error && (
-                <div style={{ padding: "20px 0", textAlign: "center" }}>
+              {/* 로딩 중 표시 */}
+              {loading && (
+                <div style={{ padding: "40px 0", textAlign: "center" }}>
                   <div
-                    className="p"
-                    style={{ marginBottom: 20, color: "var(--muted)" }}
-                  >
-                    {zodiacInfo?.name}의 오늘의 운세를 확인해보세요.
-                  </div>
-                  <button
-                    className="btn btnPrimary"
-                    onClick={fetchHoroscope}
-                    disabled={loading}
+                    className="loadingSpinner"
                     style={{
-                      opacity: loading ? 0.6 : 1,
-                      cursor: loading ? "not-allowed" : "pointer",
-                      maxWidth: "280px",
-                      margin: "0 auto",
+                      width: 40,
+                      height: 40,
+                      margin: "0 auto 16px",
+                      border: "3px solid rgba(43, 38, 42, 0.1)",
+                      borderTopColor: "var(--navy)",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
                     }}
-                  >
-                    오늘의 운세 보기
-                  </button>
+                  />
+                  <div className="p" style={{ color: "var(--muted)" }}>
+                    {zodiacInfo?.name}의 오늘 운세를 확인하고 있어요...
+                  </div>
                 </div>
               )}
 

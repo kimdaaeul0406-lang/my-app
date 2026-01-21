@@ -1,19 +1,21 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useMemo, useRef, useState, Suspense, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 import EmailInputModal from "./components/EmailInputModal";
+import SearchParamsHandler from "./components/SearchParamsHandler";
+
 
 // 사주 아이콘 SVG 컴포넌트
 function SajuIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <path d="M12 2V6M12 18V22M2 12H6M18 12H22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M6.34 6.34L8.93 8.93M15.07 15.07L17.66 17.66M17.66 6.34L15.07 8.93M8.93 15.07L6.34 17.66" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M12 2V6M12 18V22M2 12H6M18 12H22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M6.34 6.34L8.93 8.93M15.07 15.07L17.66 17.66M17.66 6.34L15.07 8.93M8.93 15.07L6.34 17.66" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -22,9 +24,9 @@ function SajuIcon({ size = 16 }: { size?: number }) {
 function TarotIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
-      <rect x="4" y="6" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <path d="M8 10H16M8 14H16M8 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="12" cy="4" r="1.5" fill="currentColor"/>
+      <rect x="4" y="6" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M8 10H16M8 14H16M8 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="12" cy="4" r="1.5" fill="currentColor" />
     </svg>
   );
 }
@@ -33,10 +35,10 @@ function TarotIcon({ size = 16 }: { size?: number }) {
 function ZodiacIconSmall({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
-      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <path d="M12 4V12M12 12V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M4 12H12M12 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="12" cy="12" r="2" fill="currentColor"/>
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M12 4V12M12 12V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4 12H12M12 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
     </svg>
   );
 }
@@ -72,7 +74,6 @@ function uid() {
 
 export default function Page() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const flowRef = useRef<HTMLElement | null>(null);
   const subscribeRef = useRef<HTMLElement | null>(null);
   const historyRef = useRef<HTMLElement | null>(null);
@@ -115,7 +116,7 @@ export default function Page() {
   // 타자기 효과 애니메이션
   useEffect(() => {
     if (!isMounted) return;
-    
+
     // 바로 타이핑 시작
     const startDelay = setTimeout(() => {
       setTypingStarted(true);
@@ -233,7 +234,7 @@ export default function Page() {
 
   // 구독
   const [subscribeEmailModalOpen, setSubscribeEmailModalOpen] = useState(false);
-  
+
   const handleSubscribeEmail = async (email: string, saveEmail: boolean) => {
     if (!sessionId) {
       showToast("세션이 없어요. 페이지를 새로고침해주세요.");
@@ -275,7 +276,7 @@ export default function Page() {
           email: email,
         }),
       });
-      
+
       if (!subscriberResponse.ok) {
         const errorData = await subscriberResponse.json().catch(() => ({}));
         const errorMessage = errorData.error || errorData.details || "구독 저장에 실패했어요";
@@ -286,7 +287,7 @@ export default function Page() {
       // 성공
       showToast("구독이 완료되었어요! 매일 아침 이메일을 확인해주세요.");
       setSubscribeEmailModalOpen(false);
-      
+
       // 외부 페이지로 리다이렉트하지 않음 - 내부에서 처리 완료
     } catch (error) {
       console.error("Subscribe error:", error);
@@ -307,7 +308,7 @@ export default function Page() {
       localStorage.setItem("lumen_session_id", session);
     }
     setSessionId(session);
-    
+
     // DB에서 세션별 이메일 로드
     if (session) {
       loadUserEmailFromDB(session);
@@ -373,25 +374,19 @@ export default function Page() {
     }
   };
 
-  // 저장 후 히스토리 섹션으로 스크롤
-  useEffect(() => {
-    const saved = searchParams.get("saved");
-    if (saved) {
-      // URL에서 쿼리 파라미터 제거
-      router.replace("/", { scroll: false });
-      // 히스토리 섹션으로 스크롤
-      setTimeout(() => {
-        scrollTo(historyRef);
-        if (saved === "tarot") {
-          showToast("타로 결과를 기록에 저장했어");
-        } else if (saved === "zodiac") {
-          showToast("별자리 결과를 기록에 저장했어");
-        } else if (saved === "saju") {
-          showToast("사주 결과를 기록에 저장했어");
-        }
-      }, 100);
-    }
-  }, [searchParams, router]);
+  // 저장 후 히스토리 섹션으로 스크롤 (SearchParamsHandler에서 호출)
+  const handleSavedParam = useCallback((saved: string) => {
+    setTimeout(() => {
+      scrollTo(historyRef);
+      if (saved === "tarot") {
+        showToast("타로 결과를 기록에 저장했어");
+      } else if (saved === "zodiac") {
+        showToast("별자리 결과를 기록에 저장했어");
+      } else if (saved === "saju") {
+        showToast("사주 결과를 기록에 저장했어");
+      }
+    }, 100);
+  }, []);
 
   // 이메일 전송 (기록 저장은 선택적)
   const handleSendEmail = async (email: string, saveToHistory: boolean, saveEmail: boolean, item?: HistoryItem) => {
@@ -550,7 +545,7 @@ export default function Page() {
     // TODO: DB 삭제 API 추가 필요
     const next = history.filter((h) => h.id !== id);
     setHistory(next);
-    
+
     // localStorage에도 저장 (하위 호환성)
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
     showToast("기록 삭제 완료");
@@ -619,6 +614,10 @@ export default function Page() {
   return (
     <main className="mainWrap">
       <div className="bgFX" />
+      {/* SearchParams 처리 (Suspense 경계 필수) */}
+      <Suspense fallback={null}>
+        <SearchParamsHandler onSavedParam={handleSavedParam} />
+      </Suspense>
       <div className="content">
         {/* HERO - Night Sky */}
         <section className="section reveal on nightSky">
@@ -731,22 +730,46 @@ export default function Page() {
               <div className="flowDesc stagger d5">{todayFlow.desc}</div>
 
               {/* 키워드에 의미 부여 - 오늘의 힌트 */}
-              <div className="stagger d4" style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12, width: "100%", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
+              <div className="stagger d4" style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 8 }}>
+                {todayFlow.tags.map((t) => (
+                  <span key={t} style={{
+                    padding: "8px 18px",
+                    background: "rgba(255, 255, 255, 0.45)",
+                    border: "1px solid rgba(255, 255, 255, 0.6)",
+                    color: "var(--navy-dark)",
+                    borderRadius: "24px",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    backdropFilter: "blur(4px)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
+                  }}>
+                    #{t}
+                  </span>
+                ))}
+              </div>
+              <div className="stagger d4" style={{ display: "none", marginTop: 24, flexDirection: "column", gap: 12, width: "100%", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
                 {todayFlow.tags.map((t, index) => {
                   const descriptions: Record<string, string> = {
-                    "용기": "작은 도전이 큰 변화를 만듭니다",
-                    "시작": "완벽하지 않아도 지금 시작하세요",
-                    "집중": "한 가지에 집중하면 흐름이 열립니다",
-                    "성취": "오늘의 작은 성취가 내일의 자신감입니다",
-                    "기쁨": "작은 순간에도 기쁨을 찾아보세요",
+                    // 첫 번째 세트
+                    "정리": "마음의 순서를 정돈해보세요",
+                    "호흡": "잠시 멈추고 깊게 숨을 쉬어보세요",
+                    "선택": "직감을 믿고 결단해보세요",
+                    // 두 번째 세트
                     "직감": "내면의 목소리를 들어보세요",
                     "흐름": "자연스러운 흐름을 따르세요",
                     "균형": "균형을 찾으면 방향이 보입니다",
+                    // 세 번째 세트
+                    "용기": "작은 도전이 큰 변화를 만듭니다",
+                    "시작": "완벽하지 않아도 지금 시작하세요",
+                    "집중": "한 가지에 집중하면 흐름이 열립니다",
+                    // 추가 키워드
+                    "성취": "오늘의 작은 성취가 내일의 자신감입니다",
+                    "기쁨": "작은 순간에도 기쁨을 찾아보세요",
                   };
                   return (
-                    <div key={t} style={{ 
-                      padding: "12px 16px", 
-                      background: "rgba(26, 35, 50, 0.03)", 
+                    <div key={t} style={{
+                      padding: "12px 16px",
+                      background: "rgba(26, 35, 50, 0.03)",
                       borderRadius: "12px",
                       border: "1px solid rgba(26, 35, 50, 0.08)",
                       textAlign: "center"
@@ -778,40 +801,48 @@ export default function Page() {
                 </Link>
               </div>
 
-              {/* 오늘의 흐름을 더 깊게 보는 방법 */}
-              <div className="stagger d6" style={{ marginTop: 24 }}>
-                <div style={{ 
-                  fontSize: 12, 
-                  color: "rgba(26, 35, 50, 0.6)", 
-                  textAlign: "center", 
-                  marginBottom: 12 
+              {/* 서비스 카드 그리드 (버튼 대체) */}
+              <div className="stagger d6" style={{ marginTop: 40 }}>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: 10,
+                  width: "100%",
+                  maxWidth: "360px",
+                  margin: "0 auto"
                 }}>
-                  오늘의 흐름을 더 깊게 보고 싶다면
-                </div>
-                <div className="btnTinyGroup">
-                  <Link
-                    href="/saju"
-                    className="btnTiny"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <SajuIcon size={14} />
-                    사주 확인하기
+                  <Link href="/saju" className="serviceCard" style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
+                  }}>
+                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><SajuIcon size={24} /></div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>사주</div>
+                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>나의 본질</div>
                   </Link>
-                  <Link
-                    href="/zodiac"
-                    className="btnTiny"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <ZodiacIconSmall size={14} />
-                    별자리 확인하기
+                  <Link href="/zodiac" className="serviceCard" style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
+                  }}>
+                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><ZodiacIconSmall size={24} /></div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>별자리</div>
+                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>오늘의 흐름</div>
                   </Link>
-                  <Link
-                    href="/tarot"
-                    className="btnTiny"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <TarotIcon size={14} />
-                    타로 뽑기
+                  <Link href="/tarot" className="serviceCard" style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
+                  }}>
+                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><TarotIcon size={24} /></div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>타로</div>
+                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>선택과 조언</div>
                   </Link>
                 </div>
               </div>
@@ -826,22 +857,46 @@ export default function Page() {
               <div className="flowDesc stagger d5">{todayFlow.desc}</div>
 
               {/* 키워드에 의미 부여 - 오늘의 힌트 */}
-              <div className="stagger d4" style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12, width: "100%", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
+              <div className="stagger d4" style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 8 }}>
+                {todayFlow.tags.map((t) => (
+                  <span key={t} style={{
+                    padding: "8px 18px",
+                    background: "rgba(255, 255, 255, 0.45)",
+                    border: "1px solid rgba(255, 255, 255, 0.6)",
+                    color: "var(--navy-dark)",
+                    borderRadius: "24px",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    backdropFilter: "blur(4px)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
+                  }}>
+                    #{t}
+                  </span>
+                ))}
+              </div>
+              <div className="stagger d4" style={{ display: "none", marginTop: 24, flexDirection: "column", gap: 12, width: "100%", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
                 {todayFlow.tags.map((t, index) => {
                   const descriptions: Record<string, string> = {
-                    "용기": "작은 도전이 큰 변화를 만듭니다",
-                    "시작": "완벽하지 않아도 지금 시작하세요",
-                    "집중": "한 가지에 집중하면 흐름이 열립니다",
-                    "성취": "오늘의 작은 성취가 내일의 자신감입니다",
-                    "기쁨": "작은 순간에도 기쁨을 찾아보세요",
+                    // 첫 번째 세트
+                    "정리": "마음의 순서를 정돈해보세요",
+                    "호흡": "잠시 멈추고 깊게 숨을 쉬어보세요",
+                    "선택": "직감을 믿고 결단해보세요",
+                    // 두 번째 세트
                     "직감": "내면의 목소리를 들어보세요",
                     "흐름": "자연스러운 흐름을 따르세요",
                     "균형": "균형을 찾으면 방향이 보입니다",
+                    // 세 번째 세트
+                    "용기": "작은 도전이 큰 변화를 만듭니다",
+                    "시작": "완벽하지 않아도 지금 시작하세요",
+                    "집중": "한 가지에 집중하면 흐름이 열립니다",
+                    // 추가 키워드
+                    "성취": "오늘의 작은 성취가 내일의 자신감입니다",
+                    "기쁨": "작은 순간에도 기쁨을 찾아보세요",
                   };
                   return (
-                    <div key={t} style={{ 
-                      padding: "12px 16px", 
-                      background: "rgba(26, 35, 50, 0.03)", 
+                    <div key={t} style={{
+                      padding: "12px 16px",
+                      background: "rgba(26, 35, 50, 0.03)",
                       borderRadius: "12px",
                       border: "1px solid rgba(26, 35, 50, 0.08)",
                       textAlign: "center"
@@ -873,40 +928,47 @@ export default function Page() {
                 </Link>
               </div>
 
-              {/* 오늘의 흐름을 더 깊게 보는 방법 */}
-              <div className="stagger d6" style={{ marginTop: 24 }}>
-                <div style={{ 
-                  fontSize: 12, 
-                  color: "rgba(26, 35, 50, 0.6)", 
-                  textAlign: "center", 
-                  marginBottom: 12 
+              {/* 서비스 카드 그리드 (버튼 대체) */}
+              <div className="stagger d6" style={{ marginTop: 40 }}>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: 10,
+                  width: "100%",
+                  maxWidth: "360px",
+                  margin: "0 auto"
                 }}>
-                  오늘의 흐름을 더 깊게 보고 싶다면
-                </div>
-                <div className="btnTinyGroup">
-                  <Link
-                    href="/saju"
-                    className="btnTiny"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <SajuIcon size={14} />
-                    사주 확인하기
+                  <Link href="/saju" className="serviceCard" style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
+                  }}>
+                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><SajuIcon size={24} /></div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>사주</div>
+                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>나의 본질</div>
                   </Link>
-                  <Link
-                    href="/zodiac"
-                    className="btnTiny"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <ZodiacIconSmall size={14} />
-                    별자리 확인하기
+                  <Link href="/zodiac" className="serviceCard" style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    padding: "20px 12px", background: "rgba(255, 255, 255, 0.65)", borderRadius: "20px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)", textDecoration: "none",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.4)", transition: "all 0.3s ease"
+                  }}>
+                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><ZodiacIconSmall size={24} /></div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>별자리</div>
+                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>오늘의 흐름</div>
                   </Link>
-                  <Link
-                    href="/tarot"
-                    className="btnTiny"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <TarotIcon size={14} />
-                    타로 뽑기
+                  <Link href="/tarot" className="serviceCard" style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    padding: "16px 8px", background: "white", borderRadius: "16px",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)", textDecoration: "none",
+                    border: "1px solid rgba(0,0,0,0.05)", transition: "transform 0.2s"
+                  }}>
+                    <div style={{ color: "var(--navy-dark)", marginBottom: 8 }}><TarotIcon size={24} /></div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy-dark)" }}>타로</div>
+                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>선택과 조언</div>
                   </Link>
                 </div>
               </div>
@@ -974,6 +1036,7 @@ export default function Page() {
             >
               {reviews.map((r, i) => {
                 const side = i % 2 === 0 ? "left" : "right";
+                const initial = r.name.charAt(0); // 이름의 첫 글자
                 return (
                   <div
                     key={`${r.name}-${i}`}
@@ -981,7 +1044,20 @@ export default function Page() {
                   >
                     <div className="reviewCardZ">
                       <div className="reviewTop">
-                        <div className="avatar" />
+                        <div
+                          className="avatar"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "linear-gradient(135deg, var(--gold-bright), var(--gold-main))",
+                            color: "var(--navy-dark)",
+                            fontWeight: 700,
+                            fontSize: 14,
+                          }}
+                        >
+                          {initial}
+                        </div>
                         <div style={{ textAlign: "left" }}>
                           <div className="name">{r.name}</div>
                           <div className="stars">★★★★★</div>
@@ -1006,65 +1082,65 @@ export default function Page() {
         </section>
 
         {/* SUBSCRIBE - 구독 기능만 (메시지 중복 제거) */}
-        <section className="reveal" ref={subscribeRef as any}>
-          <div className="subscribeFocus">
-            <div className="subscribeOrb" />
-            <div
-              className="container center"
-              style={{ padding: "0 var(--pad)" }}
-            >
-              <h2 className="h2 stagger d1">매일 아침 이메일로 받기</h2>
-              <p className="p stagger d2" style={{ maxWidth: "600px", margin: "0 auto" }}>
-                오늘의 키워드, 한 줄 조언, 주의할 흐름을 매일 아침 정리해서 보내드려요.
-              </p>
+        {/* SUBSCRIBE - 디자인 개선 (Dark Premium Card) */}
+        <section className="reveal" ref={subscribeRef as any} style={{ padding: "40px var(--pad)" }}>
+          <div className="container center">
+            <div style={{
+              background: "linear-gradient(145deg, var(--navy-dark), #2d3561)",
+              borderRadius: "24px",
+              padding: "40px 24px",
+              color: "white",
+              position: "relative",
+              overflow: "hidden",
+              boxShadow: "0 10px 30px rgba(26, 35, 50, 0.2)"
+            }}>
+              {/* 배경 장식 */}
+              <div style={{
+                position: "absolute", top: -20, right: -20,
+                width: 120, height: 120, background: "var(--gold-main)",
+                opacity: 0.1, borderRadius: "50%", filter: "blur(40px)"
+              }} />
 
-              {/* 구체적인 혜택 */}
-              <div className="stagger d3" style={{ marginTop: 32, maxWidth: "500px", marginLeft: "auto", marginRight: "auto" }}>
-                <div style={{ padding: "24px", background: "rgba(26, 35, 50, 0.04)", borderRadius: "16px", border: "1px solid rgba(26, 35, 50, 0.1)" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--navy-dark)", marginBottom: 16, textAlign: "center" }}>
-                    매일 받아보는 것
-                  </div>
-                  <div style={{ display: "grid", gap: 12 }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold-main)", marginTop: 6, flexShrink: 0 }} />
-                      <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.75)", lineHeight: 1.6 }}>
-                        <strong style={{ color: "var(--navy-dark)" }}>오늘의 키워드</strong> - 하루를 관통하는 핵심 단어
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold-main)", marginTop: 6, flexShrink: 0 }} />
-                      <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.75)", lineHeight: 1.6 }}>
-                        <strong style={{ color: "var(--navy-dark)" }}>지금 필요한 한 줄 조언</strong> - 실용적이고 명확한 메시지
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold-main)", marginTop: 6, flexShrink: 0 }} />
-                      <div style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.75)", lineHeight: 1.6 }}>
-                        <strong style={{ color: "var(--navy-dark)" }}>오늘 조심할 흐름</strong> - 주의해야 할 부분을 미리 알려드려요
-                      </div>
-                    </div>
-                  </div>
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <div style={{
+                  textTransform: "uppercase", fontSize: 12, fontWeight: 700, letterSpacing: "1px",
+                  color: "var(--gold-main)", marginBottom: 12, opacity: 0.9
+                }}>
+                  Premium Newsletter
                 </div>
-              </div>
+                <h2 className="stagger d1" style={{ fontSize: 24, fontFamily: "var(--font-serif)", marginBottom: 16 }}>
+                  매일 아침,<br />나를 위한 흐름을 받으세요
+                </h2>
+                <p className="stagger d2" style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.6, maxWidth: "280px", margin: "0 auto" }}>
+                  오늘의 키워드, 한 줄 조언, 주의할 점까지.<br />
+                  과장 없이 깔끔하게 정리해드립니다.
+                </p>
 
-              {/* 보조 CTA - 구독 */}
-              <div className="stagger d4" style={{ marginTop: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                <button
-                  className="btn btnPrimary btnWide"
-                  onClick={() => {
-                    window.open("https://page.stibee.com/subscriptions/467092", "_blank");
-                  }}
-                  style={{
-                    maxWidth: "400px",
-                    fontSize: 15,
-                    fontWeight: 800,
-                    padding: "16px 24px",
-                  }}
-                >
-                  구독하기
-                </button>
-                <div className="smallHelp" style={{ textAlign: "center", fontSize: 12, color: "rgba(26, 35, 50, 0.5)" }}>
-                  구독 페이지에서 이메일을 입력해주세요.
+                <div className="stagger d3" style={{ marginTop: 32 }}>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      window.open("https://page.stibee.com/subscriptions/467092", "_blank");
+                    }}
+                    style={{
+                      width: "100%",
+                      maxWidth: "280px",
+                      padding: "16px",
+                      background: "var(--gold-main)",
+                      color: "var(--navy-dark)",
+                      fontSize: 16,
+                      fontWeight: 700,
+                      borderRadius: "12px",
+                      border: "none",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 12px rgba(212, 165, 116, 0.3)"
+                    }}
+                  >
+                    이메일로 받아보기
+                  </button>
+                  <div style={{ marginTop: 12, fontSize: 12, opacity: 0.5 }}>
+                    스팸 없이, 오직 운세만 보내드려요
+                  </div>
                 </div>
               </div>
             </div>
@@ -1072,42 +1148,25 @@ export default function Page() {
         </section>
 
         {/* HISTORY - 행동을 유도하는 영역 */}
+        {/* HISTORY - 더 깔끔하게 정리 */}
         <section className="sectionTight reveal" ref={historyRef as any}>
           <div className="container center">
-            <h2 className="h2 stagger d1" style={{ fontSize: 16, fontWeight: 700 }}>최근 기록</h2>
-            <p className="p stagger d2" style={{ fontSize: 12, marginTop: 6 }}>흐름을 쌓아두면, 내 패턴이 보여요.</p>
+            <h2 className="h2 stagger d1" style={{ fontSize: 16, fontWeight: 700, opacity: 0.5, marginBottom: 24 }}>최근 기록</h2>
 
             <div className="historyWrap stagger d3">
               {history.length === 0 ? (
-                <div className="card cardPad left" style={{ 
-                  textAlign: "center", 
-                  padding: "32px 24px",
+                <div style={{
+                  textAlign: "center",
+                  padding: "40px 24px",
                   background: "rgba(26, 35, 50, 0.02)",
-                  border: "1px solid rgba(26, 35, 50, 0.08)",
-                  borderRadius: "16px"
+                  borderRadius: "16px",
+                  border: "1px dashed rgba(26, 35, 50, 0.1)"
                 }}>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: "var(--navy-dark)", marginBottom: 8 }}>
-                    오늘의 흐름을 한 번 남겨보세요
+                  <div style={{ fontWeight: 600, fontSize: 14, color: "var(--muted)", marginBottom: 4 }}>
+                    아직 기록이 없어요
                   </div>
-                  <div className="p" style={{ fontSize: 13, color: "rgba(26, 35, 50, 0.65)", lineHeight: 1.6 }}>
-                    사주, 타로, 별자리 결과를 저장하면<br />
-                    시간이 지나도 다시 볼 수 있어요.
-                  </div>
-                  <div style={{ marginTop: 20 }}>
-                    <Link
-                      href="/saju"
-                      className="btn btnPrimary"
-                      style={{
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 13,
-                        padding: "10px 20px",
-                      }}
-                    >
-                      지금 시작하기
-                    </Link>
+                  <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 16 }}>
+                    사주, 타로, 별자리 결과를 저장해보세요
                   </div>
                 </div>
               ) : (
@@ -1116,21 +1175,20 @@ export default function Page() {
                     <div className="historyTop">
                       <span className="badge">
                         {h.type === "SAJU"
-                          ? "SAJU"
+                          ? "사주"
                           : h.type === "ZODIAC"
-                            ? "ZODIAC"
-                            : "TAROT"}
-                        {h.isPremium ? " · PREMIUM" : ""}
+                            ? "별자리"
+                            : "타로"}
                       </span>
                       <span className="muted">
                         {formatKoreanDate(h.createdAt)}
                       </span>
                     </div>
                     <div className="historyTitle">{h.title}</div>
-                    <div className="historyText">{h.text}</div>
+                    <div className="historyText" style={{ fontSize: 13, color: "var(--text-secondary)" }}>{h.text}</div>
                     <div className="chipRow">
-                      {h.tags.slice(0, 4).map((t) => (
-                        <span className="chip" key={t}>
+                      {h.tags.slice(0, 3).map((t) => (
+                        <span className="chip" key={t} style={{ fontSize: 11, padding: "4px 8px" }}>
                           {t}
                         </span>
                       ))}
@@ -1140,6 +1198,7 @@ export default function Page() {
                         display: "flex",
                         justifyContent: "flex-end",
                         gap: 8,
+                        marginTop: 12
                       }}
                     >
                       <button
@@ -1154,10 +1213,10 @@ export default function Page() {
                           navigator.clipboard?.writeText(
                             `${h.title}\n${h.text}`
                           );
-                          showToast("결과를 복사했어(데모)");
+                          showToast("결과를 복사했어요");
                         }}
                       >
-                        공유(복사)
+                        복사
                       </button>
                     </div>
                   </div>

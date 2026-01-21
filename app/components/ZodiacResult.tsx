@@ -4,12 +4,19 @@ import { type ZodiacInfo } from "../utils/zodiac";
 import PremiumGate from "./PremiumGate";
 
 interface HoroscopeData {
-  date: string;
+  date: string | null;
   sign: string;
   horoscope: string;
   love?: string;
   money?: string;
   work?: string;
+  description?: string;
+  mood?: string | null;
+  color?: string | null;
+  lucky_number?: string | number | null;
+  lucky_time?: string | null;
+  source?: "aztro" | "api-ninjas";
+  type?: "basic" | "today" | "tomorrow" | "yesterday";
 }
 
 interface ZodiacResultProps {

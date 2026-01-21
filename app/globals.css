@@ -218,15 +218,20 @@ button {
 }
 
 .subPageHeader .btnBack {
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
   color: var(--cream);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: none;
   position: relative;
   z-index: 1;
+  padding: 8px 4px;
+  box-shadow: none;
+  min-height: auto;
 }
 
 .subPageHeader .btnBack:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: rgba(245, 241, 232, 0.8);
+  box-shadow: none;
 }
 
 /* 밤하늘 장식 (작은 별) */
@@ -391,6 +396,7 @@ button {
 
 /* 모바일 전용: identityLine 중앙 정렬 및 크기 조정 (PC 1024px 이상에서는 적용 안 됨) */
 @media (max-width: 767px) {
+
   .identityLine,
   .nightSky .identityLine {
     width: fit-content !important;
@@ -409,6 +415,7 @@ button {
 }
 
 @media (max-width: 380px) {
+
   .identityLine,
   .nightSky .identityLine {
     gap: 3px !important;
@@ -507,7 +514,7 @@ button {
     margin-right: auto !important;
   }
 
-  .pricingSection > * {
+  .pricingSection>* {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -539,7 +546,7 @@ button {
     margin-right: auto !important;
   }
 
-  .pricingSectionHeader > div {
+  .pricingSectionHeader>div {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -720,19 +727,27 @@ button {
 }
 
 @keyframes blink-fast {
-  0%, 50% {
+
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+
+  51%,
+  100% {
     opacity: 0;
   }
 }
 
 @keyframes blink-slow {
-  0%, 50% {
+
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+
+  51%,
+  100% {
     opacity: 0;
   }
 }
@@ -2706,6 +2721,7 @@ button {
     transform: translateX(-50%) translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
@@ -2716,6 +2732,7 @@ button {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -3550,4 +3567,22 @@ button {
 
 .fadeSlideUp {
   animation: fadeSlideUp 0.5s ease-out forwards;
+}
+
+/* ===== Spin Animation (로딩 스피너용) ===== */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.serviceCard:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.75) !important;
 }

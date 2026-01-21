@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('[Saju API] 요청 받음:', body);
+    // console.log('[Saju API] 요청 받음:', body);
 
     const { birthDate, birthTime, gender, calendar } = body;
 
@@ -59,8 +59,7 @@ ${birthTime ? `- 출생 시간: ${birthTime}` : '- 출생 시간: 알 수 없음
 - 세련되고 신비로운 톤으로 작성해주세요
 - 사주명리학의 전통적인 관점을 바탕으로 작성하되, 현대적이고 실용적인 해석을 제공해주세요`;
 
-    console.log('[Saju API] Gemini 호출 시작');
-    console.log("Using Key:", process.env.GEMINI_API_KEY?.slice(-4));
+    // console.log('[Saju API] Gemini 호출 시작');
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemma-3-27b-it" });
@@ -68,8 +67,7 @@ ${birthTime ? `- 출생 시간: ${birthTime}` : '- 출생 시간: 알 수 없음
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const resultText = response.text();
-    console.log('[Saju API] 응답 받음 (전체):', resultText);
-    console.log('[Saju API] 응답 받음 (처음 200자):', resultText.substring(0, 200));
+    // console.log('[Saju API] 응답 받음');
 
     // JSON 파싱 시도 (여러 패턴 시도)
     let jsonMatch = resultText.match(/\{[\s\S]*\}/);
