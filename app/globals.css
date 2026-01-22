@@ -834,14 +834,14 @@ button {
 .brand {
   letter-spacing: 0.32em;
   font-weight: 800;
-  font-size: 22px;
+  font-size: 28px;
   margin: 0;
   color: var(--ink);
 }
 
 .tagline {
   margin: 12px 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -880,7 +880,7 @@ button {
 
 .heroTitle {
   margin: 18px 0 0;
-  font-size: 36px;
+  font-size: 42px;
   line-height: 1.12;
   font-weight: 900;
   letter-spacing: -0.03em;
@@ -961,7 +961,7 @@ button {
   cursor: pointer;
   padding: 8px 10px;
   color: rgba(43, 38, 42, 0.6);
-  font-size: 14px;
+  font-size: 15px;
   text-decoration: underline;
   text-underline-offset: 4px;
   transition: color 0.2s ease;
@@ -978,7 +978,7 @@ button {
   gap: 10px;
   align-items: center;
   color: rgba(43, 38, 42, 0.52);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 /* ===== Buttons ===== */
@@ -1325,6 +1325,43 @@ button {
   color: rgba(26, 35, 50, 0.6);
 }
 
+/* 해석 원칙 텍스트 그리드 (모바일: 세로, PC: 가로) */
+.principlesTextGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .principleSubtitle {
+    margin-bottom: 72px !important;
+  }
+
+  .principlesTextGrid {
+    flex-direction: row;
+    gap: 40px;
+    max-width: 900px;
+    text-align: center;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 48px;
+  }
+
+  .principlesTextGrid>div {
+    flex: 1;
+  }
+
+  .principleItemTitle {
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* 원칙 카드 */
 .principles {
   margin-top: 14px;
@@ -1431,6 +1468,45 @@ button {
   font-size: 12px;
   color: rgba(26, 35, 50, 0.7);
   line-height: 1.6;
+}
+
+/* PC: 리뷰 카드 크기 확대 */
+@media (min-width: 1024px) {
+  .reviewZig {
+    margin-top: 24px;
+    gap: 24px;
+  }
+
+  .reviewItem {
+    max-width: 480px;
+  }
+
+  .reviewCardZ {
+    padding: 28px;
+  }
+
+  .reviewTop {
+    gap: 16px;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .name {
+    font-size: 17px;
+  }
+
+  .stars {
+    font-size: 14px;
+  }
+
+  .reviewText {
+    margin: 16px 0 0;
+    font-size: 16px;
+    line-height: 1.7;
+  }
 }
 
 /* ===== TAROT Dark Section (✅ 리뷰 가독성 개선 + 하단 여백 확대) ===== */
@@ -2779,15 +2855,15 @@ button {
 
   /* Hero 텍스트/CTA 전체를 scale 1.25 적용 */
   .nightSky .brand {
-    font-size: 30px;
+    font-size: 36px;
   }
 
   .nightSky .tagline {
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .nightSky .heroTitle {
-    font-size: 45px;
+    font-size: 56px;
     /* PC에서 heroTitle 글씨 크기 더 증가 */
     line-height: 1.3;
     /* PC에서 줄바꿈 사이 공백 증가 */
@@ -2817,11 +2893,11 @@ button {
   }
 
   .nightSky .heroLink {
-    font-size: 1.25em;
+    font-size: 16px;
   }
 
   .nightSky .miniRow {
-    font-size: 1.25em;
+    font-size: 14px;
   }
 
   /* PC에서 identityLine은 기본 스타일 유지 (모바일 스타일 무시) */
@@ -3620,13 +3696,17 @@ button {
 
 .flowCard {
   width: 100%;
-  max-width: 400px;
-  /* Mobile Default */
+  max-width: 100%;
+  /* Mobile: 전체 너비 사용 */
   background: rgba(252, 252, 252, 0.95);
   backdrop-filter: blur(24px);
-  border-radius: 36px;
-  padding: 40px 28px;
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  border-radius: 24px;
+  padding: 32px 16px;
+  /* 패딩 줄여서 내부 공간 확보 */
+  box-shadow:
+    0 10px 40px -10px rgba(0, 0, 0, 0.12),
+    0 20px 60px -15px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -3750,48 +3830,55 @@ button {
 }
 
 .flowServices {
-  margin-top: 20px;
+  margin-top: 24px;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
 }
 
 .serviceCardItem {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  padding: 16px 4px;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 16px 20px;
   background: white;
   border-radius: 16px;
   text-decoration: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.04);
   transition: transform 0.2s;
+  gap: 16px;
 }
 
 .serviceCardItem .icon {
-  margin-bottom: 8px;
+  margin-bottom: 0;
   color: var(--gold-main);
+  flex-shrink: 0;
 }
 
 .serviceCardItem .label {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--navy-dark);
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .serviceCardItem .sub {
-  font-size: 9px;
+  font-size: 12px;
   color: #888;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
+  margin-left: auto;
 }
 
 .serviceCardItem .arrow {
-  font-size: 10px;
-  color: #ccc;
-  margin-top: 4px;
+  font-size: 14px;
+  color: #bbb;
+  margin-left: 8px;
 }
 
 /* PC Responsive */
@@ -3971,26 +4058,49 @@ button {
 }
 
 .cinematicFadeUp {
-  animation: cinematicUp 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: cinematicUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 
-/* Service Items Sequential Appear */
+/* Service Items Sequential Appear - Mobile Fast */
 .serviceItemAppear {
   opacity: 0;
-  animation: cinematicUp 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: cinematicUp 1.0s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .delay-1 {
-  animation-delay: 0.5s;
+  animation-delay: 0.2s;
 }
 
 .delay-2 {
-  animation-delay: 0.8s;
+  animation-delay: 0.4s;
 }
 
 .delay-3 {
-  animation-delay: 1.1s;
+  animation-delay: 0.6s;
+}
+
+/* PC: Restore Original Slower Animations */
+@media (min-width: 769px) {
+  .cinematicFadeUp {
+    animation: cinematicUp 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .serviceItemAppear {
+    animation: cinematicUp 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  .delay-1 {
+    animation-delay: 0.5s;
+  }
+
+  .delay-2 {
+    animation-delay: 0.8s;
+  }
+
+  .delay-3 {
+    animation-delay: 1.1s;
+  }
 }
 
 
@@ -4028,24 +4138,27 @@ button {
 
   /* Services Grid Expansion */
   .flowServices {
-    max-width: 520px !important;
-    /* 680px -> 520px */
+    display: grid !important;
+    flex-direction: unset !important;
+    max-width: 820px !important;
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 16px !important;
-    margin-top: 32px !important;
+    gap: 24px !important;
+    margin: 40px auto 0 auto !important;
+    justify-content: center !important;
   }
 
   .serviceCardItem {
-    padding: 24px 16px !important;
-    /* 사이즈 축소 */
-    border-radius: 20px !important;
-    min-height: 140px !important;
-    /* 180px -> 140px */
+    padding: 40px 28px !important;
+    border-radius: 24px !important;
+    min-height: 260px !important;
+    min-width: 240px !important;
     display: flex;
-    flex-direction: column;
+    flex-direction: column !important;
+    align-items: center !important;
     justify-content: center;
     background: rgba(255, 255, 255, 0.6);
     transition: all 0.3s ease;
+    gap: 0 !important;
   }
 
   .serviceCardItem:hover {
@@ -4055,21 +4168,20 @@ button {
   }
 
   .serviceCardItem .icon {
-    transform: scale(1.3);
-    /* 1.5 -> 1.3 */
-    margin-bottom: 12px;
+    transform: scale(1.8);
+    margin-bottom: 20px !important;
   }
 
   .serviceCardItem .label {
-    font-size: 18px !important;
-    /* 20px -> 18px */
-    margin-bottom: 4px;
+    font-size: 22px !important;
+    margin-bottom: 8px !important;
     font-weight: 700;
   }
 
   .serviceCardItem .sub {
-    font-size: 13px !important;
+    font-size: 15px !important;
     opacity: 0.7;
+    margin-left: 0 !important;
   }
 
   .serviceCardItem .arrow {

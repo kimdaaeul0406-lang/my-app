@@ -325,17 +325,23 @@ function HomeContent() {
   const [flowScene, setFlowScene] = useState<'initial' | 'intro' | 'card'>('initial');
 
   useEffect(() => {
+    // 모바일 감지 (768px 이하)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+    // 모바일: threshold 0.5, 인트로 1.8초 / PC: threshold 0.8, 인트로 2.5초
+    const threshold = isMobile ? 0.5 : 0.8;
+    const introDelay = isMobile ? 1800 : 2500;
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting && flowScene === 'initial') {
           setFlowScene('intro');
-          // 인트로 2.5초 보여주고 전환 (충분한 시간 제공)
           setTimeout(() => {
             setFlowScene('card');
-          }, 2500);
+          }, introDelay);
         }
       });
-    }, { threshold: 0.8 });
+    }, { threshold });
 
     if (flowRef.current) {
       observer.observe(flowRef.current);
@@ -360,14 +366,6 @@ function HomeContent() {
     {
       name: "최서연",
       text: "톤이 고요해서 좋고, 결과가 딱 필요한 만큼만 있어서 믿음이 가요.",
-    },
-    {
-      name: "정다은",
-      text: "매일 아침 확인하는 게 습관이 됐어요. 하루를 시작하는 마음가짐이 달라져요.",
-    },
-    {
-      name: "윤태영",
-      text: "불필요한 걱정을 줄여주고, 실용적인 조언만 주는 게 좋아요.",
     },
   ];
 
@@ -784,33 +782,8 @@ function HomeContent() {
               과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리
             </p>
 
-            <div className="heroEyebrow stagger d3">
-              <span>사주</span>
-              <span className="heroDot" />
-              <span>타로</span>
-              <span className="heroDot" />
-              <span>별자리</span>
-            </div>
-
-            <div className={`heroTitle stagger d4 ${typingStarted && !typingComplete ? 'typing' : ''} ${typingComplete ? 'typing-complete' : ''}`} style={{ whiteSpace: "pre-line" }}>
+            <div className={`heroTitle stagger d3 ${typingStarted && !typingComplete ? 'typing' : ''} ${typingComplete ? 'typing-complete' : ''}`} style={{ whiteSpace: "pre-line" }}>
               {typedText}
-            </div>
-
-            <div className="heroSub stagger d5">
-              사주는 본질을, 타로는 선택을, 별자리는 흐름을.
-              <br />
-              하루의 방향을 조용히 정리해요.
-            </div>
-
-            <div className="identityLine stagger d5">
-              <span className="identityBadge">사주</span>
-              <span>본질·정리</span>
-              <span className="heroDot" />
-              <span className="identityBadge">타로</span>
-              <span>선택·메시지</span>
-              <span className="heroDot" />
-              <span className="identityBadge">별자리</span>
-              <span>흐름·보조</span>
             </div>
 
             <div className="heroDivider" />
@@ -865,23 +838,8 @@ function HomeContent() {
                     <h2 className="flowTitle stagger d2" style={{ marginBottom: 0 }}>오늘의 흐름</h2>
                   </div>
 
-                  {/* 2. Tags (Simple Text Style) */}
-                  <div className="stagger d3" style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: 12 }}>
-                    {todayFlow.tags.map((t, i) => (
-                      <span key={t} style={{
-                        fontSize: "15px",
-                        color: "#666",
-                        fontWeight: 400,
-                        letterSpacing: "-0.01em",
-                        fontFamily: "inherit" // 부모(기본 고딕) 폰트 상속
-                      }}>
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* 3. Services (Centered Grid) */}
-                  <div className="flowServices stagger d4" style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, width: "100%", maxWidth: "340px", margin: "24px auto 0" }}>
+                  {/* 3. Services (Centered Grid - Mobile: 세로, PC: 가로) */}
+                  <div className="flowServices stagger d4">
                     <Link href="/saju" className="serviceCardItem serviceItemAppear delay-1">
                       <div className="icon"><SajuIcon size={20} /></div>
                       <div className="label">사주</div>
@@ -935,6 +893,84 @@ function HomeContent() {
           </div>
         </section>
 
+        {/* 해석 원칙 (FLOW 아래, 밝은 배경 - 텍스트만) */}
+        <section className="sectionTight reveal" style={{ background: "var(--bg)", padding: "56px 0" }}>
+          <div className="container center">
+            <h3 className="stagger d1" style={{
+              fontSize: "clamp(22px, 5vw, 28px)",
+              fontWeight: 800,
+              marginBottom: "12px",
+              color: "var(--navy-dark)",
+              letterSpacing: "-0.02em"
+            }}>
+              LUMEN의 해석 원칙
+            </h3>
+            <p className="principleSubtitle stagger d2" style={{
+              marginBottom: "48px",
+              color: "var(--muted)",
+              fontSize: "clamp(14px, 3.5vw, 16px)"
+            }}>
+              우리는 이런 기준으로 해석해요
+            </p>
+
+            <div className="principlesTextGrid stagger d3">
+              <div>
+                <div className="principleItemTitle" style={{
+                  fontWeight: 700,
+                  fontSize: "clamp(16px, 4vw, 18px)",
+                  color: "var(--navy-dark)",
+                  marginBottom: "8px"
+                }}>
+                  공포·불안 조장 없음
+                </div>
+                <div style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  color: "var(--muted)",
+                  lineHeight: 1.7
+                }}>
+                  마음을 흔드는 말 대신, 흐름을 정리하는 문장으로만 전해요.
+                </div>
+              </div>
+
+              <div>
+                <div className="principleItemTitle" style={{
+                  fontWeight: 700,
+                  fontSize: "clamp(16px, 4vw, 18px)",
+                  color: "var(--navy-dark)",
+                  marginBottom: "8px"
+                }}>
+                  행동으로 이어지는 조언
+                </div>
+                <div style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  color: "var(--muted)",
+                  lineHeight: 1.7
+                }}>
+                  "그래서 오늘 뭘 하면 좋을지"가 남도록 방향을 정리해요.
+                </div>
+              </div>
+
+              <div>
+                <div className="principleItemTitle" style={{
+                  fontWeight: 700,
+                  fontSize: "clamp(16px, 4vw, 18px)",
+                  color: "var(--navy-dark)",
+                  marginBottom: "8px"
+                }}>
+                  짧고 명확한 문장
+                </div>
+                <div style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  color: "var(--muted)",
+                  lineHeight: 1.7
+                }}>
+                  필요한 만큼만. 읽고 나면 마음이 가벼워지게 구성해요.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* TARO / TRUST / REVIEWS (타로 세계: 어두움 + 골드 소량) */}
         <section className="sectionTight reveal taroSection">
           <div className="container center">
@@ -955,35 +991,6 @@ function HomeContent() {
               <div className="trustPill">
                 <span className="trustNum">99%</span>
                 <span className="trustLabel">만족도</span>
-              </div>
-            </div>
-
-            <div className="principles stagger d4" aria-label="해석 원칙">
-              <div className="principleCard">
-                <div className="principleTop">
-                  <div className="principleTitle">공포·불안 조장 없음</div>
-                </div>
-                <div className="principleDesc">
-                  마음을 흔드는 말 대신, 흐름을 정리하는 문장으로만 전해요. 과장된 말은 쓰지 않아요.
-                </div>
-              </div>
-
-              <div className="principleCard">
-                <div className="principleTop">
-                  <div className="principleTitle">행동으로 이어지는 조언</div>
-                </div>
-                <div className="principleDesc">
-                  "그래서 오늘 뭘 하면 좋을지"가 남도록 방향을 정리해요.
-                </div>
-              </div>
-
-              <div className="principleCard">
-                <div className="principleTop">
-                  <div className="principleTitle">짧고 명확한 문장</div>
-                </div>
-                <div className="principleDesc">
-                  필요한 만큼만. 읽고 나면 마음이 가벼워지게 구성해요. 오늘의 선택을 정리해드릴 뿐, 스스로 판단하시면 돼요.
-                </div>
               </div>
             </div>
 
