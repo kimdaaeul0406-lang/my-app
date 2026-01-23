@@ -1035,10 +1035,12 @@ export default function TarotPage() {
         },
         body: JSON.stringify({
           email: email,
-          type: pendingSaveItem.type,
+          type: pendingSaveItem.type.toLowerCase(),
           title: emailTitle,
           text: emailText,
           tags: pendingSaveItem.tags,
+          cardId: fullData?.cardId,
+          isReversed: fullData?.isReversed,
         }),
       });
 
@@ -1113,6 +1115,7 @@ export default function TarotPage() {
       // 전체 결과 데이터를 포함
       fullData: {
         cardName: tarotResult.name,
+        cardId: tarotResult.id,
         isReversed: isReversed,
         message: apiResult.message,
         love: apiResult.love,

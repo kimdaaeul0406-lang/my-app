@@ -89,6 +89,7 @@ function HomeContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [pendingSaveItem, setPendingSaveItem] = useState<HistoryItem | null>(null);
+  const [stibeeModalOpen, setStibeeModalOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
 
@@ -1085,9 +1086,7 @@ function HomeContent() {
                 <div className="stagger d3" style={{ marginTop: 32 }}>
                   <button
                     className="btn"
-                    onClick={() => {
-                      window.open("https://page.stibee.com/subscriptions/467092", "_blank");
-                    }}
+                    onClick={() => setStibeeModalOpen(true)}
                     style={{
                       width: "100%",
                       maxWidth: "280px",
@@ -1329,6 +1328,137 @@ function HomeContent() {
               >
                 닫기
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 구독 모달 */}
+      {stibeeModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "20px"
+          }}
+          onClick={() => setStibeeModalOpen(false)}
+        >
+          <div
+            style={{
+              background: "linear-gradient(135deg, #1a2332 0%, #2d3a4f 100%)",
+              borderRadius: "20px",
+              padding: "40px 32px",
+              maxWidth: "400px",
+              width: "100%",
+              position: "relative",
+              color: "#fff"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 닫기 버튼 */}
+            <button
+              onClick={() => setStibeeModalOpen(false)}
+              style={{
+                position: "absolute",
+                top: "16px",
+                right: "16px",
+                background: "none",
+                border: "none",
+                color: "#fff",
+                fontSize: "24px",
+                cursor: "pointer",
+                opacity: 0.7
+              }}
+            >
+              ×
+            </button>
+
+            {/* 모달 콘텐츠 */}
+            <div style={{ textAlign: "center" }}>
+              <h2 style={{ fontSize: "24px", fontWeight: 800, color: "#d4a574", marginBottom: "8px" }}>
+                LUMEN
+              </h2>
+              <p style={{ fontSize: "14px", opacity: 0.8, marginBottom: "32px" }}>
+                매일 아침, 오늘의 흐름을 받아보세요
+              </p>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  const form = e.target as HTMLFormElement
+                  const emailInput = form.elements.namedItem('subscribeEmail') as HTMLInputElement
+                  const email = emailInput?.value?.trim()
+
+                  if (!email) {
+                    showToast("이메일을 입력해주세요")
+                    return
+                  }
+
+                  try {
+                    const res = await fetch('/api/subscribers', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email })
+                    })
+
+                    if (res.ok) {
+                      showToast("구독 완료! 환영 이메일을 확인해주세요")
+                      setStibeeModalOpen(false)
+                    } else {
+                      const data = await res.json()
+                      showToast(data.error || "구독에 실패했습니다")
+                    }
+                  } catch (err) {
+                    showToast("네트워크 오류가 발생했습니다")
+                  }
+                }}
+              >
+                <input
+                  type="email"
+                  name="subscribeEmail"
+                  placeholder="이메일 주소를 입력하세요"
+                  style={{
+                    width: "100%",
+                    padding: "16px",
+                    fontSize: "16px",
+                    border: "none",
+                    borderRadius: "12px",
+                    background: "rgba(255,255,255,0.1)",
+                    color: "#fff",
+                    marginBottom: "16px",
+                    outline: "none"
+                  }}
+                  required
+                />
+                <button
+                  type="submit"
+                  style={{
+                    width: "100%",
+                    padding: "16px",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    border: "none",
+                    borderRadius: "12px",
+                    background: "#d4a574",
+                    color: "#1a2332",
+                    cursor: "pointer"
+                  }}
+                >
+                  구독하기
+                </button>
+              </form>
+
+              <p style={{ fontSize: "12px", opacity: 0.5, marginTop: "16px" }}>
+                스팸 없이, 오직 운세만 보내드려요
+              </p>
             </div>
           </div>
         </div>
