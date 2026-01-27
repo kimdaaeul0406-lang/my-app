@@ -10,6 +10,27 @@ export const metadata = {
     statusBarStyle: "black-translucent",
     title: "LUMEN",
   },
+  openGraph: {
+    title: "LUMEN - 오늘의 흐름",
+    description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리",
+    siteName: "LUMEN",
+    locale: "ko_KR",
+    type: "website",
+    images: [
+      {
+        url: "/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "LUMEN",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "LUMEN - 오늘의 흐름",
+    description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리",
+    images: ["/icon-512.png"],
+  },
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",
