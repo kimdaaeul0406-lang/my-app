@@ -6,7 +6,8 @@ const siteUrl = "https://my-app-jade-eight-85.vercel.app";
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: "LUMEN - 오늘의 흐름",
-  description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리",
+  description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리. AI가 해석하는 무료 운세 서비스.",
+  keywords: ["운세", "타로", "사주", "별자리", "무료 운세", "오늘의 운세", "AI 운세", "타로점", "사주풀이", "별자리 운세", "LUMEN"],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -45,6 +46,13 @@ export const metadata = {
     "og:image:width": "1200",
     "og:image:height": "630",
   },
+  verification: {
+    // Google Search Console 인증 시 여기에 추가
+    // google: "your-google-verification-code",
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
 };
 
 export const viewport = {
@@ -63,6 +71,29 @@ const serif = Noto_Serif_KR({
   variable: "--font-serif",
 });
 
+// JSON-LD 구조화 데이터
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "LUMEN",
+  description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리. AI가 해석하는 무료 운세 서비스.",
+  url: siteUrl,
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "KRW",
+  },
+  creator: {
+    "@type": "Organization",
+    name: "LUMEN",
+    url: siteUrl,
+  },
+  inLanguage: "ko",
+  keywords: "운세, 타로, 사주, 별자리, 무료 운세, 오늘의 운세, AI 운세",
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -73,8 +104,14 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="naver-site-verification" content="" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body>{children}</body>
     </html>
   );
 }
+
