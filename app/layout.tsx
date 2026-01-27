@@ -17,11 +17,20 @@ export const metadata = {
     siteName: "LUMEN",
     locale: "ko_KR",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "LUMEN - 오늘의 흐름을 정리하다",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "LUMEN - 오늘의 흐름",
     description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리",
+    images: ["/og-image.png"],
   },
   icons: {
     icon: "/icon-192.png",
