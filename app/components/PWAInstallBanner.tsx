@@ -35,23 +35,33 @@ export default function PWAInstallBanner() {
         // DB에서 배너 표시 여부 확인
         const checkBannerStatus = async () => {
             if (!session) return;
-            
+
+            const runLoadBanner = () => {
+                loadBanner();
+            };
+
             try {
-                const response = await fetch(`/api/pwa-banner?sessionId=${encodeURIComponent(session)}`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const response = await fetch(
+                    `/api/pwa-banner?sessionId=${encodeURIComponent(session)}`,
+                    { signal: controller.signal }
+                );
+                clearTimeout(timeoutId);
+
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && !data.showBanner) {
-                        // 7일 동안 안 보기로 설정되어 있으면 표시하지 않음
                         return;
                     }
                 }
             } catch (error) {
-                console.warn("Failed to check banner status from DB:", error);
-                // 에러가 나도 계속 진행
+                if ((error as Error)?.name !== "AbortError") {
+                    console.warn("Failed to check banner status from DB:", error);
+                }
             }
 
-            // 배너 표시 로직 계속 진행
-            loadBanner();
+            runLoadBanner();
         };
 
         const loadBanner = () => {

@@ -1244,8 +1244,8 @@ function HomeContent() {
           </button>
         )}
 
-        {/* PWA 설치 유도 배너 (복귀 시에는 뜨지 않음) */}
-        {!isEffectiveFastMode && <PWAInstallBanner />}
+        {/* PWA 설치 유도 배너 (복귀 여부와 관계없이 표시 - 로컬/배포 동일 동작) */}
+        <PWAInstallBanner />
 
         {/* 이메일 입력 모달 */}
         <EmailInputModal
