@@ -15,10 +15,11 @@ export const metadata: Metadata = {
         type: 'website',
         images: [
             {
-                url: `${siteUrl}/og-image.png`,
+                url: '/og-image.png',
                 width: 1200,
                 height: 630,
                 alt: 'LUMEN 타로 운세',
+                type: 'image/png',
             },
         ],
     },
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: '타로 운세 - LUMEN',
         description: 'AI가 해석하는 타로 카드 리딩. 연애, 금전, 직장 운세를 과장 없이 정리해드려요.',
-        images: [`${siteUrl}/og-image.png`],
+        images: ['/og-image.png'],
     },
     alternates: {
         canonical: `${siteUrl}/tarot`,

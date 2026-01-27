@@ -15,10 +15,11 @@ export const metadata: Metadata = {
         type: 'website',
         images: [
             {
-                url: `${siteUrl}/og-image.png`,
+                url: '/og-image.png',
                 width: 1200,
                 height: 630,
                 alt: 'LUMEN 별자리 운세',
+                type: 'image/png',
             },
         ],
     },
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: '별자리 운세 - LUMEN',
         description: 'AI가 해석하는 12별자리 오늘의 운세. 연애, 직장, 금전 운세.',
-        images: [`${siteUrl}/og-image.png`],
+        images: ['/og-image.png'],
     },
     alternates: {
         canonical: `${siteUrl}/zodiac`,

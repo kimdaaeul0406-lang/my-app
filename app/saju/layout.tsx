@@ -15,10 +15,11 @@ export const metadata: Metadata = {
         type: 'website',
         images: [
             {
-                url: `${siteUrl}/og-image.png`,
+                url: '/og-image.png',
                 width: 1200,
                 height: 630,
                 alt: 'LUMEN 사주 운세',
+                type: 'image/png',
             },
         ],
     },
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: '사주 운세 - LUMEN',
         description: 'AI가 해석하는 사주팔자 운세. 생년월일로 보는 성격, 연애, 직장, 금전 운세.',
-        images: [`${siteUrl}/og-image.png`],
+        images: ['/og-image.png'],
     },
     alternates: {
         canonical: `${siteUrl}/saju`,

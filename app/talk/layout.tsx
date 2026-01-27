@@ -15,10 +15,11 @@ export const metadata: Metadata = {
         type: 'website',
         images: [
             {
-                url: `${siteUrl}/og-image.png`,
+                url: '/og-image.png',
                 width: 1200,
                 height: 630,
                 alt: 'LUMEN 인사이트',
+                type: 'image/png',
             },
         ],
     },
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: 'LUMEN 인사이트 - AI 상담',
         description: 'LUMEN과 대화하며 오늘의 운세를 더 깊이 이해해보세요.',
-        images: [`${siteUrl}/og-image.png`],
+        images: ['/og-image.png'],
     },
     alternates: {
         canonical: `${siteUrl}/talk`,

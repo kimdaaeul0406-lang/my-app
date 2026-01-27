@@ -23,7 +23,8 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: `${siteUrl}/og-image.png`,
+        url: "/og-image.png",
+        secureUrl: "https://my-app-jade-eight-85.vercel.app/og-image.png",
         width: 1200,
         height: 630,
         alt: "LUMEN - 오늘의 흐름을 정리하다",
@@ -35,16 +36,11 @@ export const metadata = {
     card: "summary_large_image",
     title: "LUMEN - 오늘의 흐름",
     description: "과장 없이, 오늘의 흐름을 정리하는 사주 & 타로 & 별자리",
-    images: [`${siteUrl}/og-image.png`],
+    images: ["/og-image.png"],
   },
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",
-  },
-  other: {
-    // 카카오톡 및 기타 메신저 호환성을 위한 추가 메타 태그
-    "og:image:width": "1200",
-    "og:image:height": "630",
   },
   verification: {
     // Google Search Console 인증 시 여기에 추가
