@@ -1156,7 +1156,9 @@ function HomeContent() {
                   padding: "40px 24px",
                   background: "rgba(26, 35, 50, 0.02)",
                   borderRadius: "16px",
-                  border: "1px dashed rgba(26, 35, 50, 0.1)"
+                  border: "1px dashed rgba(26, 35, 50, 0.1)",
+                  maxWidth: 400,
+                  margin: "0 auto"
                 }}>
                   <div style={{ fontWeight: 600, fontSize: 14, color: "var(--muted)", marginBottom: 4 }}>
                     아직 기록이 없어요
