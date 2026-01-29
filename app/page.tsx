@@ -498,7 +498,7 @@ function HomeContent() {
   // DB에서 히스토리 로드
   const loadHistoryFromDB = async (email: string) => {
     try {
-      const response = await fetch(`/api/readings?email=${encodeURIComponent(email)}`);
+      const response = await fetch(`/api/readings?email=${encodeURIComponent(email)}&t=${Date.now()}`);
       if (!response.ok) {
         console.error("Failed to load history from DB");
         return;
