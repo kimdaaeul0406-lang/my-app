@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabaseServer'
 
+export const dynamic = 'force-dynamic'
+
 // readings 조회 API
 export async function GET(request: NextRequest) {
   try {
