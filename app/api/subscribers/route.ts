@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 
 // 구독자 추가 API
 export async function POST(request: NextRequest) {
   try {
+    const supabaseServer = getSupabaseServer()
     const body = await request.json()
     const { email } = body
 

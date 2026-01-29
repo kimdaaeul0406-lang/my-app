@@ -990,23 +990,24 @@ export default function TarotPage() {
   const handleSendEmail = async (email: string, saveToHistory: boolean, saveEmail: boolean) => {
     if (!pendingSaveItem || !sessionId) return;
 
-    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+    // DB에 세션별 이메일 업데이트 (항상 수행, history 기능 작동을 위해 필요)
+    try {
+      await fetch("/api/user-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          email: email,
+          saveEmail: saveEmail,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to save email to DB:", error);
+    }
+
     if (saveEmail) {
-      try {
-        await fetch("/api/user-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId: sessionId,
-            email: email,
-            saveEmail: true,
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save email to DB:", error);
-      }
       setUserEmail(email);
     }
 
@@ -1072,6 +1073,18 @@ export default function TarotPage() {
               text: pendingSaveItem.text,
               tags: pendingSaveItem.tags,
               isPremium: false,
+              // 카드 + 연애·직장·조언 등 전체 (최근 기록 모달 전체 보기용)
+              ...(fullData && {
+                cardName: fullData.cardName,
+                cardId: fullData.cardId,
+                isReversed: fullData.isReversed,
+                message: fullData.message,
+                love: fullData.love,
+                money: fullData.money,
+                career: fullData.career,
+                advice: fullData.advice,
+                keywords: fullData.keywords,
+              }),
             },
           }),
         });

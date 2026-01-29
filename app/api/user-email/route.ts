@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 
 // 사용자 세션별 이메일 조회/저장 API
 export async function GET(request: NextRequest) {
   try {
+    const supabaseServer = getSupabaseServer()
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get('sessionId')
 
@@ -97,6 +98,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseServer = getSupabaseServer()
     const body = await request.json()
     const { sessionId, email, saveEmail } = body
 

@@ -190,14 +190,7 @@ export async function POST(request: Request) {
     // console.log("[Horoscope API] Gemini 호출 시작");
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemma-3-27b-it",
-      generationConfig: {
-        temperature: 1.0, // 더 다양한 결과를 위해 temperature 증가
-        topP: 0.95,
-        topK: 40,
-      }
-    });
+    const model = genAI.getGenerativeModel({ model: "gemma-3-27b-it" });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

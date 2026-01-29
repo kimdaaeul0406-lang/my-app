@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { type ZodiacInfo } from "../utils/zodiac";
 import {
@@ -12,140 +11,116 @@ import {
 import { shareResult, formatZodiacShare } from "../utils/share";
 import EmailInputModal from "../components/EmailInputModal";
 
-const HISTORY_KEY = "lumen_history_v2";
-
 function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
 // 별자리 아이콘 SVG 컴포넌트
+const ZODIAC_ICONS: Record<string, React.ReactElement> = {
+  aries: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L8 6H16L12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  taurus: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M12 4V12M12 12V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4 12H12M12 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  gemini: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 4C8 5.1 7.1 6 6 6C4.9 6 4 5.1 4 4C4 2.9 4.9 2 6 2C7.1 2 8 2.9 8 4Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M20 4C20 5.1 19.1 6 18 6C16.9 6 16 5.1 16 4C16 2.9 16.9 2 18 2C19.1 2 20 2.9 20 4Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M8 20C8 21.1 7.1 22 6 22C4.9 22 4 21.1 4 20C4 18.9 4.9 18 6 18C7.1 18 8 18.9 8 20Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M20 20C20 21.1 19.1 22 18 22C16.9 22 16 21.1 16 20C16 18.9 16.9 18 18 18C19.1 18 20 18.9 20 20Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M6 6V18M18 6V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  cancer: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 8C6 10.2 7.8 12 10 12C12.2 12 14 10.2 14 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M10 16C10 13.8 11.8 12 14 12C16.2 12 18 13.8 18 16" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M6 6L4 4M18 6L20 4M6 18L4 20M18 18L20 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  leo: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="10" r="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M8 16L6 22M16 16L18 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12 4V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  virgo: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8 6L12 2L16 6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="14" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M10 18L12 20L14 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  libra: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 8H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M6 16H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12 8V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="6" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <circle cx="18" cy="16" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    </svg>
+  ),
+  scorpio: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12 8C12 10.2 10.2 12 8 12C5.8 12 4 10.2 4 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M12 8C12 10.2 13.8 12 16 12C18.2 12 20 10.2 20 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M12 12V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  sagittarius: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L8 6L12 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 10L16 6L20 2" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  capricorn: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M10 12L14 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M6 8L4 6M18 16L20 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M6 8V4M18 16V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  aquarius: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 8C6 6.9 6.9 6 8 6C9.1 6 10 6.9 10 8C10 9.1 9.1 10 8 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M14 8C14 6.9 14.9 6 16 6C17.1 6 18 6.9 18 8C18 9.1 17.1 10 16 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M6 16C6 14.9 6.9 14 8 14C9.1 14 10 14.9 10 16C10 17.1 9.1 18 8 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M14 16C14 14.9 14.9 14 16 14C17.1 14 18 14.9 18 16C18 17.1 17.1 18 16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M8 10V14M16 10V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  pisces: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M18 8C18 10.2 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M6 16C6 13.8 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M10 12H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+};
+
 function ZodiacIcon({ nameEn, color }: { nameEn: string; color?: string }) {
-  const iconMap: Record<string, React.ReactElement> = {
-    aries: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L8 6H16L12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    taurus: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M12 4V12M12 12V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M4 12H12M12 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    gemini: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8 4C8 5.1 7.1 6 6 6C4.9 6 4 5.1 4 4C4 2.9 4.9 2 6 2C7.1 2 8 2.9 8 4Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M20 4C20 5.1 19.1 6 18 6C16.9 6 16 5.1 16 4C16 2.9 16.9 2 18 2C19.1 2 20 2.9 20 4Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M8 20C8 21.1 7.1 22 6 22C4.9 22 4 21.1 4 20C4 18.9 4.9 18 6 18C7.1 18 8 18.9 8 20Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M20 20C20 21.1 19.1 22 18 22C16.9 22 16 21.1 16 20C16 18.9 16.9 18 18 18C19.1 18 20 18.9 20 20Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M6 6V18M18 6V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    cancer: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8C6 10.2 7.8 12 10 12C12.2 12 14 10.2 14 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M10 16C10 13.8 11.8 12 14 12C16.2 12 18 13.8 18 16" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M6 6L4 4M18 6L20 4M6 18L4 20M18 18L20 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    leo: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="10" r="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M8 16L6 22M16 16L18 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M12 4V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    virgo: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M8 6L12 2L16 6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="12" cy="14" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M10 18L12 20L14 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    libra: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M6 16H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M12 8V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="6" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <circle cx="18" cy="16" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
-      </svg>
-    ),
-    scorpio: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M12 8C12 10.2 10.2 12 8 12C5.8 12 4 10.2 4 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M12 8C12 10.2 13.8 12 16 12C18.2 12 20 10.2 20 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M12 12V18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M8 18L12 22L16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    sagittarius: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L8 6L12 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12 10L16 6L20 2" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    capricorn: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M10 12L14 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M6 8L4 6M18 16L20 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M6 8V4M18 16V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    aquarius: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8C6 6.9 6.9 6 8 6C9.1 6 10 6.9 10 8C10 9.1 9.1 10 8 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M14 8C14 6.9 14.9 6 16 6C17.1 6 18 6.9 18 8C18 9.1 17.1 10 16 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M6 16C6 14.9 6.9 14 8 14C9.1 14 10 14.9 10 16C10 17.1 9.1 18 8 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M14 16C14 14.9 14.9 14 16 14C17.1 14 18 14.9 18 16C18 17.1 17.1 18 16 18" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M8 10V14M16 10V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    pisces: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 8C6 10.2 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M18 8C18 10.2 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M6 16C6 13.8 7.8 12 10 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M18 16C18 13.8 16.2 12 14 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M10 12H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  };
+  const icon = ZODIAC_ICONS[nameEn];
 
-  if (!iconMap[nameEn]) return null;
-
-  const icon = iconMap[nameEn];
-
-  // color가 제공되면 모든 path의 stroke를 직접 변경
-  const coloredIcon = color
-    ? (() => {
-      const iconElement = icon as React.ReactElement<any>;
-      const children = React.Children.toArray(iconElement.props.children);
-      return React.cloneElement(iconElement, {
-        style: { color },
-        children: children.map((child: React.ReactNode) => {
-          if (React.isValidElement(child)) {
-            const childElement = child as React.ReactElement<any>;
-            const childProps = childElement.props as any;
-            return React.cloneElement(childElement, {
-              stroke: color,
-              fill: childProps.fill === "none" ? "none" : (childProps.fill || color)
-            });
-          }
-          return child;
-        })
-      });
-    })()
-    : icon;
+  if (!icon) return null;
 
   return (
     <span style={{
@@ -154,7 +129,7 @@ function ZodiacIcon({ nameEn, color }: { nameEn: string; color?: string }) {
       justifyContent: "center",
       color: color || "currentColor"
     }}>
-      {coloredIcon}
+      {React.cloneElement(icon)}
     </span>
   );
 }
@@ -207,7 +182,6 @@ const allZodiacs: ZodiacInfo[] = [
 ];
 
 export default function ZodiacPage() {
-  const router = useRouter();
   const [selectedZodiac, setSelectedZodiac] = useState<ZodiacInfo | null>(null);
   const [zodiacInfo, setZodiacInfo] = useState<ZodiacInfo | null>(null);
   const [horoscopeData, setHoroscopeData] = useState<HoroscopeData | null>(
@@ -231,9 +205,15 @@ export default function ZodiacPage() {
   const [pendingSaveItem, setPendingSaveItem] = useState<HistoryItem | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  // 클라이언트에서 한 번이라도 마운트된 적 있으면 true 유지 (Strict Mode 이중 마운트 시 깜빡임 방지)
+  const [mounted, setMounted] = useState(
+    () => typeof window !== "undefined" && !!(window as unknown as { __zodiacHydrated?: boolean }).__zodiacHydrated
+  );
 
-  // 세션 ID 생성/로드
+  // 세션 ID 생성/로드 & 마운트 체크
   useEffect(() => {
+    (window as unknown as { __zodiacHydrated?: boolean }).__zodiacHydrated = true;
+    setMounted(true);
     let session = localStorage.getItem("lumen_session_id");
     if (!session) {
       session = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
@@ -261,21 +241,6 @@ export default function ZodiacPage() {
       console.error("Error loading user email from DB:", error);
     }
   };
-
-  // 별자리 선택 시 zodiacInfo 설정 및 바로 운세 가져오기
-  useEffect(() => {
-    if (selectedZodiac) {
-      setZodiacInfo(selectedZodiac);
-      setHoroscopeData(null);
-      setError(null);
-      setShowModal(true);
-      // 바로 운세 가져오기 시작
-      fetchHoroscopeForSign(selectedZodiac);
-    } else {
-      setZodiacInfo(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedZodiac]);
 
   // 특정 별자리에 대해 운세 가져오기 (별자리 선택 시 바로 호출)
   const fetchHoroscopeForSign = async (zodiac: ZodiacInfo) => {
@@ -354,6 +319,17 @@ export default function ZodiacPage() {
     }
   };
 
+  // 별자리 선택 핸들러
+  const handleZodiacSelect = (zodiac: ZodiacInfo) => {
+    setSelectedZodiac(zodiac);
+    setZodiacInfo(zodiac);
+    setHoroscopeData(null);
+    setError(null);
+    setShowModal(true);
+    // 바로 운세 가져오기 시작
+    fetchHoroscopeForSign(zodiac);
+  };
+
   // 운세 가져오기 함수 (다시 시도 버튼용)
   const fetchHoroscope = async () => {
     if (!zodiacInfo || loading) return;
@@ -364,63 +340,91 @@ export default function ZodiacPage() {
   const handleSendEmail = async (email: string, saveToHistory: boolean, saveEmail: boolean) => {
     if (!pendingSaveItem || !sessionId) return;
 
-    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+    // 1. DB에 세션별 이메일 업데이트 (항상 수행)
+    try {
+      await fetch("/api/user-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          email: email,
+          saveEmail: saveEmail,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to save email to DB:", error);
+    }
+
     if (saveEmail) {
-      try {
-        await fetch("/api/user-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId: sessionId,
-            email: email,
-            saveEmail: true,
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save email to DB:", error);
-      }
       setUserEmail(email);
     }
 
+    // 3. 기록 저장 (선택한 경우) - 이메일 전송보다 먼저 수행 (전체 필드 포함 → 모달 전체 보기용)
+    if (saveToHistory) {
+      try {
+        const typeMap: Record<string, string> = {
+          SAJU: "saju",
+          TAROT: "tarot",
+          ZODIAC: "zodiac",
+        };
+        const fullData = (pendingSaveItem as any).fullData;
+
+        const saveResponse = await fetch("/api/readings/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email,
+            type: typeMap[pendingSaveItem.type] || "zodiac",
+            result_json: {
+              title: pendingSaveItem.title,
+              text: pendingSaveItem.text,
+              tags: pendingSaveItem.tags,
+              isPremium: false,
+              ...(fullData && {
+                message: fullData.message,
+                love: fullData.love,
+                career: fullData.career,
+                money: fullData.money,
+                advice: fullData.advice,
+                luckyNumber: fullData.luckyNumber,
+                luckyColor: fullData.luckyColor,
+                keywords: fullData.keywords,
+                zodiacName: fullData.zodiacName,
+              }),
+            },
+          }),
+        });
+
+        if (!saveResponse.ok) {
+          console.error("Failed to save to history DB");
+        }
+      } catch (error) {
+        console.error("Error saving history:", error);
+      }
+    }
+
+    // 4. 이메일 전송
     try {
-      // 이메일 전송 (전체 결과 포함)
       const fullData = (pendingSaveItem as any).fullData;
       let emailText = "";
       let emailTitle = pendingSaveItem.title;
 
       if (fullData) {
-        // 전체 결과 포맷팅
         emailTitle = `[별자리] ${fullData.zodiacName} - 오늘의 흐름`;
         emailText = `오늘의 메시지\n${fullData.message}\n\n`;
-        if (fullData.love) {
-          emailText += `연애\n${fullData.love}\n\n`;
-        }
-        if (fullData.career) {
-          emailText += `직장\n${fullData.career}\n\n`;
-        }
-        if (fullData.money) {
-          emailText += `금전\n${fullData.money}\n\n`;
-        }
-        if (fullData.advice) {
-          emailText += `조언\n${fullData.advice}\n\n`;
-        }
-        if (fullData.luckyNumber) {
-          emailText += `행운의 숫자: ${fullData.luckyNumber}\n`;
-        }
-        if (fullData.luckyColor) {
-          emailText += `행운의 색상: ${fullData.luckyColor}`;
-        }
+        if (fullData.love) emailText += `연애\n${fullData.love}\n\n`;
+        if (fullData.career) emailText += `직장\n${fullData.career}\n\n`;
+        if (fullData.money) emailText += `금전\n${fullData.money}\n\n`;
+        if (fullData.advice) emailText += `조언\n${fullData.advice}\n\n`;
+        if (fullData.luckyNumber) emailText += `행운의 숫자: ${fullData.luckyNumber}\n`;
+        if (fullData.luckyColor) emailText += `행운의 색상: ${fullData.luckyColor}`;
       } else {
         emailText = pendingSaveItem.text;
       }
 
       const emailResponse = await fetch("/api/send-email", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email,
           type: pendingSaveItem.type,
@@ -432,47 +436,22 @@ export default function ZodiacPage() {
 
       if (!emailResponse.ok) {
         const errorData = await emailResponse.json().catch(() => ({}));
-        const errorMessage = errorData.error || errorData.message || "이메일 전송에 실패했어요";
-        console.error("Email send failed:", errorMessage, errorData);
-        throw new Error(errorMessage);
-      }
-
-      // 기록에도 저장하기를 선택한 경우에만 DB에 저장
-      if (saveToHistory) {
-        const typeMap: Record<string, string> = {
-          SAJU: "saju",
-          TAROT: "tarot",
-          ZODIAC: "zodiac",
-        };
-
-        const saveResponse = await fetch("/api/readings/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email,
-            type: typeMap[pendingSaveItem.type] || "zodiac",
-            result_json: {
-              title: pendingSaveItem.title,
-              text: pendingSaveItem.text,
-              tags: pendingSaveItem.tags,
-              isPremium: false,
-            },
-          }),
-        });
-
-        if (!saveResponse.ok) {
-          console.error("Failed to save to history, but email sent");
-        }
+        console.warn("Email send failed (non-critical):", errorData);
+        throw new Error(errorData.error || "이메일 전송에 실패했어요");
       }
 
       showToast(saveToHistory ? "이메일을 보냈고 기록에 저장했어요" : "이메일을 보냈어요");
-      setPendingSaveItem(null);
     } catch (error) {
       console.error("Send email error:", error);
-      throw error;
+      // 이메일 실패해도 기록은 저장되었으므로 토스트 메시지 조정
+      if (saveToHistory) {
+        showToast("기록에 저장했어요 (이메일 전송 실패)");
+      } else {
+        showToast("이메일 전송에 실패했어요");
+      }
     }
+
+    setPendingSaveItem(null);
   };
 
   const saveZodiac = () => {
@@ -510,6 +489,17 @@ export default function ZodiacPage() {
     } as any);
     setEmailModalOpen(true);
   };
+
+  if (!mounted) {
+    return (
+      <main className="mainWrap">
+        <div className="bgFX" />
+        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div className="p" style={{ color: 'var(--muted)' }}>별들을 불러오는 중...</div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mainWrap">
@@ -555,7 +545,7 @@ export default function ZodiacPage() {
 
             <h1 className="h2 stagger d1" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <ZodiacIcon nameEn="libra" />
-              별자리 운세
+              별자리 운세 (업데이트됨)
             </h1>
             <p className="p stagger d2">
               별자리를 선택하면 오늘의 별자리 흐름을 알려드려요.
@@ -604,7 +594,7 @@ export default function ZodiacPage() {
                           return (
                             <button
                               key={zodiac.nameEn}
-                              onClick={() => setSelectedZodiac(zodiac)}
+                              onClick={() => handleZodiacSelect(zodiac)}
                               className={isSelected ? "zodiacSelected" : ""}
                               style={{
                                 padding: "20px 12px",

@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 
 // PWA 배너 표시 여부 조회/저장 API
 export async function GET(request: NextRequest) {
   try {
+    let supabaseServer
+    try {
+      supabaseServer = getSupabaseServer()
+    } catch {
+      return NextResponse.json({ success: true, showBanner: true }, { status: 200 })
+    }
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get('sessionId')
 
@@ -103,6 +109,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    let supabaseServer
+    try {
+      supabaseServer = getSupabaseServer()
+    } catch {
+      return NextResponse.json({ success: true, message: 'Banner dismiss attempted' }, { status: 200 })
+    }
     const body = await request.json()
     const { sessionId, dismissFor7Days } = body
 

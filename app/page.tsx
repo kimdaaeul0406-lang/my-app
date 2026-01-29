@@ -55,6 +55,23 @@ type HistoryItem = {
   tags: string[];
   createdAt: number;
   isPremium?: boolean;
+  /** 타로 기록일 때 카드 이미지 표시용 */
+  cardId?: number;
+  cardName?: string;
+  isReversed?: boolean;
+  /** 모달 전체 보기용 (연애·직장·조언 등) */
+  message?: string;
+  overview?: string;
+  personality?: string;
+  love?: string;
+  career?: string;
+  money?: string;
+  advice?: string;
+  thisYear?: string;
+  luckyElement?: string;
+  luckyColor?: string;
+  luckyNumber?: number;
+  keywords?: string[];
 };
 
 const HISTORY_KEY = "lumen_history_v2";
@@ -132,20 +149,8 @@ function HomeContent() {
     }));
   }, []);
 
-  // 로딩 상태 플래그 (복귀 시 애니메이션 스킵용 - 초기값 즉시 계산)
-  const [isFastMode, setIsFastMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const hasParam = !!params.get("returnFrom");
-
-      // 파라미터가 없어도, 내부 서비스 페이지에서 돌아왔다면(뒤로가기 등) FastMode 적용
-      const referrer = document.referrer || "";
-      const isInternalReturn = referrer.includes("/saju") || referrer.includes("/tarot") || referrer.includes("/zodiac") || referrer.includes("/talk");
-
-      return hasParam || isInternalReturn;
-    }
-    return false;
-  });
+  // 로딩 상태 플래그 (복귀 시 애니메이션 스킵용 - 초기값 false로 통일하여 Hydration 에러 방지)
+  const [isFastMode, setIsFastMode] = useState(false);
 
   // [Fast Mode 로직 개선]
   // URL 파라미터가 있거나, 혹은 이미 FastMode로 진입했다면 계속 유지시키는 state
@@ -437,6 +442,8 @@ function HomeContent() {
 
   // 기록
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  // 최근 기록 상세 팝업 (카드 클릭 시 전체 확인)
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null);
 
   // 세션 ID 생성/로드
   useEffect(() => {
@@ -473,11 +480,14 @@ function HomeContent() {
         return;
       }
       const data = await response.json();
-      if (data.success && data.email && data.saveEmail) {
-        // 이메일이 저장되어 있으면 사용
-        setUserEmail(data.email);
-        // DB에서 히스토리 로드
+      if (data.success && data.email) {
+        // 이메일이 있으면 히스토리 로드 (저장 여부와 무관하게 기록은 보여줌)
         loadHistoryFromDB(data.email);
+
+        // 이메일 저장하기가 체크된 경우에만 자동 입력을 위해 상태 업데이트
+        if (data.saveEmail) {
+          setUserEmail(data.email);
+        }
       } else {
         // 이메일이 저장되지 않았으면 localStorage에서 로드 (하위 호환성)
         try {
@@ -531,28 +541,27 @@ function HomeContent() {
     const itemToSend = item || pendingSaveItem;
     if (!itemToSend || !sessionId) return;
 
-    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
-    // 실패해도 이메일 전송은 계속 진행
-    if (saveEmail) {
-      try {
-        const saveResponse = await fetch("/api/user-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId: sessionId,
-            email: email,
-            saveEmail: true,
-          }),
-        });
-        if (!saveResponse.ok) {
-          console.warn("Failed to save email to DB (non-critical):", await saveResponse.json().catch(() => ({})));
-        }
-      } catch (error) {
-        console.warn("Failed to save email to DB (non-critical):", error);
-        // 에러가 발생해도 이메일 전송은 계속 진행
+    // DB에 세션별 이메일 업데이트 (항상 수행, history 기능 작동을 위해 필요)
+    try {
+      const saveResponse = await fetch("/api/user-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          email: email,
+          saveEmail: saveEmail,
+        }),
+      });
+      if (!saveResponse.ok) {
+        console.warn("Failed to save email to DB (non-critical):", await saveResponse.json().catch(() => ({})));
       }
+    } catch (error) {
+      console.warn("Failed to save email to DB (non-critical):", error);
+    }
+
+    if (saveEmail) {
       setUserEmail(email);
     }
 
@@ -679,12 +688,31 @@ function HomeContent() {
   };
 
   const removeHistory = async (id: string) => {
-    // DB에서 삭제하는 API가 없으므로 일단 로컬에서만 삭제
-    // TODO: DB 삭제 API 추가 필요
     const next = history.filter((h) => h.id !== id);
-    setHistory(next);
 
-    // localStorage에도 저장 (하위 호환성)
+    // DB에서 불러온 기록(UUID)이면 API로 삭제 요청 (새로고침 후에도 반영되도록)
+    const isUuid = /^[0-9a-f-]{36}$/i.test(id);
+    if (sessionId && isUuid) {
+      try {
+        const res = await fetch("/api/readings/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, sessionId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          showToast(data.error || "삭제에 실패했어요. 다시 시도해주세요.");
+          return;
+        }
+      } catch (err) {
+        console.error("Remove history error:", err);
+        showToast("삭제에 실패했어요. 다시 시도해주세요.");
+        return;
+      }
+    }
+
+    setHistory(next);
+    // localStorage에도 반영 (이메일 없이 로컬만 쓰는 경우)
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
     showToast("기록 삭제 완료");
   };
@@ -1116,7 +1144,10 @@ function HomeContent() {
         {/* HISTORY - 더 깔끔하게 정리 */}
         <section className="sectionTight reveal" ref={historyRef as any}>
           <div className="container center">
-            <h2 className="h2 stagger d1" style={{ fontSize: 16, fontWeight: 700, opacity: 0.5, marginBottom: 24 }}>최근 기록</h2>
+            <h2 className="h2 stagger d1" style={{ fontSize: 16, fontWeight: 700, opacity: 0.5, marginBottom: 8 }}>최근 기록</h2>
+            <p className="stagger d2" style={{ fontSize: 12, color: "var(--muted)", marginBottom: 24 }}>
+              카드를 누르면 전체 내용을 볼 수 있어요
+            </p>
 
             <div className="historyWrap stagger d3">
               {history.length === 0 ? (
@@ -1136,7 +1167,15 @@ function HomeContent() {
                 </div>
               ) : (
                 history.map((h) => (
-                  <div className="historyCard" key={h.id}>
+                  <div
+                    className="historyCard"
+                    key={h.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedHistoryItem(h)}
+                    onKeyDown={(e) => e.key === "Enter" && setSelectedHistoryItem(h)}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="historyTop">
                       <span className="badge">
                         {h.type === "SAJU"
@@ -1150,7 +1189,19 @@ function HomeContent() {
                       </span>
                     </div>
                     <div className="historyTitle">{h.title}</div>
-                    <div className="historyText" style={{ fontSize: 13, color: "var(--text-secondary)" }}>{h.text}</div>
+                    <div
+                      className="historyText"
+                      style={{
+                        fontSize: 13,
+                        color: "var(--text-secondary)",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {h.text}
+                    </div>
                     <div className="chipRow">
                       {h.tags.slice(0, 3).map((t) => (
                         <span className="chip" key={t} style={{ fontSize: 11, padding: "4px 8px" }}>
@@ -1159,25 +1210,36 @@ function HomeContent() {
                       ))}
                     </div>
                     <div
+                      className="chipRow historyCardActions"
                       style={{
-                        display: "flex",
                         justifyContent: "flex-end",
                         gap: 8,
-                        marginTop: 12
+                        marginTop: 12,
                       }}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <button
+                        type="button"
+                        className="btnTiny"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedHistoryItem(h);
+                        }}
+                      >
+                        전체 보기
+                      </button>
+                      <button
+                        type="button"
                         className="btnTiny"
                         onClick={() => removeHistory(h.id)}
                       >
                         삭제
                       </button>
                       <button
+                        type="button"
                         className="btnTiny"
                         onClick={() => {
-                          navigator.clipboard?.writeText(
-                            `${h.title}\n${h.text}`
-                          );
+                          navigator.clipboard?.writeText(`${h.title}\n${h.text}`);
                           showToast("결과를 복사했어요");
                         }}
                       >
@@ -1214,6 +1276,291 @@ function HomeContent() {
         )}
 
         {toast && <div className="toast">{toast}</div>}
+
+        {/* 최근 기록 상세 팝업 (카드 클릭 시 전체 확인) */}
+        {selectedHistoryItem && (
+          <div
+            className="modalOverlay"
+            onClick={() => setSelectedHistoryItem(null)}
+            style={{ zIndex: 9998 }}
+          >
+            <div
+              className="modalSheet"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: 480, maxHeight: "85vh", display: "flex", flexDirection: "column" }}
+            >
+              <div className="modalHeader">
+                <div className="modalTitle" style={{ fontSize: 14, fontWeight: 700 }}>
+                  {selectedHistoryItem.type === "SAJU"
+                    ? "사주"
+                    : selectedHistoryItem.type === "ZODIAC"
+                      ? "별자리"
+                      : "타로"}{" "}
+                  기록
+                </div>
+                <button
+                  className="closeBtn"
+                  onClick={() => setSelectedHistoryItem(null)}
+                  aria-label="닫기"
+                >
+                  ×
+                </button>
+              </div>
+              <div
+                className="modalBody"
+                style={{
+                  overflowY: "auto",
+                  flex: 1,
+                  padding: "16px 20px",
+                }}
+              >
+                <div className="muted" style={{ marginBottom: 8 }}>
+                  {formatKoreanDate(selectedHistoryItem.createdAt)}
+                </div>
+                {selectedHistoryItem.type === "TAROT" && selectedHistoryItem.cardId != null && (
+                  <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
+                    <img
+                      src={`/tarot/${selectedHistoryItem.cardId}.png`}
+                      alt={selectedHistoryItem.cardName || "타로 카드"}
+                      style={{
+                        width: 80,
+                        height: 140,
+                        objectFit: "contain",
+                        borderRadius: 8,
+                        transform: selectedHistoryItem.isReversed ? "scaleY(-1)" : undefined,
+                      }}
+                    />
+                    <span style={{ fontSize: 14, color: "var(--muted)", fontWeight: 600 }}>
+                      {selectedHistoryItem.cardName}
+                      {selectedHistoryItem.isReversed ? " (역방향)" : ""}
+                    </span>
+                  </div>
+                )}
+                <div className="historyTitle" style={{ marginBottom: 12 }}>
+                  {selectedHistoryItem.title}
+                </div>
+                {/* 전체 기록: 연애·직장·금전·조언 등 섹션별 표시 */}
+                <div
+                  className="historyText"
+                  style={{
+                    fontSize: 14,
+                    lineHeight: 1.65,
+                    color: "var(--text-secondary)",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {selectedHistoryItem.type === "SAJU" &&
+                  (selectedHistoryItem.overview || selectedHistoryItem.personality) ? (
+                    <>
+                      {selectedHistoryItem.overview && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>오늘의 흐름</div>
+                          <div>{selectedHistoryItem.overview}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.personality && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>성격</div>
+                          <div>{selectedHistoryItem.personality}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.love && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>연애</div>
+                          <div>{selectedHistoryItem.love}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.career && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>직장</div>
+                          <div>{selectedHistoryItem.career}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.money && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>금전</div>
+                          <div>{selectedHistoryItem.money}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.thisYear && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>올해의 흐름</div>
+                          <div>{selectedHistoryItem.thisYear}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.advice && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>조언</div>
+                          <div>{selectedHistoryItem.advice}</div>
+                        </div>
+                      )}
+                      {(selectedHistoryItem.luckyElement || selectedHistoryItem.luckyColor) && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>행운</div>
+                          <div>
+                            {selectedHistoryItem.luckyElement && <span>요소: {selectedHistoryItem.luckyElement}</span>}
+                            {selectedHistoryItem.luckyElement && selectedHistoryItem.luckyColor && " · "}
+                            {selectedHistoryItem.luckyColor && <span>색상: {selectedHistoryItem.luckyColor}</span>}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : selectedHistoryItem.type === "ZODIAC" &&
+                    (selectedHistoryItem.message || selectedHistoryItem.love) ? (
+                    <>
+                      {selectedHistoryItem.message && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>오늘의 메시지</div>
+                          <div>{selectedHistoryItem.message}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.love && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>연애</div>
+                          <div>{selectedHistoryItem.love}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.career && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>직장</div>
+                          <div>{selectedHistoryItem.career}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.money && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>금전</div>
+                          <div>{selectedHistoryItem.money}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.advice && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>조언</div>
+                          <div>{selectedHistoryItem.advice}</div>
+                        </div>
+                      )}
+                      {(selectedHistoryItem.luckyNumber != null || selectedHistoryItem.luckyColor) && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>행운</div>
+                          <div>
+                            {selectedHistoryItem.luckyNumber != null && (
+                              <span>숫자: {selectedHistoryItem.luckyNumber}</span>
+                            )}
+                            {selectedHistoryItem.luckyNumber != null && selectedHistoryItem.luckyColor && " · "}
+                            {selectedHistoryItem.luckyColor && <span>색상: {selectedHistoryItem.luckyColor}</span>}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : selectedHistoryItem.type === "TAROT" &&
+                    (selectedHistoryItem.message || selectedHistoryItem.love) ? (
+                    <>
+                      {selectedHistoryItem.message && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>오늘의 메시지</div>
+                          <div>{selectedHistoryItem.message}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.love && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>연애</div>
+                          <div>{selectedHistoryItem.love}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.money && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>금전</div>
+                          <div>{selectedHistoryItem.money}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.career && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>직장</div>
+                          <div>{selectedHistoryItem.career}</div>
+                        </div>
+                      )}
+                      {selectedHistoryItem.advice && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--navy-dark)" }}>조언</div>
+                          <div>{selectedHistoryItem.advice}</div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    selectedHistoryItem.text
+                  )}
+                </div>
+                {selectedHistoryItem.tags.length > 0 && (
+                  <div className="chipRow" style={{ marginTop: 12 }}>
+                    {selectedHistoryItem.tags.map((t) => (
+                      <span className="chip" key={t} style={{ fontSize: 11, padding: "4px 8px" }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 8,
+                    marginTop: 20,
+                    paddingTop: 16,
+                    borderTop: "1px solid rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <button
+                    className="btnTiny"
+                    onClick={() => {
+                      removeHistory(selectedHistoryItem.id);
+                      setSelectedHistoryItem(null);
+                    }}
+                  >
+                    삭제
+                  </button>
+                  <button
+                    className="btnTiny"
+                    onClick={() => {
+                      const lines: string[] = [selectedHistoryItem.title, ""];
+                      if (selectedHistoryItem.type === "SAJU") {
+                        if (selectedHistoryItem.overview) lines.push("오늘의 흐름\n", selectedHistoryItem.overview, "\n");
+                        if (selectedHistoryItem.personality) lines.push("성격\n", selectedHistoryItem.personality, "\n");
+                        if (selectedHistoryItem.love) lines.push("연애\n", selectedHistoryItem.love, "\n");
+                        if (selectedHistoryItem.career) lines.push("직장\n", selectedHistoryItem.career, "\n");
+                        if (selectedHistoryItem.money) lines.push("금전\n", selectedHistoryItem.money, "\n");
+                        if (selectedHistoryItem.thisYear) lines.push("올해의 흐름\n", selectedHistoryItem.thisYear, "\n");
+                        if (selectedHistoryItem.advice) lines.push("조언\n", selectedHistoryItem.advice, "\n");
+                        if (selectedHistoryItem.luckyElement || selectedHistoryItem.luckyColor) {
+                          lines.push("행운: ", [selectedHistoryItem.luckyElement, selectedHistoryItem.luckyColor].filter(Boolean).join(" · "), "\n");
+                        }
+                      } else if (selectedHistoryItem.type === "ZODIAC" || selectedHistoryItem.type === "TAROT") {
+                        if (selectedHistoryItem.message) lines.push("오늘의 메시지\n", selectedHistoryItem.message, "\n");
+                        if (selectedHistoryItem.love) lines.push("연애\n", selectedHistoryItem.love, "\n");
+                        if (selectedHistoryItem.career) lines.push("직장\n", selectedHistoryItem.career, "\n");
+                        if (selectedHistoryItem.money) lines.push("금전\n", selectedHistoryItem.money, "\n");
+                        if (selectedHistoryItem.advice) lines.push("조언\n", selectedHistoryItem.advice, "\n");
+                        if (selectedHistoryItem.luckyNumber != null || selectedHistoryItem.luckyColor) {
+                          lines.push("행운: ", [selectedHistoryItem.luckyNumber, selectedHistoryItem.luckyColor].filter(Boolean).join(" · "), "\n");
+                        }
+                      }
+                      if (lines.length === 2) lines.push(selectedHistoryItem.text);
+                      navigator.clipboard?.writeText(lines.join(""));
+                      showToast("결과를 복사했어요");
+                    }}
+                  >
+                    복사
+                  </button>
+                  <button
+                    className="btnTiny"
+                    onClick={() => setSelectedHistoryItem(null)}
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 맨 위로 가기 버튼 */}
         {showScrollTop && (

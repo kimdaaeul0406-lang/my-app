@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseServer = getSupabaseServer()
     const body = await request.json()
     const { email, type, topic, question, result_json, summary } = body
 

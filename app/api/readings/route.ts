@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 
 export const dynamic = 'force-dynamic'
 
 // readings 조회 API
 export async function GET(request: NextRequest) {
   try {
+    const supabaseServer = getSupabaseServer()
     const { searchParams } = new URL(request.url)
     const email = searchParams.get('email')
 
@@ -55,18 +56,21 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 3. 프론트엔드 형식으로 변환
+    // 3. 프론트엔드 형식으로 변환 (전체 기록 표시용으로 result_json 전체 전달)
     const formattedReadings = (readings || []).map((reading) => {
       const result = reading.result_json as any
-      return {
+      const base = {
         id: reading.id,
         type: reading.type.toUpperCase() as 'SAJU' | 'TAROT' | 'ZODIAC',
         title: result.title || `[${reading.type}] 결과`,
-        text: result.text || result.horoscope || result.message || '',
+        text: result.text || result.horoscope || result.message || result.overview || '',
         tags: result.tags || [],
         createdAt: new Date(reading.created_at).getTime(),
         isPremium: result.isPremium || false,
+        // 모달 전체 보기용: 연애·직장·조언 등 모든 필드
+        ...result,
       }
+      return base
     })
 
     return NextResponse.json(

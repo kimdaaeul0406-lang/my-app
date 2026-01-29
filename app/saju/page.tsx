@@ -204,23 +204,24 @@ export default function SajuPage() {
   const handleSendEmail = async (email: string, saveToHistory: boolean, saveEmail: boolean) => {
     if (!pendingSaveItem || !sessionId) return;
 
-    // DB에 세션별 이메일 저장 (이메일 저장하기를 선택한 경우)
+    // DB에 세션별 이메일 업데이트 (항상 수행, history 기능 작동을 위해 필요)
+    try {
+      await fetch("/api/user-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          email: email,
+          saveEmail: saveEmail,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to save email to DB:", error);
+    }
+
     if (saveEmail) {
-      try {
-        await fetch("/api/user-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId: sessionId,
-            email: email,
-            saveEmail: true,
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save email to DB:", error);
-      }
       setUserEmail(email);
     }
 
@@ -267,13 +268,14 @@ export default function SajuPage() {
         throw new Error(errorMessage);
       }
 
-      // 기록에도 저장하기를 선택한 경우에만 DB에 저장
+      // 기록에도 저장하기를 선택한 경우에만 DB에 저장 (전체 필드 포함 → 모달 전체 보기용)
       if (saveToHistory) {
         const typeMap: Record<string, string> = {
           SAJU: "saju",
           TAROT: "tarot",
           ZODIAC: "zodiac",
         };
+        const fullData = (pendingSaveItem as any).fullData;
 
         const saveResponse = await fetch("/api/readings/create", {
           method: "POST",
@@ -288,6 +290,18 @@ export default function SajuPage() {
               text: pendingSaveItem.text,
               tags: pendingSaveItem.tags,
               isPremium: false,
+              ...(fullData && {
+                overview: fullData.overview,
+                personality: fullData.personality,
+                love: fullData.love,
+                career: fullData.career,
+                money: fullData.money,
+                thisYear: fullData.thisYear,
+                advice: fullData.advice,
+                luckyElement: fullData.luckyElement,
+                luckyColor: fullData.luckyColor,
+                keywords: fullData.keywords,
+              }),
             },
           }),
         });
